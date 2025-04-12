@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Aiguilog - Sorties à faire</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    /* Surcharges / ajustements spécifiques à cette page, si nécessaire. */
+
+    /* Mise en place de la grille en deux colonnes pour le formulaire */
+    .two-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr; /* 2 colonnes de largeurs égales */
+      gap: 1rem;
+    }
+    .col-left, .col-right {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    /* Pour forcer le bouton à prendre toute la largeur, 
+       on l'encapsule dans une div qui s'étend sur les 2 colonnes. */
+    .full-width {
+      grid-column: 1 / span 2; /* prend les 2 colonnes */
+      display: flex;
+      justify-content: center; /* centre le bouton si besoin */
+      margin-top: 1rem;
+    }
+    .full-width button {
+      width: 100%;
+      padding: 1rem;
+      font-size: 1.1rem;
+    }
+
+    /* Optionnel : style pour les cellules en mode édition (inline editing) */
+    .editable {
+      background-color: #eef;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div>Aiguilog</div>
+    <nav>
+      <a href="sorties-faites.html">Fait</a>
+      <a href="sorties-a-faire.html" class="active">À Faire</a>
+      <a href="#">Rechercher</a>
+      <a href="utilisateur.html">👤</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <h2>Sorties à faire</h2>
+
+    <!-- Formulaire -->
+    <form id="form-a-faire" class="two-cols">
+      <!-- Colonne gauche -->
+      <div class="col-left">
+        <input 
+          type="text" 
+          id="sommet" 
+          placeholder="Sommet" 
+          required 
+        />
+        <input 
+          type="number" 
+          id="altitude" 
+          placeholder="Altitude (m)" 
+          min="0" 
+          onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" 
+          required 
+        />
+        <input 
+          type="number" 
+          id="denivele" 
+          placeholder="Dénivelé (m)" 
+          min="0" 
+          onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" 
+          required 
+        />
+        <textarea id="details" placeholder="Détails"></textarea>
+      </div>
+
+      <!-- Colonne droite -->
+      <div class="col-right">
+        <!-- Méthode -->
+        <select id="methode" required>
+          <option value="" disabled selected>Méthode</option>
+          <option value="Alpinisme">Alpinisme</option>
+          <option value="Randonnée">Randonnée</option>
+          <option value="Escalade">Escalade</option>
+        </select>
+        <!-- Cotation (dépend de la Méthode) -->
+        <select id="cotation" required>
+          <option value="" disabled selected>Cotation</option>
+        </select>
+        <!-- Date -->
+        <input type="date" id="date" required />
+      </div>
+
+      <!-- Bouton "Ajouter" sur toute la largeur -->
+      <div class="full-width">
+        <button type="submit">Ajouter</button>
+      </div>
+    </form>
+
+    <!-- Tableau -->
+    <table>
+      <thead>
+        <tr>
+          <th>✏️</th>
+          <th>Sommet</th>
+          <th>Altitude</th>
+          <th>Dénivelé</th>
+          <th>Détails</th>
+          <th>Méthode</th>
+          <th>Cotation</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="table-body-afaire"></tbody>
+    </table>
+  </div>
+
+  <script>
+    // Correspondance Méthode -> Cotations
+    const cotationsParMéthode = {
+      "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED"],
+      "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
+      "Escalade": ["4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c"]
+    };
+
+    const formAFaire = document.getElementById('form-a-faire');
+    const methodeSelect = document.getElementById('methode');
+    const cotationSelect = document.getElementById('cotation');
+    const tableBodyAFaire = document.getElementById('table-body-afaire');
+
+    // Met à jour la liste des cotations en fonction de la méthode
+    methodeSelect.addEventListener('change', () => {
+      const methode = methodeSelect.value;
+      cotationSelect.innerHTML = '<option value="" disabled selected>Cotation</option>';
+      if (cotationsParMéthode[methode]) {
+        cotationsParMéthode[methode].forEach(cot => {
+          const opt = document.createElement('option');
+          opt.value = cot;
+          opt.textContent = cot;
+          cotationSelect.appendChild(opt);
+        });
+      }
+    });
+
+    // Ajoute le préfixe "~" et suffixe "m" aux valeurs altitude et dénivelé
+    function formatValue(val) {
+      return val ? `~${val}m` : "";
+    }
+
+    // Bascule en mode édition sur la ligne
+    function toggleEdit(btn) {
+      const row = btn.parentElement.parentElement;
+      const isEditing = row.getAttribute('data-editing') === 'true';
+      const cells = row.querySelectorAll('td:not(:first-child)');
+
+      if (!isEditing) {
+        // Activer l'édition
+        cells.forEach(cell => {
+          cell.contentEditable = "true";
+          cell.classList.add("editable");
+        });
+        row.setAttribute('data-editing', 'true');
+        btn.textContent = "✔️";
+      } else {
+        // Désactiver l'édition et reformater altitude / dénivelé
+        cells.forEach((cell, index) => {
+          cell.contentEditable = "false";
+          cell.classList.remove("editable");
+        });
+        // Reprendre la 3e et 4e colonne pour reformatage
+        const altitudeCell = row.children[2];
+        altitudeCell.textContent = formatValue(
+          altitudeCell.textContent.replace(/^~/, "").replace(/m$/, "").trim()
+        );
+        const deniveleCell = row.children[3];
+        deniveleCell.textContent = formatValue(
+          deniveleCell.textContent.replace(/^~/, "").replace(/m$/, "").trim()
+        );
+
+        row.setAttribute('data-editing', 'false');
+        btn.textContent = "✏️";
+      }
+    }
+
+    // Événement "submit" pour ajouter une nouvelle ligne
+    formAFaire.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const sommet = document.getElementById('sommet').value.trim();
+      const altitudeVal = document.getElementById('altitude').value.trim();
+      const deniveleVal = document.getElementById('denivele').value.trim();
+      const details = document.getElementById('details').value.trim();
+      const methode = methodeSelect.value;
+      const cotation = cotationSelect.value;
+      const date = document.getElementById('date').value;
+
+      // Formater altitude et dénivelé
+      const altFormatted = formatValue(altitudeVal);
+      const denFormatted = formatValue(deniveleVal);
+
+      // Création de la ligne
+      const newRow = document.createElement('tr');
+      newRow.innerHTML = `
+        <td><button class="edit-btn" onclick="toggleEdit(this)">✏️</button></td>
+        <td>${sommet}</td>
+        <td>${altFormatted}</td>
+        <td>${denFormatted}</td>
+        <td>${details}</td>
+        <td>${methode}</td>
+        <td>${cotation}</td>
+        <td>${date}</td>
+      `;
+      tableBodyAFaire.appendChild(newRow);
+
+      formAFaire.reset();
+      cotationSelect.innerHTML = '<option value="" disabled selected>Cotation</option>';
+    });
+  </script>
+</body>
+</html>

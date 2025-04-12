@@ -1,6 +1,7 @@
 // server.js
 
 require('dotenv').config(); // Charger les variables d'environnement
+console.log("MONGODB_URI:", process.env.MONGODB_URI); // Devrait afficher votre URI
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
