@@ -1,18 +1,16 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // ===== Fonction utilitaire pour formater les nombres (ex: altitude) =====
-  function formatValue(val) {
-    return val ? `~${val}m` : "";
-  }
-
-  // ===== Vérification de la connexion pour les pages protégées =====
-  // Si la page requiert une connexion (mon-compte.html, sorties-a-faire.html, sorties-faites.html)
-  const protectedPages = ["mon-compte.html", "sorties-a-faire.html", "sorties-faites.html"];
-  if (protectedPages.some(page => window.location.href.includes(page))) {
-    // Vérifier si le token ou les infos utilisateur sont stockés
+  // ===== Contrôle de la connexion sur les pages protégées =====
+  const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
+  // Utiliser window.location.pathname pour obtenir le chemin de la page
+  const currentPath = window.location.pathname;
+  console.log("Chemin actuel :", currentPath);
+  if (protectedPages.some(page => currentPath.endsWith(page))) {
     const token = localStorage.getItem("token");
     const user = localStorage.getItem("user");
+    console.log("Token trouvé :", token);
+    console.log("User trouvé :", user);
     if (!token || !user) {
-      // Non connecté, rediriger vers index ou page de connexion
+      // Rediriger l'utilisateur non connecté vers la page de connexion
       window.location.href = "utilisateur.html";
     }
   }
@@ -25,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===== Pour utilisateur.html (Login) =====
+  // ===== Pour utilisateur.html (Connexion) =====
   const loginForm = document.getElementById("login-form");
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
@@ -40,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const data = await res.json();
         if (res.ok && data.token) {
-          // Stocker le token et les infos utilisateur dans le localStorage
+          // Stockage persistant : on utilise localStorage pour garder la connexion
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
           window.location.href = "mon-compte.html";
@@ -60,12 +58,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ===== Pour creer-compte.html (Registration) =====
+  // ===== Pour creer-compte.html (Inscription) =====
   const registerForm = document.getElementById("register-form");
   if (registerForm) {
     registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      // Récupération des nouvelles infos
+      // Récupération des champs
       const firstName = document.getElementById("register-firstname").value.trim();
       const lastName = document.getElementById("register-lastname").value.trim();
       const username = document.getElementById("register-username").value.trim();
@@ -79,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const data = await res.json();
         if (res.ok && data.token) {
-          // Stocker le token et les infos utilisateur pour rester connecté
+          // Stocker dans localStorage pour persister la connexion
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
           window.location.href = "mon-compte.html";
@@ -93,19 +91,20 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===== Pour mon-compte.html (Profil) =====
-  const connectedUser = localStorage.getItem("user");
-  if (document.getElementById("titre-bienvenue") && !connectedUser) {
-    window.location.href = "utilisateur.html";
-  }
-  if (document.getElementById("titre-bienvenue") && connectedUser) {
-    const userData = JSON.parse(connectedUser);
-    const titreBienvenue = document.getElementById("titre-bienvenue");
-    const infoMembre = document.getElementById("info-membre");
-    titreBienvenue.textContent = `Bienvenue, ${userData.firstName} ${userData.lastName} (${userData.username})`;
-    if (userData.birthdate) {
-      const date = new Date(userData.birthdate);
-      infoMembre.textContent = `Né(e) le ${date.toLocaleDateString("fr-FR")}`;
+  // ===== Pour mon-compte.html (Profil utilisateur) =====
+  if (document.getElementById("titre-bienvenue")) {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) {
+      window.location.href = "utilisateur.html";
+    } else {
+      const userData = JSON.parse(storedUser);
+      const titreBienvenue = document.getElementById("titre-bienvenue");
+      const infoMembre = document.getElementById("info-membre");
+      titreBienvenue.textContent = `Bienvenue, ${userData.firstName} ${userData.lastName} (${userData.username})`;
+      if (userData.birthdate) {
+        const date = new Date(userData.birthdate);
+        infoMembre.textContent = `Né(e) le ${date.toLocaleDateString("fr-FR")}`;
+      }
     }
   }
   const logoutBtn = document.getElementById("logout");
@@ -117,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===== Pour sorties-a-faire.html =====
+  // ===== Pour sorties-a-faire.html (Sorties à faire) =====
   const formAFaire = document.getElementById("form-a-faire");
   if (formAFaire) {
     const methodeSelect = document.getElementById("methode");
@@ -145,7 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // Génération dynamique de la liste d'années pour les sorties à faire
+    // Génération de la liste des années pour "sorties à faire"
     if (yearSelect) {
       const currentYear = new Date().getFullYear();
       const range = 10;
@@ -167,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const cotation = cotationSelect.value;
       const year = yearSelect.value;
       const sortieData = {
-        type: "a-faire", // Pour distinguer ce type
+        type: "a-faire",
         sommet,
         altitude: altitudeVal,
         denivele: deniveleVal,
@@ -214,7 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===== Pour sorties-faites.html =====
+  // ===== Pour sorties-faites.html (Sorties déjà réalisées) =====
   const formFait = document.getElementById("form-fait");
   if (formFait) {
     const methodeFait = document.getElementById("methode-fait");
@@ -250,8 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const details = document.getElementById("details-fait").value.trim();
       const methode = methodeFait.value;
       const cotation = cotationFait.value;
-      const date = dateInput.value;
-
+      const date = dateInput.value;  // Champ type date
       const sortieData = {
         type: "fait",
         sommet,
@@ -317,7 +315,6 @@ document.addEventListener("DOMContentLoaded", () => {
         cell.contentEditable = "false";
         cell.classList.remove("editable");
       });
-      // Optionnel : reformatter altitude et dénivelé si nécessaire
       row.setAttribute("data-editing", "false");
       btn.textContent = "✏️";
     }
