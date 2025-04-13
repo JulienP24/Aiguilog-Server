@@ -32,19 +32,25 @@
 </head>
 <body>
   <!-- Header commun -->
-  <header class="main-header">
-    <div class="header-desktop">
-      <a href="index.html" class="header-logo">AIGUILOG</a>
-      <nav class="desktop-nav">
-        <a href="sorties-faites.html" class="active">Fait</a>
-        <a href="sorties-a-faire.html">À Faire</a>
-        <a href="rechercher.html">Rechercher</a>
-        <a href="mon-compte.html">Mon compte</a>
-      </nav>
-    </div>
-    <div class="header-mobile">
-      <a href="index.html" class="header-logo-mobile">AIGUILOG</a>
-      <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">&#9776;</button>
+  <header class="ios-header">
+    <div class="nav-container">
+      <div class="desktop-nav">
+        <a href="index.html" class="logo-link">
+          <img src="images/logo.png" alt="Aiguilog" class="logo-img">
+        </a>
+        <nav class="nav-links">
+          <a href="sorties-faites.html" class="active">Fait</a>
+          <a href="sorties-a-faire.html">À Faire</a>
+          <a href="rechercher.html">Rechercher</a>
+          <a href="mon-compte.html">Mon compte</a>
+        </nav>
+      </div>
+      <div class="mobile-nav">
+        <a href="index.html" class="logo-link">
+          <img src="images/logo.png" alt="Aiguilog" class="logo-img">
+        </a>
+        <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">&#9776;</button>
+      </div>
     </div>
     <nav id="mobile-menu">
       <ul>

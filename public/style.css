@@ -21,7 +21,7 @@ body {
   color: var(--dark);
 }
 
-/* ---------- HEADER (Navigation Desktop & Mobile) ---------- */
+/* ---------- HEADER COMMUN (Desktop & Mobile) ---------- */
 .main-header {
   position: sticky;
   top: 0;
@@ -29,41 +29,53 @@ body {
   background: var(--primary);
   color: #fff;
   padding: 0.5rem 1rem;
+  border-radius: 9999px; /* Demi-cercle aux extrémités */
+  margin: 0 5%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-/* Desktop header */
-.header-desktop {
+/* Conteneur du header */
+.nav-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-.header-desktop .header-logo {
-  color: #fff;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 1.5rem;
+
+/* ---------- Desktop Header ---------- */
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
-.desktop-nav a {
-  color: #fff;
+.desktop-nav .logo-link {
+  display: inline-block;
+  margin-right: 1rem;
+}
+.desktop-nav .logo-img {
+  height: 60px;
+}
+.nav-links a {
   text-decoration: none;
+  color: #fff;
   margin-left: 1rem;
   font-weight: 500;
 }
-.desktop-nav a:hover {
+.nav-links a:hover {
   text-decoration: underline;
 }
 
-/* Mobile header */
-.header-mobile {
+/* ---------- Mobile Header ---------- */
+.mobile-nav {
   display: none;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
 }
-.header-logo-mobile {
-  color: #fff;
+.logo-link-mobile {
   text-decoration: none;
-  font-weight: bold;
-  font-size: 1.4rem;
+}
+.mobile-nav .logo-img {
+  height: 60px;
 }
 #mobile-menu-toggle {
   background: none;
@@ -73,7 +85,7 @@ body {
   cursor: pointer;
 }
 
-/* Mobile menu (caché par défaut) */
+/* Menu mobile caché par défaut */
 #mobile-menu {
   position: fixed;
   top: 0;
@@ -84,6 +96,7 @@ body {
   color: var(--dark);
   padding: 2rem 1rem;
   box-shadow: -4px 0 10px rgba(0,0,0,0.2);
+  border-radius: 8px 0 0 8px;
   transition: 0.3s;
 }
 #mobile-menu ul {
@@ -106,12 +119,12 @@ body {
 
 /* ---------- Media Queries ---------- */
 @media (min-width: 768px) {
-  .header-desktop { display: flex; }
-  .header-mobile, #mobile-menu { display: none; }
+  .desktop-nav { display: flex; }
+  .mobile-nav, #mobile-menu { display: none; }
 }
 @media (max-width: 767px) {
-  .header-desktop { display: none; }
-  .header-mobile { display: flex; }
+  .desktop-nav { display: none; }
+  .mobile-nav { display: flex; }
 }
 
 /* ---------- Conteneur principal ---------- */
@@ -151,7 +164,9 @@ button {
   font-weight: bold;
   transition: background 0.3s;
 }
-button:hover { background-color: #005ecb; }
+button:hover {
+  background-color: #005ecb;
+}
 .two-cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -183,7 +198,9 @@ th, td {
   text-align: left;
   border-bottom: 1px solid var(--gray);
 }
-th { background-color: var(--background); }
+th {
+  background-color: var(--background);
+}
 .editable { background-color: #eef; }
 select {
   appearance: none;
@@ -204,6 +221,6 @@ select {
   }
   body { background: #1a1a1a; color: var(--dark); }
   header, nav, form, table { background: #2c2c2c; color: var(--dark); }
-  .desktop-nav a { color: var(--dark); }
+  .nav-links a { color: var(--dark); }
   #mobile-menu ul li a { color: var(--primary); }
 }

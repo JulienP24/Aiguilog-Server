@@ -6,8 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   function getUser() {
     const raw = localStorage.getItem("user");
-    try { return raw ? JSON.parse(raw) : null; } 
-    catch (e) { return null; }
+    try { return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
   }
   
   function getToken() {
@@ -25,10 +24,11 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // ------------------ Navigation et Redirection ------------------
   function updateUserIconLink() {
-    const userIconLink = document.querySelector(".desktop-nav a[href='mon-compte.html']") || document.querySelector("#mobile-menu a[href='mon-compte.html']");
-    if (userIconLink) { 
-      userIconLink.href = getUser() ? "mon-compte.html" : "utilisateur.html"; 
-    }
+    // Exemple : mettre à jour le lien "Mon compte" dans la nav desktop et mobile
+    const links = document.querySelectorAll("a[href='mon-compte.html']");
+    links.forEach(link => {
+      link.href = getUser() ? "mon-compte.html" : "utilisateur.html";
+    });
   }
   updateUserIconLink();
   
@@ -151,7 +151,9 @@ document.addEventListener("DOMContentLoaded", () => {
   async function displaySorties() {
     const sorties = await loadSorties();
     const typeToDisplay = currentPath.includes("sorties-faites") ? "fait" : "a-faire";
-    const tableBody = document.getElementById(currentPath.includes("sorties-faites") ? "table-body-fait" : "table-body-afaire");
+    const tableBody = document.getElementById(
+      currentPath.includes("sorties-faites") ? "table-body-fait" : "table-body-afaire"
+    );
     if (tableBody) {
       tableBody.innerHTML = "";
       sorties.filter(s => s.type === typeToDisplay).forEach(s => {
@@ -400,7 +402,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cells[5].innerHTML = "";
     cells[5].appendChild(selectCotation);
     
-    // Actualiser cotation si méthode change
+    // Actualiser cotation si la méthode change
     selectMethode.addEventListener("change", function() {
       const newMethod = this.value;
       selectCotation.innerHTML = "";
@@ -540,9 +542,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // ------------------ Auto-complétion pour le champ Sommet ------------------
   let sommetInput = document.getElementById("sommet");
-  if (!sommetInput) {
-    sommetInput = document.getElementById("sommet-fait");
-  }
+  if (!sommetInput) { sommetInput = document.getElementById("sommet-fait"); }
   if (sommetInput) {
     sommetInput.addEventListener("input", updateSummitsDatalist);
     sommetInput.addEventListener("change", () => {
@@ -551,12 +551,8 @@ document.addEventListener("DOMContentLoaded", () => {
       for (let i = 0; i < options.length; i++) {
         if (options[i].value.toLowerCase() === sommetInput.value.trim().toLowerCase()) {
           let altitudeInput = document.getElementById("altitude");
-          if (!altitudeInput) {
-            altitudeInput = document.getElementById("altitude-fait");
-          }
-          if (altitudeInput) {
-            altitudeInput.value = options[i].getAttribute("data-altitude") || "";
-          }
+          if (!altitudeInput) { altitudeInput = document.getElementById("altitude-fait"); }
+          if (altitudeInput) { altitudeInput.value = options[i].getAttribute("data-altitude") || ""; }
           break;
         }
       }
@@ -566,16 +562,11 @@ document.addEventListener("DOMContentLoaded", () => {
   async function updateSummitsDatalist() {
     const query = sommetInput.value.trim();
     const datalist = document.getElementById("summits-list");
-    if (query.length < 2) {
-      datalist.innerHTML = "";
-      return;
-    }
+    if (query.length < 2) { datalist.innerHTML = ""; return; }
     try {
       const res = await fetch(`/api/summits?q=${encodeURIComponent(query)}`);
       const suggestions = await res.json();
-      datalist.innerHTML = suggestions.map(s =>
-        `<option data-altitude="${s.elevation}" value="${s.name}">`
-      ).join('');
+      datalist.innerHTML = suggestions.map(s => `<option data-altitude="${s.elevation}" value="${s.name}">`).join('');
     } catch (err) {
       console.error("Erreur lors de l'auto-complétion des sommets :", err);
     }
@@ -585,9 +576,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function displaySorties() {
     const sorties = await loadSorties();
     const typeToDisplay = currentPath.includes("sorties-faites") ? "fait" : "a-faire";
-    const tableBody = document.getElementById(
-      currentPath.includes("sorties-faites") ? "table-body-fait" : "table-body-afaire"
-    );
+    const tableBody = document.getElementById(currentPath.includes("sorties-faites") ? "table-body-fait" : "table-body-afaire");
     if (tableBody) {
       tableBody.innerHTML = "";
       sorties.filter(s => s.type === typeToDisplay).forEach(s => {
@@ -608,6 +597,19 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
         tableBody.appendChild(newRow);
       });
+    }
+  }
+  
+  async function loadSorties() {
+    const token = getToken();
+    if (!token) return [];
+    try {
+      const res = await fetch("/api/sorties", { headers: { "Authorization": "Bearer " + token } });
+      const sorties = await res.json();
+      return sorties;
+    } catch (err) {
+      console.error("Erreur lors du chargement des sorties :", err);
+      return [];
     }
   }
   displaySorties();
