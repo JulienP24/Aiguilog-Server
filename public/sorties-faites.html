@@ -36,7 +36,9 @@
   <header class="ios-header">
     <div class="nav-container">
       <div class="nav-left">
-        <img src="images/logo.png" alt="Logo Aiguilog" class="logo-img">
+        <a href="index.html">
+          <img src="images/logo.png" alt="Aiguilog" class="logo-img">
+        </a>
       </div>
       <nav class="nav-center">
         <a href="sorties-faites.html" class="active">Fait</a>
@@ -58,7 +60,6 @@
         <input type="text" id="sommet-fait" placeholder="Sommet" required />
         <input type="number" id="altitude-fait" placeholder="Altitude (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
         <input type="number" id="denivele-fait" placeholder="Dénivelé (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
-        <textarea id="details-fait" placeholder="Détails"></textarea>
       </div>
       <div class="col-right">
         <select id="methode-fait" required>
@@ -70,24 +71,29 @@
         <select id="cotation-fait" required>
           <option value="" disabled selected>Cotation</option>
         </select>
-        <!-- Champ type date pour les sorties faites -->
         <input type="date" id="date" required />
+      </div>
+      <!-- Champ Détails en bas -->
+      <div class="full-width">
+        <input type="text" id="details-fait" placeholder="Détails" />
       </div>
       <div class="full-width">
         <button type="submit">Ajouter</button>
       </div>
     </form>
+    
     <table>
       <thead>
+        <!-- Ordre de colonnes : Action, Sommet, Altitude, Dénivelé, Méthode, Cotation, Date, Détails -->
         <tr>
-          <th>✏️</th>
+          <th>Actions</th>
           <th>Sommet</th>
           <th>Altitude</th>
           <th>Dénivelé</th>
-          <th>Détails</th>
           <th>Méthode</th>
           <th>Cotation</th>
           <th>Date</th>
+          <th>Détails</th>
         </tr>
       </thead>
       <tbody id="table-body-fait"></tbody>
