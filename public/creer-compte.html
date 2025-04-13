@@ -22,40 +22,9 @@
       <input type="text" id="register-username" placeholder="Identifiant" required />
       <input type="password" id="register-password" placeholder="Mot de passe" required />
       <input type="date" id="register-birthdate" placeholder="Date de naissance" required />
-      <button id="btn-valider">Valider</button>
+      <button type="submit" id="btn-valider">Valider</button>
     </form>
   </div>
-
-  <script>
-    const registerForm = document.getElementById('register-form');
-
-    registerForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const username = document.getElementById('register-username').value.trim();
-      const password = document.getElementById('register-password').value.trim();
-      const birthdate = document.getElementById('register-birthdate').value;
-
-      if (localStorage.getItem('user_' + username)) {
-        alert("Cet identifiant existe déjà, veuillez en choisir un autre.");
-        return;
-      }
-
-      const createdAt = new Date().toISOString();
-
-      const userData = {
-        username: username,
-        password: password,
-        birthdate: birthdate,
-        createdAt: createdAt
-      };
-
-      localStorage.setItem('user_' + username, JSON.stringify(userData));
-
-      sessionStorage.setItem('connectedUser', username);
-
-      window.location.href = 'mon-compte.html';
-    });
-  </script>
   <script src="script.js"></script>
 </body>
 </html>

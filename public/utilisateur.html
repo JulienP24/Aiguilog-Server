@@ -21,43 +21,10 @@
     <form id="login-form" class="two-cols">
       <input type="text" id="login-username" placeholder="Identifiant" required />
       <input type="password" id="login-password" placeholder="Mot de passe" required />
-      <button id="btn-connexion">Connexion</button>
+      <button type="submit" id="btn-connexion">Connexion</button>
       <button type="button" id="btn-creer-compte">Créer un compte</button>
     </form>
   </div>
-
-  <script>
-    const loginForm = document.getElementById('login-form');
-    const btnCreerCompte = document.getElementById('btn-creer-compte');
-
-    loginForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const username = document.getElementById('login-username').value.trim();
-      const password = document.getElementById('login-password').value.trim();
-
-      // Récupère le compte depuis localStorage
-      const userData = JSON.parse(localStorage.getItem('user_' + username));
-
-      if (!userData) {
-        alert("Cet identifiant n'existe pas. Veuillez créer un compte.");
-        return;
-      }
-
-      if (userData.password !== password) {
-        alert("Mot de passe incorrect.");
-        return;
-      }
-
-      // Connexion réussie
-      sessionStorage.setItem('connectedUser', username);
-
-      window.location.href = 'mon-compte.html';
-    });
-
-    btnCreerCompte.addEventListener('click', () => {
-      window.location.href = 'creer-compte.html';
-    });
-  </script>
   <script src="script.js"></script>
 </body>
 </html>

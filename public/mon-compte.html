@@ -23,76 +23,17 @@
     <h3>Changer nom d’utilisateur</h3>
     <form id="change-username-form" class="two-cols">
       <input type="text" id="new-username" placeholder="Nouveau nom" required />
-      <button>Enregistrer</button>
+      <button type="submit">Enregistrer</button>
     </form>
 
     <h3>Changer mot de passe</h3>
     <form id="change-password-form" class="two-cols">
       <input type="password" id="new-password" placeholder="Nouveau mot de passe" required />
-      <button>Enregistrer</button>
+      <button type="submit">Enregistrer</button>
     </form>
 
     <button id="logout">Se déconnecter</button>
   </div>
-
-  <script>
-    const connectedUser = sessionStorage.getItem('connectedUser');
-    if (!connectedUser) {
-      window.location.href = 'utilisateur.html';
-    }
-
-    const userData = JSON.parse(localStorage.getItem('user_' + connectedUser) || '{}');
-    const titreBienvenue = document.getElementById('titre-bienvenue');
-    const infoMembre = document.getElementById('info-membre');
-
-    if (userData.username) {
-      titreBienvenue.textContent = 'Bienvenue, ' + userData.username;
-      if (userData.createdAt) {
-        const date = new Date(userData.createdAt);
-        infoMembre.textContent = 'Membre depuis le ' + date.toLocaleDateString('fr-FR');
-      }
-    }
-
-    // Changer le nom d’utilisateur
-    const changeUsernameForm = document.getElementById('change-username-form');
-    changeUsernameForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const newUsername = document.getElementById('new-username').value.trim();
-
-      if (localStorage.getItem('user_' + newUsername)) {
-        alert("Ce nom d'utilisateur est déjà utilisé.");
-        return;
-      }
-
-      localStorage.removeItem('user_' + userData.username);
-      userData.username = newUsername;
-      localStorage.setItem('user_' + newUsername, JSON.stringify(userData));
-      sessionStorage.setItem('connectedUser', newUsername);
-
-      alert("Nom d'utilisateur mis à jour avec succès !");
-      window.location.reload();
-    });
-
-    // Changer le mot de passe
-    const changePasswordForm = document.getElementById('change-password-form');
-    changePasswordForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const newPassword = document.getElementById('new-password').value.trim();
-
-      userData.password = newPassword;
-      localStorage.setItem('user_' + userData.username, JSON.stringify(userData));
-
-      alert("Mot de passe mis à jour avec succès !");
-      window.location.reload();
-    });
-
-    // Déconnexion
-    const logoutBtn = document.getElementById('logout');
-    logoutBtn.addEventListener('click', () => {
-      sessionStorage.removeItem('connectedUser');
-      window.location.href = 'index.html';
-    });
-  </script>
   <script src="script.js"></script>
 </body>
 </html>
