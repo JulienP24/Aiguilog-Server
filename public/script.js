@@ -1,4 +1,22 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // ===== Fonction utilitaire pour formater les nombres (ex: altitude) =====
+  function formatValue(val) {
+    return val ? `~${val}m` : "";
+  }
+
+  // ===== Vérification de la connexion pour les pages protégées =====
+  // Si la page requiert une connexion (mon-compte.html, sorties-a-faire.html, sorties-faites.html)
+  const protectedPages = ["mon-compte.html", "sorties-a-faire.html", "sorties-faites.html"];
+  if (protectedPages.some(page => window.location.href.includes(page))) {
+    // Vérifier si le token ou les infos utilisateur sont stockés
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+    if (!token || !user) {
+      // Non connecté, rediriger vers index ou page de connexion
+      window.location.href = "utilisateur.html";
+    }
+  }
+
   // ===== Pour index.html =====
   const btnGoLogin = document.getElementById("btn-go-login");
   if (btnGoLogin) {
@@ -22,8 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const data = await res.json();
         if (res.ok && data.token) {
-          sessionStorage.setItem("token", data.token);
-          sessionStorage.setItem("connectedUser", username);
+          // Stocker le token et les infos utilisateur dans le localStorage
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
           window.location.href = "mon-compte.html";
         } else {
           alert("Erreur de connexion : " + (data.error || "Inconnue"));
@@ -46,6 +65,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (registerForm) {
     registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+      // Récupération des nouvelles infos
+      const firstName = document.getElementById("register-firstname").value.trim();
+      const lastName = document.getElementById("register-lastname").value.trim();
       const username = document.getElementById("register-username").value.trim();
       const password = document.getElementById("register-password").value.trim();
       const birthdate = document.getElementById("register-birthdate").value;
@@ -53,12 +75,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const res = await fetch("/api/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password, birthdate })
+          body: JSON.stringify({ firstName, lastName, username, password, birthdate })
         });
         const data = await res.json();
-        if (res.ok) {
-          alert("Inscription réussie !");
-          window.location.href = "utilisateur.html";
+        if (res.ok && data.token) {
+          // Stocker le token et les infos utilisateur pour rester connecté
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
+          window.location.href = "mon-compte.html";
         } else {
           alert("Erreur d'inscription : " + (data.error || "Inconnue"));
         }
@@ -69,21 +93,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===== Pour mon-compte.html =====
-  const connectedUser = sessionStorage.getItem("connectedUser");
+  // ===== Pour mon-compte.html (Profil) =====
+  const connectedUser = localStorage.getItem("user");
   if (document.getElementById("titre-bienvenue") && !connectedUser) {
     window.location.href = "utilisateur.html";
   }
   if (document.getElementById("titre-bienvenue") && connectedUser) {
+    const userData = JSON.parse(connectedUser);
     const titreBienvenue = document.getElementById("titre-bienvenue");
-    titreBienvenue.textContent = "Bienvenue, " + connectedUser;
-    // Ici, vous pouvez ajouter des appels à l'API pour récupérer des infos supplémentaires
+    const infoMembre = document.getElementById("info-membre");
+    titreBienvenue.textContent = `Bienvenue, ${userData.firstName} ${userData.lastName} (${userData.username})`;
+    if (userData.birthdate) {
+      const date = new Date(userData.birthdate);
+      infoMembre.textContent = `Né(e) le ${date.toLocaleDateString("fr-FR")}`;
+    }
   }
   const logoutBtn = document.getElementById("logout");
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
-      sessionStorage.removeItem("token");
-      sessionStorage.removeItem("connectedUser");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
       window.location.href = "index.html";
     });
   }
@@ -116,10 +145,10 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // Génération de la liste d'années pour les sorties à faire
+    // Génération dynamique de la liste d'années pour les sorties à faire
     if (yearSelect) {
       const currentYear = new Date().getFullYear();
-      const range = 10; // 10 prochaines années
+      const range = 10;
       for (let i = 0; i < range; i++) {
         const option = document.createElement("option");
         option.value = currentYear + i;
@@ -137,9 +166,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const methode = methodeSelect.value;
       const cotation = cotationSelect.value;
       const year = yearSelect.value;
-
       const sortieData = {
-        type: "a-faire", // Pour distinguer, si besoin
+        type: "a-faire", // Pour distinguer ce type
         sommet,
         altitude: altitudeVal,
         denivele: deniveleVal,
@@ -149,9 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
         annee: year
       };
 
-      // Récupérer le token pour l'envoi avec authentification
-      const token = sessionStorage.getItem("token");
-
+      const token = localStorage.getItem("token");
       try {
         const res = await fetch("/api/sorties", {
           method: "POST",
@@ -163,16 +189,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const data = await res.json();
         if (res.ok) {
-          // Ajout dans le tableau en cas de succès
-          function formatValue(val) { return val ? `~${val}m` : ""; }
-          const altFormatted = formatValue(altitudeVal);
-          const denFormatted = formatValue(deniveleVal);
           const newRow = document.createElement("tr");
           newRow.innerHTML = `
             <td><button class="edit-btn" onclick="toggleEdit(this)">✏️</button></td>
             <td>${sommet}</td>
-            <td>${altFormatted}</td>
-            <td>${denFormatted}</td>
+            <td>${formatValue(altitudeVal)}</td>
+            <td>${formatValue(deniveleVal)}</td>
             <td>${details}</td>
             <td>${methode}</td>
             <td>${cotation}</td>
@@ -197,7 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (formFait) {
     const methodeFait = document.getElementById("methode-fait");
     const cotationFait = document.getElementById("cotation-fait");
-    const dateInput = document.getElementById("date"); // champ type date pour sorties faites
+    const dateInput = document.getElementById("date"); // champ type date
     const tableBodyFait = document.getElementById("table-body-fait");
     const cotationsParMéthode = {
       "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED"],
@@ -228,21 +250,20 @@ document.addEventListener("DOMContentLoaded", () => {
       const details = document.getElementById("details-fait").value.trim();
       const methode = methodeFait.value;
       const cotation = cotationFait.value;
-      const date = dateInput.value; // La date réelle
+      const date = dateInput.value;
 
       const sortieData = {
-        type: "fait", // Permet de distinguer entre sorties "à faire" et "faites"
+        type: "fait",
         sommet,
         altitude: altitudeVal,
         denivele: deniveleVal,
         details,
         methode,
         cotation,
-        date // On envoie la date complète
+        date
       };
 
-      const token = sessionStorage.getItem("token");
-
+      const token = localStorage.getItem("token");
       try {
         const res = await fetch("/api/sorties", {
           method: "POST",
@@ -254,15 +275,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const data = await res.json();
         if (res.ok) {
-          function formatValue(val) { return val ? `~${val}m` : ""; }
-          const altFormatted = formatValue(altitudeVal);
-          const denFormatted = formatValue(deniveleVal);
           const newRow = document.createElement("tr");
           newRow.innerHTML = `
             <td><button class="edit-btn" onclick="toggleEdit(this)">✏️</button></td>
             <td>${sommet}</td>
-            <td>${altFormatted}</td>
-            <td>${denFormatted}</td>
+            <td>${formatValue(altitudeVal)}</td>
+            <td>${formatValue(deniveleVal)}</td>
             <td>${details}</td>
             <td>${methode}</td>
             <td>${cotation}</td>
@@ -287,9 +305,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const row = btn.parentElement.parentElement;
     const isEditing = row.getAttribute("data-editing") === "true";
     const cells = row.querySelectorAll("td:not(:first-child)");
-    function formatValue(val) {
-      return val ? `~${val}m` : "";
-    }
     if (!isEditing) {
       cells.forEach(cell => {
         cell.contentEditable = "true";
@@ -302,16 +317,14 @@ document.addEventListener("DOMContentLoaded", () => {
         cell.contentEditable = "false";
         cell.classList.remove("editable");
       });
-      const altitudeCell = row.children[2];
-      altitudeCell.textContent = formatValue(
-        altitudeCell.textContent.replace(/^~/, "").replace(/m$/, "").trim()
-      );
-      const deniveleCell = row.children[3];
-      deniveleCell.textContent = formatValue(
-        deniveleCell.textContent.replace(/^~/, "").replace(/m$/, "").trim()
-      );
+      // Optionnel : reformatter altitude et dénivelé si nécessaire
       row.setAttribute("data-editing", "false");
       btn.textContent = "✏️";
     }
   };
+
+  // Utilitaire pour formater des valeurs numériques
+  function formatValue(val) {
+    return val ? `~${val}m` : "";
+  }
 });

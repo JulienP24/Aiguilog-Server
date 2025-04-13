@@ -19,10 +19,20 @@
   <div class="container">
     <h2>Créer un compte</h2>
     <form id="register-form" class="two-cols">
-      <input type="text" id="register-username" placeholder="Identifiant" required />
-      <input type="password" id="register-password" placeholder="Mot de passe" required />
-      <input type="date" id="register-birthdate" placeholder="Date de naissance" required />
-      <button type="submit" id="btn-valider">Valider</button>
+      <!-- Première colonne -->
+      <div class="col-left">
+        <input type="text" id="register-firstname" placeholder="Prénom" required />
+        <input type="text" id="register-lastname" placeholder="Nom" required />
+      </div>
+      <!-- Deuxième colonne -->
+      <div class="col-right">
+        <input type="text" id="register-username" placeholder="Identifiant" required />
+        <input type="password" id="register-password" placeholder="Mot de passe" required />
+        <input type="date" id="register-birthdate" placeholder="Date de naissance" required />
+      </div>
+      <div class="full-width">
+        <button type="submit" id="btn-valider">Créer le compte</button>
+      </div>
     </form>
   </div>
   <script src="script.js"></script>
