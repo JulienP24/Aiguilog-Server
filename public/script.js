@@ -1,41 +1,44 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // ----------------- UTILS -----------------
+  // ----- UTILITAIRES -----
   function formatValue(val) {
     return val ? `~${val}m` : "";
   }
-
+  
   function getUser() {
-    const raw = localStorage.getItem("user");
-    if (raw) {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
       try {
-        return JSON.parse(raw);
+        return JSON.parse(storedUser);
       } catch (e) {
         return null;
       }
     }
     return null;
   }
-
+  
   function getToken() {
     return localStorage.getItem("token");
   }
-
-  // ----------------- PAGES PROTÉGÉES -----------------
-  const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
-  const currentPath = window.location.pathname;
-  // Utilisation de endsWith pour matcher la fin du pathname
-  if (protectedPages.some(page => currentPath.endsWith(page))) {
-    if (!getToken() || !getUser()) {
-      // Redirection vers la page de connexion
-      window.location.href = "utilisateur.html";
-      return; // Stoppe l'exécution
+  
+  // ----- Mise à jour du lien de l'icône utilisateur -----
+  function updateUserIconLink() {
+    const user = getUser();
+    const userIconLink = document.querySelector(".nav-right a");
+    if (userIconLink) {
+      userIconLink.href = user ? "mon-compte.html" : "utilisateur.html";
     }
   }
-
-  // Met à jour le lien de l'avatar pour rediriger vers mon-compte.html si l'utilisateur est connecté
-  document.querySelectorAll("nav a[href='utilisateur.html']").forEach(link => {
-    link.href = getUser() ? "mon-compte.html" : "utilisateur.html";
-  });
+  updateUserIconLink();
+  
+  // ----- Redirection des pages protégées -----
+  const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
+  const currentPath = window.location.pathname;
+  if (protectedPages.some(page => currentPath.endsWith(page))) {
+    if (!getToken() || !getUser()) {
+      window.location.href = "utilisateur.html";
+      return;
+    }
+  }
 
   // ----------------- INDEX.HTML -----------------
   const btnGoLogin = document.getElementById("btn-go-login");
