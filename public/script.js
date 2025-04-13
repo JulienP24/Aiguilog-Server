@@ -1,12 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
   // --- UTILITAIRES ---
-
-  // Formate une valeur numérique en ajoutant "~" au début et "m" à la fin, si elle existe
   function formatValue(val) {
     return val ? `~${val}m` : "";
   }
-
-  // Vérifier la connexion : retourne l'objet user s'il est connecté, sinon null
+  
   function getUser() {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -18,15 +15,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     return null;
   }
-
-  // Récupère le token
+  
   function getToken() {
     return localStorage.getItem("token");
   }
-
-  // --- Gestion de la navigation (avatar) ---
-  // Dans le header, l'avatar ou le lien utilisateur doit pointer vers mon-compte.html s'il est connecté,
-  // sinon vers utilisateur.html.
+  
+  // --- Mise à jour du lien utilisateur dans le header ---
   const navLinks = document.querySelectorAll("nav a[href='utilisateur.html']");
   const user = getUser();
   if (navLinks) {
@@ -34,19 +28,17 @@ document.addEventListener("DOMContentLoaded", () => {
       link.href = user ? "mon-compte.html" : "utilisateur.html";
     });
   }
-
-  // --- Redirection des pages protégées ---
+  
+  // --- Redirection sur pages protégées ---
   const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
   const currentPath = window.location.pathname;
   if (protectedPages.some(page => currentPath.endsWith(page))) {
-    const token = getToken();
-    const currentUser = getUser();
-    if (!token || !currentUser) {
+    if (!getToken() || !getUser()) {
       window.location.href = "utilisateur.html";
-      return; // arrêter l'exécution du script si redirection
+      return;
     }
   }
-
+  
   // --- Pour index.html ---
   const btnGoLogin = document.getElementById("btn-go-login");
   if (btnGoLogin) {
@@ -54,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = "utilisateur.html";
     });
   }
-
+  
   // --- Pour utilisateur.html (Connexion) ---
   const loginForm = document.getElementById("login-form");
   if (loginForm) {
@@ -88,7 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   }
-
+  
   // --- Pour creer-compte.html (Inscription) ---
   const registerForm = document.getElementById("register-form");
   if (registerForm) {
@@ -119,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
+  
   // --- Pour mon-compte.html (Profil utilisateur) ---
   if (document.getElementById("titre-bienvenue")) {
     const storedUser = getUser();
@@ -143,27 +135,27 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = "utilisateur.html";
     });
   }
-
-  // --- Fonction pour charger les sorties depuis le serveur ---
+  
+  // --- Fonction pour charger toutes les sorties depuis le serveur ---
   async function loadSorties() {
     const token = getToken();
-    if (!token) return;
+    if (!token) return [];
     try {
       const res = await fetch("/api/sorties", {
         headers: { "Authorization": "Bearer " + token }
       });
       const sorties = await res.json();
-      return sorties; // retourne la liste complète
+      return sorties;
     } catch (err) {
       console.error("Erreur lors du chargement des sorties:", err);
       return [];
     }
   }
-
+  
   // --- Pour sorties-a-faire.html (Sorties à faire) ---
   const formAFaire = document.getElementById("form-a-faire");
   if (formAFaire) {
-    // Charger les sorties à faire enregistrées
+    // Charger les sorties de type "a-faire"
     loadSorties().then((sorties) => {
       const filtered = sorties.filter(s => s.type === "a-faire");
       const tableBodyAFaire = document.getElementById("table-body-afaire");
@@ -182,7 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
         tableBodyAFaire.appendChild(newRow);
       });
     });
-
+  
     const methodeSelect = document.getElementById("methode");
     const cotationSelect = document.getElementById("cotation");
     const yearSelect = document.getElementById("year");
@@ -191,7 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
       "Escalade": ["4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c"]
     };
-
+  
     if (methodeSelect && cotationSelect) {
       methodeSelect.addEventListener("change", () => {
         const methode = methodeSelect.value;
@@ -206,7 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     }
-
+  
     if (yearSelect) {
       const currentYear = new Date().getFullYear();
       const range = 10;
@@ -217,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
         yearSelect.appendChild(option);
       }
     }
-
+  
     formAFaire.addEventListener("submit", async (e) => {
       e.preventDefault();
       const sommet = document.getElementById("sommet").value.trim();
@@ -227,6 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const methode = methodeSelect.value;
       const cotation = cotationSelect.value;
       const year = yearSelect.value;
+  
       const sortieData = {
         type: "a-faire",
         sommet,
@@ -237,7 +230,7 @@ document.addEventListener("DOMContentLoaded", () => {
         cotation,
         annee: year
       };
-
+  
       const token = getToken();
       try {
         const res = await fetch("/api/sorties", {
@@ -250,7 +243,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const data = await res.json();
         if (res.ok) {
-          // Ajout de la nouvelle sortie dans le tableau
           const tableBodyAFaire = document.getElementById("table-body-afaire");
           const newRow = document.createElement("tr");
           newRow.innerHTML = `
@@ -276,11 +268,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
+  
   // --- Pour sorties-faites.html (Sorties réalisées) ---
   const formFait = document.getElementById("form-fait");
   if (formFait) {
-    // Charger les sorties de type "fait" depuis le serveur
     loadSorties().then((sorties) => {
       const filtered = sorties.filter(s => s.type === "fait");
       const tableBodyFait = document.getElementById("table-body-fait");
@@ -299,16 +290,16 @@ document.addEventListener("DOMContentLoaded", () => {
         tableBodyFait.appendChild(newRow);
       });
     });
-
+  
     const methodeFait = document.getElementById("methode-fait");
     const cotationFait = document.getElementById("cotation-fait");
-    const dateInput = document.getElementById("date"); // Champ type date pour sorties faites
+    const dateInput = document.getElementById("date"); // Champ type date
     const cotationsParMéthode = {
       "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED"],
       "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
       "Escalade": ["4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c"]
     };
-
+  
     if (methodeFait && cotationFait) {
       methodeFait.addEventListener("change", () => {
         const methode = methodeFait.value;
@@ -323,7 +314,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     }
-
+  
     formFait.addEventListener("submit", async (e) => {
       e.preventDefault();
       const sommet = document.getElementById("sommet-fait").value.trim();
@@ -333,6 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const methode = methodeFait.value;
       const cotation = cotationFait.value;
       const date = dateInput.value;
+  
       const sortieData = {
         type: "fait",
         sommet,
@@ -343,7 +335,7 @@ document.addEventListener("DOMContentLoaded", () => {
         cotation,
         date
       };
-
+  
       const token = getToken();
       try {
         const res = await fetch("/api/sorties", {
@@ -381,8 +373,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
-  // ===== Fonction de basculement du mode édition sur une ligne =====
+  
+  // --- Fonction de basculement du mode édition ---
   window.toggleEdit = function(btn) {
     const row = btn.parentElement.parentElement;
     const isEditing = row.getAttribute("data-editing") === "true";

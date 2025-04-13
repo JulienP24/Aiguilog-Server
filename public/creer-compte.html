@@ -5,18 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Aiguilog - Créer un compte</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="icon" type="image/png" href="images/icone.png">
 </head>
 <body>
-  <header>
-    <div>Aiguilog</div>
-    <nav>
-      <a href="sorties-faites.html">Fait</a>
-      <a href="sorties-a-faire.html">À Faire</a>
-      <a href="#">Rechercher</a>
-      <a href="utilisateur.html">👤</a>
-    </nav>
+  <header class="ios-header">
+    <div class="nav-container">
+      <div class="nav-left">
+        <img src="images/logo.png" alt="Logo Aiguilog" class="logo-img">
+      </div>
+      <nav class="nav-center">
+        <a href="sorties-faites.html">Fait</a>
+        <a href="sorties-a-faire.html">À Faire</a>
+        <a href="#">Rechercher</a>
+      </nav>
+      <div class="nav-right">
+        <a href="utilisateur.html">
+          <img src="images/user-icon.png" alt="Icône utilisateur" class="user-icon">
+        </a>
+      </div>
+    </div>
   </header>
+  
   <div class="container">
     <h2>Créer un compte</h2>
     <form id="register-form" class="two-cols">
@@ -36,6 +44,7 @@
       </div>
     </form>
   </div>
+  
   <script src="script.js"></script>
 </body>
 </html>

@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Aiguilog - Sorties à faire</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="icon" type="image/png" href="images/icone.png">
   <style>
     .two-cols {
       display: grid;
@@ -34,15 +33,24 @@
   </style>
 </head>
 <body>
-  <header>
-    <div>Aiguilog</div>
-    <nav>
-      <a href="sorties-faites.html">Fait</a>
-      <a href="sorties-a-faire.html" class="active">À Faire</a>
-      <a href="#">Rechercher</a>
-      <a href="utilisateur.html">👤</a>
-    </nav>
+  <header class="ios-header">
+    <div class="nav-container">
+      <div class="nav-left">
+        <img src="images/logo.png" alt="Logo Aiguilog" class="logo-img">
+      </div>
+      <nav class="nav-center">
+        <a href="sorties-faites.html">Fait</a>
+        <a href="sorties-a-faire.html" class="active">À Faire</a>
+        <a href="#">Rechercher</a>
+      </nav>
+      <div class="nav-right">
+        <a href="utilisateur.html">
+          <img src="images/user-icon.png" alt="Icône utilisateur" class="user-icon">
+        </a>
+      </div>
+    </div>
   </header>
+  
   <div class="container">
     <h2>Sorties à faire</h2>
     <form id="form-a-faire" class="two-cols">
@@ -62,7 +70,7 @@
         <select id="cotation" required>
           <option value="" disabled selected>Cotation</option>
         </select>
-        <!-- Liste d'années pour les sorties à faire -->
+        <!-- Liste déroulante pour les années -->
         <select id="year" required>
           <option value="" disabled selected>Année</option>
         </select>
@@ -87,6 +95,7 @@
       <tbody id="table-body-afaire"></tbody>
     </table>
   </div>
+  
   <script src="script.js"></script>
 </body>
 </html>

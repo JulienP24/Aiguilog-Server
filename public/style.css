@@ -9,13 +9,14 @@
   --shadow: 0 4px 10px rgba(0,0,0,0.05);
   --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   
-  /* Variables pour les images (vérifiez que le dossier images existe dans public) */
+  /* Variables pour les images */
   --header-bg: url('images/header-bg.jpg');
   --nav-bg: url('images/nav-bg.jpg');
   --login-bg: url('images/login-bg.jpg');
   --dropdown-arrow: url('images/dropdown-arrow.png');
 }
 
+/* Reset */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -53,46 +54,58 @@ body {
   }
 }
 
-/* Header fixe lors du scroll */
-header {
+/* Header style inspiré d'iOS / VisionOS */
+.ios-header {
   position: sticky;
   top: 0;
   z-index: 1000;
   background: var(--header-bg) no-repeat center center;
   background-size: cover;
+  backdrop-filter: blur(10px);
   box-shadow: var(--shadow);
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: white;
-}
-
-/* Navigation */
-nav {
-  background: var(--nav-bg) no-repeat center center;
-  background-size: cover;
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-nav a {
-  text-decoration: none;
-  color: var(--dark);
-  margin: 0 0.5rem;
   padding: 0.5rem 1rem;
-  border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.8);
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Logo à gauche */
+.nav-left img.logo-img {
+  height: 40px;
+}
+
+/* Navigation centrée */
+.nav-center {
+  display: flex;
+  gap: 2rem;
+  flex: 1;
+  justify-content: center;
+}
+.nav-center a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
   transition: background 0.3s;
 }
-
-nav a.active {
-  background-color: var(--primary);
-  color: white;
+.nav-center a:hover {
+  background: #f0f0f0;
 }
 
+/* Icône utilisateur à droite */
+.nav-right img.user-icon {
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Container principal */
 .container {
   max-width: 1000px;
   margin: auto;
@@ -116,7 +129,7 @@ input, select, textarea {
   width: 100%;
 }
 
-/* Retire les flèches des inputs de type number */
+/* Retirer les flèches des inputs de type number */
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -134,7 +147,6 @@ button {
   font-weight: bold;
   transition: background 0.3s;
 }
-
 button:hover {
   background-color: #005ecb;
 }
@@ -145,13 +157,11 @@ button:hover {
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
-
 .col-left, .col-right {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
-
 .full-width {
   grid-column: 1 / span 2;
   display: flex;
@@ -168,18 +178,16 @@ table {
   overflow: hidden;
   box-shadow: var(--shadow);
 }
-
 th, td {
   padding: 1rem;
   text-align: left;
   border-bottom: 1px solid var(--gray);
 }
-
 th {
   background-color: var(--gray-light);
 }
 
-/* Style pour les cellules en mode édition */
+/* Cellules en mode édition */
 .editable {
   background-color: #eef;
 }

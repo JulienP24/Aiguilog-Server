@@ -5,25 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Aiguilog - Mon compte</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="icon" type="image/png" href="images/icone.png">
 </head>
 <body>
-  <header>
-    <div>Aiguilog</div>
-    <nav>
-      <a href="sorties-faites.html">Fait</a>
-      <a href="sorties-a-faire.html">À Faire</a>
-      <a href="#">Rechercher</a>
-      <a href="utilisateur.html">👤</a>
-    </nav>
+  <header class="ios-header">
+    <div class="nav-container">
+      <div class="nav-left">
+        <img src="images/logo.png" alt="Logo Aiguilog" class="logo-img">
+      </div>
+      <nav class="nav-center">
+        <a href="sorties-faites.html">Fait</a>
+        <a href="sorties-a-faire.html">À Faire</a>
+        <a href="#">Rechercher</a>
+      </nav>
+      <div class="nav-right">
+        <a href="mon-compte.html">
+          <img src="images/user-icon.png" alt="Icône utilisateur" class="user-icon">
+        </a>
+      </div>
+    </div>
   </header>
+  
   <div class="container">
     <h2 id="titre-bienvenue">Mon compte</h2>
     <p id="info-membre"></p>
-    
-    <!-- Vous pouvez ajouter ici des formulaires pour modifier prénom, nom, identifiant, mot de passe, etc. -->
+    <!-- Ici vous pourrez ajouter des formulaires de modification si besoin -->
     <button id="logout">Se déconnecter</button>
   </div>
+  
   <script src="script.js"></script>
 </body>
 </html>
