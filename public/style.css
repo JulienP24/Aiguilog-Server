@@ -54,56 +54,70 @@ body {
   }
 }
 
-/* Header style inspiré d'iOS / VisionOS */
+/* ---------- Nouveau style pour le header flottant ---------- */
 .ios-header {
-  position: sticky;
-  top: 0;
+  position: sticky;           /* Collé en haut pendant le scroll */
+  top: 10px;                  /* Petite marge du haut pour l'effet "flottant" */
   z-index: 1000;
-  background: var(--header-bg) no-repeat center center;
-  background-size: cover;
-  backdrop-filter: blur(10px);
-  box-shadow: var(--shadow);
-  padding: 0.5rem 1rem;
+  background-color: var(--primary);  /* Utilise le bleu défini dans --primary */
+  border-radius: 12px;        /* Coins arrondis */
+  margin: 0 5%;               /* Marge horizontale pour centrer la barre */
+  padding: 10px 20px;         /* Augmenté pour agrandir la barre */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Légère ombre pour l'effet flottant */
 }
 
+/* Conteneur interne pour aligner le contenu (logo, liens, icône utilisateur) */
 .nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-/* Logo à gauche */
+/* Logo : agrandi */
 .nav-left img.logo-img {
-  height: 40px;
+  height: 60px;  /* Augmentez cette valeur pour un logo plus grand */
 }
 
 /* Navigation centrée */
 .nav-center {
+  flex: 1; /* Prend l'espace restant */
   display: flex;
-  gap: 2rem;
-  flex: 1;
   justify-content: center;
+  gap: 30px; /* Espacement plus grand entre les liens */
 }
+
 .nav-center a {
   text-decoration: none;
-  color: #333;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
+  color: white;     /* Texte en blanc pour contraster avec le bleu */
+  font-weight: 600;
+  font-size: 1.1rem;
+  padding: 8px 12px;
   border-radius: 8px;
   transition: background 0.3s;
 }
+
 .nav-center a:hover {
-  background: #f0f0f0;
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Icône utilisateur à droite */
 .nav-right img.user-icon {
-  height: 34px;
+  height: 40px;     /* Taille de l'icône utilisateur */
+  width: 40px;
   border-radius: 50%;
   cursor: pointer;
 }
+
+/* Pour le mode sombre, on peut ajuster un peu */
+@media (prefers-color-scheme: dark) {
+  .ios-header {
+    background-color: #4a90e2; /* Ajustement du bleu pour le dark mode */
+  }
+  .nav-center a {
+    color: #f0f0f0;
+  }
+}
+
 
 /* Container principal */
 .container {
