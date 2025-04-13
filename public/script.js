@@ -1,21 +1,53 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // Fonction utilitaire pour formater des valeurs numériques
+  // --- UTILITAIRES ---
+
+  // Formate une valeur numérique en ajoutant "~" au début et "m" à la fin, si elle existe
   function formatValue(val) {
     return val ? `~${val}m` : "";
   }
 
-  // ===== Vérification de connexion sur pages protégées =====
+  // Vérifier la connexion : retourne l'objet user s'il est connecté, sinon null
+  function getUser() {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        return JSON.parse(storedUser);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  // Récupère le token
+  function getToken() {
+    return localStorage.getItem("token");
+  }
+
+  // --- Gestion de la navigation (avatar) ---
+  // Dans le header, l'avatar ou le lien utilisateur doit pointer vers mon-compte.html s'il est connecté,
+  // sinon vers utilisateur.html.
+  const navLinks = document.querySelectorAll("nav a[href='utilisateur.html']");
+  const user = getUser();
+  if (navLinks) {
+    navLinks.forEach(link => {
+      link.href = user ? "mon-compte.html" : "utilisateur.html";
+    });
+  }
+
+  // --- Redirection des pages protégées ---
   const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
   const currentPath = window.location.pathname;
   if (protectedPages.some(page => currentPath.endsWith(page))) {
-    const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
-    if (!token || !user) {
+    const token = getToken();
+    const currentUser = getUser();
+    if (!token || !currentUser) {
       window.location.href = "utilisateur.html";
+      return; // arrêter l'exécution du script si redirection
     }
   }
 
-  // ===== Pour index.html =====
+  // --- Pour index.html ---
   const btnGoLogin = document.getElementById("btn-go-login");
   if (btnGoLogin) {
     btnGoLogin.addEventListener("click", () => {
@@ -23,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===== Pour utilisateur.html (Connexion) =====
+  // --- Pour utilisateur.html (Connexion) ---
   const loginForm = document.getElementById("login-form");
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
@@ -57,7 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ===== Pour creer-compte.html (Inscription) =====
+  // --- Pour creer-compte.html (Inscription) ---
   const registerForm = document.getElementById("register-form");
   if (registerForm) {
     registerForm.addEventListener("submit", async (e) => {
@@ -88,18 +120,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===== Pour mon-compte.html (Profil) =====
+  // --- Pour mon-compte.html (Profil utilisateur) ---
   if (document.getElementById("titre-bienvenue")) {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = getUser();
     if (!storedUser) {
       window.location.href = "utilisateur.html";
     } else {
-      const userData = JSON.parse(storedUser);
       const titreBienvenue = document.getElementById("titre-bienvenue");
       const infoMembre = document.getElementById("info-membre");
-      titreBienvenue.textContent = `Bienvenue, ${userData.firstName} ${userData.lastName} (${userData.username})`;
-      if (userData.birthdate) {
-        const date = new Date(userData.birthdate);
+      titreBienvenue.textContent = `Bienvenue, ${storedUser.firstName} ${storedUser.lastName} (${storedUser.username})`;
+      if (storedUser.birthdate) {
+        const date = new Date(storedUser.birthdate);
         infoMembre.textContent = `Né(e) le ${date.toLocaleDateString("fr-FR")}`;
       }
     }
@@ -109,17 +140,52 @@ document.addEventListener("DOMContentLoaded", () => {
     logoutBtn.addEventListener("click", () => {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      window.location.href = "index.html";
+      window.location.href = "utilisateur.html";
     });
   }
 
-  // ===== Pour sorties-a-faire.html (Sorties à faire) =====
+  // --- Fonction pour charger les sorties depuis le serveur ---
+  async function loadSorties() {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const res = await fetch("/api/sorties", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      const sorties = await res.json();
+      return sorties; // retourne la liste complète
+    } catch (err) {
+      console.error("Erreur lors du chargement des sorties:", err);
+      return [];
+    }
+  }
+
+  // --- Pour sorties-a-faire.html (Sorties à faire) ---
   const formAFaire = document.getElementById("form-a-faire");
   if (formAFaire) {
+    // Charger les sorties à faire enregistrées
+    loadSorties().then((sorties) => {
+      const filtered = sorties.filter(s => s.type === "a-faire");
+      const tableBodyAFaire = document.getElementById("table-body-afaire");
+      filtered.forEach(s => {
+        const newRow = document.createElement("tr");
+        newRow.innerHTML = `
+          <td><button class="edit-btn" onclick="toggleEdit(this)">✏️</button></td>
+          <td>${s.sommet}</td>
+          <td>${formatValue(s.altitude)}</td>
+          <td>${formatValue(s.denivele)}</td>
+          <td>${s.details}</td>
+          <td>${s.methode}</td>
+          <td>${s.cotation}</td>
+          <td>${s.annee || ""}</td>
+        `;
+        tableBodyAFaire.appendChild(newRow);
+      });
+    });
+
     const methodeSelect = document.getElementById("methode");
     const cotationSelect = document.getElementById("cotation");
     const yearSelect = document.getElementById("year");
-    const tableBodyAFaire = document.getElementById("table-body-afaire");
     const cotationsParMéthode = {
       "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED"],
       "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
@@ -140,6 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     }
+
     if (yearSelect) {
       const currentYear = new Date().getFullYear();
       const range = 10;
@@ -150,6 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
         yearSelect.appendChild(option);
       }
     }
+
     formAFaire.addEventListener("submit", async (e) => {
       e.preventDefault();
       const sommet = document.getElementById("sommet").value.trim();
@@ -170,7 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
         annee: year
       };
 
-      const token = localStorage.getItem("token");
+      const token = getToken();
       try {
         const res = await fetch("/api/sorties", {
           method: "POST",
@@ -182,6 +250,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const data = await res.json();
         if (res.ok) {
+          // Ajout de la nouvelle sortie dans le tableau
+          const tableBodyAFaire = document.getElementById("table-body-afaire");
           const newRow = document.createElement("tr");
           newRow.innerHTML = `
             <td><button class="edit-btn" onclick="toggleEdit(this)">✏️</button></td>
@@ -207,13 +277,32 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===== Pour sorties-faites.html (Sorties réalisées) =====
+  // --- Pour sorties-faites.html (Sorties réalisées) ---
   const formFait = document.getElementById("form-fait");
   if (formFait) {
+    // Charger les sorties de type "fait" depuis le serveur
+    loadSorties().then((sorties) => {
+      const filtered = sorties.filter(s => s.type === "fait");
+      const tableBodyFait = document.getElementById("table-body-fait");
+      filtered.forEach(s => {
+        const newRow = document.createElement("tr");
+        newRow.innerHTML = `
+          <td><button class="edit-btn" onclick="toggleEdit(this)">✏️</button></td>
+          <td>${s.sommet}</td>
+          <td>${formatValue(s.altitude)}</td>
+          <td>${formatValue(s.denivele)}</td>
+          <td>${s.details}</td>
+          <td>${s.methode}</td>
+          <td>${s.cotation}</td>
+          <td>${s.date || ""}</td>
+        `;
+        tableBodyFait.appendChild(newRow);
+      });
+    });
+
     const methodeFait = document.getElementById("methode-fait");
     const cotationFait = document.getElementById("cotation-fait");
-    const dateInput = document.getElementById("date"); // champ type date
-    const tableBodyFait = document.getElementById("table-body-fait");
+    const dateInput = document.getElementById("date"); // Champ type date pour sorties faites
     const cotationsParMéthode = {
       "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED"],
       "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
@@ -234,6 +323,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     }
+
     formFait.addEventListener("submit", async (e) => {
       e.preventDefault();
       const sommet = document.getElementById("sommet-fait").value.trim();
@@ -242,7 +332,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const details = document.getElementById("details-fait").value.trim();
       const methode = methodeFait.value;
       const cotation = cotationFait.value;
-      const date = dateInput.value;  // champ type date
+      const date = dateInput.value;
       const sortieData = {
         type: "fait",
         sommet,
@@ -254,7 +344,7 @@ document.addEventListener("DOMContentLoaded", () => {
         date
       };
 
-      const token = localStorage.getItem("token");
+      const token = getToken();
       try {
         const res = await fetch("/api/sorties", {
           method: "POST",
@@ -266,6 +356,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const data = await res.json();
         if (res.ok) {
+          const tableBodyFait = document.getElementById("table-body-fait");
           const newRow = document.createElement("tr");
           newRow.innerHTML = `
             <td><button class="edit-btn" onclick="toggleEdit(this)">✏️</button></td>
@@ -291,7 +382,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===== Fonction de basculement du mode édition =====
+  // ===== Fonction de basculement du mode édition sur une ligne =====
   window.toggleEdit = function(btn) {
     const row = btn.parentElement.parentElement;
     const isEditing = row.getAttribute("data-editing") === "true";
