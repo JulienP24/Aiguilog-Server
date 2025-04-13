@@ -122,10 +122,7 @@ client.connect()
       }
     }
   
-    // ----------- Endpoint pour ajouter une sortie (SORTIES) -----------
-    // On gère ici les deux types :
-    // - Pour "fait" : le front-end envoie { date, ... }.
-    // - Pour "a-faire" : le front-end envoie { annee, ... }.
+    // Endpoint pour ajouter une sortie (SORTIES)
     app.post('/api/sorties', authMiddleware, async (req, res) => {
       try {
         const sortieData = req.body;
@@ -139,9 +136,8 @@ client.connect()
             return res.status(400).json({ error: "L'année est requise pour une sortie à faire" });
           }
         }
-  
         sortieData.createdAt = new Date();
-        sortieData.userId = ObjectId(req.user.userId);
+        sortieData.userId = new ObjectId(req.user.userId); // Utilisation de "new"
         await db.collection("sorties").insertOne(sortieData);
         res.json({ message: "Sortie ajoutée" });
       } catch (err) {
@@ -149,17 +145,18 @@ client.connect()
         res.status(500).json({ error: "Erreur serveur lors de l'ajout de la sortie" });
       }
     });
-  
-    // ----------- Endpoint pour récupérer les sorties de l'utilisateur -----------
+
+    // Endpoint pour récupérer les sorties
     app.get('/api/sorties', authMiddleware, async (req, res) => {
       try {
-        const sorties = await db.collection("sorties").find({ userId: ObjectId(req.user.userId) }).toArray();
+        const sorties = await db.collection("sorties").find({ userId: new ObjectId(req.user.userId) }).toArray();
         res.json(sorties);
       } catch (err) {
         console.error("Erreur dans /api/sorties (GET):", err);
         res.status(500).json({ error: "Erreur serveur lors de la récupération des sorties" });
       }
     });
+
   
     app.listen(PORT, () => {
       console.log(`Serveur démarré sur http://localhost:${PORT}`);
