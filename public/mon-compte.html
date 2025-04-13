@@ -7,36 +7,37 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Header mobile optimisé -->
-  <header class="ios-header">
-    <div class="nav-container">
-      <div class="nav-left"></div>
-      <div class="nav-center">
-        <a href="index.html">
-          <img src="images/logo.png" alt="Aiguilog" class="logo-img">
-        </a>
-      </div>
-      <div class="nav-right">
-        <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">&#9776;</button>
-      </div>
+  <!-- Header commun -->
+  <header class="main-header">
+    <div class="header-desktop">
+      <a href="index.html" class="header-logo">AIGUILOG</a>
+      <nav class="desktop-nav">
+        <a href="sorties-faites.html">Fait</a>
+        <a href="sorties-a-faire.html">À Faire</a>
+        <a href="rechercher.html">Rechercher</a>
+        <a href="mon-compte.html">Mon compte</a>
+      </nav>
+    </div>
+    <div class="header-mobile">
+      <a href="index.html" class="header-logo-mobile">AIGUILOG</a>
+      <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">&#9776;</button>
     </div>
     <nav id="mobile-menu">
       <ul>
-        <li><a href="rechercher.html">Chercher</a></li>
         <li><a href="sorties-faites.html">Fait</a></li>
         <li><a href="sorties-a-faire.html">À Faire</a></li>
+        <li><a href="rechercher.html">Rechercher</a></li>
+        <li><a href="mon-compte.html">Mon compte</a></li>
       </ul>
-      <div class="mobile-user">
-        <a href="mon-compte.html">Utilisateur</a>
-      </div>
     </nav>
+  </header>
 
   <div class="container">
     <h2 id="titre-bienvenue">Mon compte</h2>
     <p id="info-membre"></p>
     <button id="logout">Se déconnecter</button>
   </div>
-  
+
   <script src="script.js"></script>
 </body>
 </html>

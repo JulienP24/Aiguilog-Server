@@ -1,20 +1,14 @@
 :root {
   --primary: #007aff;
-  --gray-light: #f2f2f7;
+  --background: #f2f2f7;
   --gray: #d1d1d6;
   --dark: #1c1c1e;
   --radius: 1rem;
   --shadow: 0 4px 10px rgba(0,0,0,0.05);
-  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  
-  /* Variables pour les images */
-  --header-bg: url('images/header-bg.jpg');
-  --nav-bg: url('images/nav-bg.jpg');
-  --login-bg: url('images/login-bg.jpg');
-  --dropdown-arrow: url('images/dropdown-arrow.png');
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Reset */
+/* RESET */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -23,132 +17,118 @@
 
 body {
   font-family: var(--font);
-  background-color: var(--gray-light);
+  background: var(--background);
   color: var(--dark);
 }
 
-/* ---------- HEADER MOBILE ---------- */
-.ios-header {
+/* ---------- HEADER (Navigation Desktop & Mobile) ---------- */
+.main-header {
   position: sticky;
-  top: 10px;
-  z-index: 1000;
-  background-color: var(--primary);
-  border-radius: 9999px;
-  margin: 0 5%;
-  padding: 10px 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  top: 0;
+  z-index: 999;
+  background: var(--primary);
+  color: #fff;
+  padding: 0.5rem 1rem;
 }
 
-.nav-container {
+/* Desktop header */
+.header-desktop {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-
-/* Pas de contenu dans nav-left pour mobile */
-.nav-left { display: none; }
-
-/* Logo centré dans nav-center */
-.nav-center {
-  text-align: center;
-  flex: 1;
+.header-desktop .header-logo {
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.5rem;
 }
-.nav-center a img.logo-img {
-  height: 60px;
+.desktop-nav a {
+  color: #fff;
+  text-decoration: none;
+  margin-left: 1rem;
+  font-weight: 500;
+}
+.desktop-nav a:hover {
+  text-decoration: underline;
 }
 
-/* Bouton hamburger dans nav-right */
-.nav-right {
-  display: flex;
+/* Mobile header */
+.header-mobile {
+  display: none;
   align-items: center;
+  justify-content: space-between;
+}
+.header-logo-mobile {
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.4rem;
 }
 #mobile-menu-toggle {
   background: none;
   border: none;
-  font-size: 2rem;
   color: #fff;
+  font-size: 2rem;
   cursor: pointer;
 }
 
-/* Menu mobile caché par défaut */
+/* Mobile menu (caché par défaut) */
 #mobile-menu {
   position: fixed;
   top: 0;
   right: -250px;
   width: 250px;
   height: 100%;
-  background-color: #fff;
-  box-shadow: -4px 0 12px rgba(0,0,0,0.2);
-  border-radius: 8px 0 0 8px;
-  transition: right 0.3s ease;
-  padding: 20px;
-}
-#mobile-menu.open {
-  right: 0;
+  background: #fff;
+  color: var(--dark);
+  padding: 2rem 1rem;
+  box-shadow: -4px 0 10px rgba(0,0,0,0.2);
+  transition: 0.3s;
 }
 #mobile-menu ul {
   list-style: none;
-  padding: 0;
   margin: 0;
+  padding: 0;
 }
 #mobile-menu ul li {
-  margin-bottom: 15px;
+  margin-bottom: 1rem;
 }
 #mobile-menu ul li a {
   text-decoration: none;
   font-size: 1.2rem;
   color: var(--primary);
-  font-weight: bold;
+  font-weight: 600;
 }
-#mobile-menu .mobile-user {
-  position: absolute;
-  bottom: 20px;
-  left: 0;
+#mobile-menu.open {
   right: 0;
-  text-align: center;
-}
-#mobile-menu .mobile-user a {
-  text-decoration: none;
-  font-size: 1.2rem;
-  color: var(--primary);
-  font-weight: bold;
 }
 
-/* Pour écran large, cacher le header mobile et utiliser l'ancien header */
+/* ---------- Media Queries ---------- */
 @media (min-width: 768px) {
-  #mobile-menu, #mobile-menu-toggle { display: none; }
-  .ios-header {
-    /* Vous pouvez conserver votre ancien header pour desktop ici */
-    position: sticky;
-    top: 0;
-    margin: 0;
-    border-radius: 0;
-    padding: 10px 20px;
-  }
-  .nav-container {
-    display: flex;
-    justify-content: space-between;
-  }
-  .nav-left, .nav-center, .nav-right { display: block; }
-  .nav-center { text-align: center; }
+  .header-desktop { display: flex; }
+  .header-mobile, #mobile-menu { display: none; }
+}
+@media (max-width: 767px) {
+  .header-desktop { display: none; }
+  .header-mobile { display: flex; }
 }
 
-/* ---------- AUTRES STYLES (formulaires, tableaux, etc.) ---------- */
-
+/* ---------- Conteneur principal ---------- */
 .container {
   max-width: 1000px;
   margin: auto;
   padding: 2rem;
 }
 
+/* ---------- Formulaires ---------- */
 form {
-  background: white;
+  background: #fff;
   padding: 1.5rem;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   margin-bottom: 2rem;
 }
-
 input, select, textarea {
   padding: 0.75rem;
   border-radius: var(--radius);
@@ -156,27 +136,22 @@ input, select, textarea {
   font-size: 1rem;
   width: 100%;
 }
-
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-
 button {
   padding: 0.75rem;
   background-color: var(--primary);
-  color: white;
+  color: #fff;
   border: none;
   border-radius: var(--radius);
   cursor: pointer;
   font-weight: bold;
   transition: background 0.3s;
 }
-button:hover {
-  background-color: #005ecb;
-}
-
+button:hover { background-color: #005ecb; }
 .two-cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -194,10 +169,11 @@ button:hover {
   margin-top: 1rem;
 }
 
+/* ---------- Tableaux ---------- */
 table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: #fff;
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: var(--shadow);
@@ -207,21 +183,27 @@ th, td {
   text-align: left;
   border-bottom: 1px solid var(--gray);
 }
-th {
-  background-color: var(--gray-light);
-}
-
-/* Cellules en mode édition */
-.editable {
-  background-color: #eef;
-}
-
-/* Personnalisation des listes déroulantes */
+th { background-color: var(--background); }
+.editable { background-color: #eef; }
 select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background: white var(--dropdown-arrow) no-repeat right center;
+  background: #fff var(--dropdown-arrow) no-repeat right center;
   background-size: 1rem;
   padding-right: 2rem;
+}
+
+/* ---------- Dark Mode ---------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: #4a90e2;
+    --background: #2c2c2c;
+    --gray: #444;
+    --dark: #f0f0f0;
+  }
+  body { background: #1a1a1a; color: var(--dark); }
+  header, nav, form, table { background: #2c2c2c; color: var(--dark); }
+  .desktop-nav a { color: var(--dark); }
+  #mobile-menu ul li a { color: var(--primary); }
 }

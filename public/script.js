@@ -3,21 +3,18 @@ document.addEventListener("DOMContentLoaded", () => {
   function formatValue(val) {
     return val ? `~${val}m` : "";
   }
-
+  
   function getUser() {
     const raw = localStorage.getItem("user");
-    try {
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) {
-      return null;
-    }
+    try { return raw ? JSON.parse(raw) : null; } 
+    catch (e) { return null; }
   }
-
+  
   function getToken() {
     return localStorage.getItem("token");
   }
-
-  // ------------------ MOBILE MENU TOGGLE ------------------
+  
+  // ------------------ Mobile Menu Toggle ------------------
   const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
   const mobileMenu = document.getElementById("mobile-menu");
   if (mobileMenuToggle && mobileMenu) {
@@ -25,17 +22,16 @@ document.addEventListener("DOMContentLoaded", () => {
       mobileMenu.classList.toggle("open");
     });
   }
-
-  // ------------------ Mise à jour du lien utilisateur ------------------
+  
+  // ------------------ Navigation et Redirection ------------------
   function updateUserIconLink() {
-    const userIconLink = document.querySelector(".nav-right a");
-    if (userIconLink) {
-      userIconLink.href = getUser() ? "mon-compte.html" : "utilisateur.html";
+    const userIconLink = document.querySelector(".desktop-nav a[href='mon-compte.html']") || document.querySelector("#mobile-menu a[href='mon-compte.html']");
+    if (userIconLink) { 
+      userIconLink.href = getUser() ? "mon-compte.html" : "utilisateur.html"; 
     }
   }
   updateUserIconLink();
-
-  // ------------------ Redirection pour pages protégées ------------------
+  
   const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
   const currentPath = window.location.pathname;
   if (protectedPages.some(page => currentPath.endsWith(page))) {
@@ -44,15 +40,12 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
   }
-
-  // ------------------ Navigation (Index) ------------------
+  
   const btnGoLogin = document.getElementById("btn-go-login");
   if (btnGoLogin) {
-    btnGoLogin.addEventListener("click", () => {
-      window.location.href = "utilisateur.html";
-    });
+    btnGoLogin.addEventListener("click", () => { window.location.href = "utilisateur.html"; });
   }
-
+  
   // ------------------ Connexion (utilisateur.html) ------------------
   const loginForm = document.getElementById("login-form");
   if (loginForm) {
@@ -82,12 +75,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     const btnCreerCompte = document.getElementById("btn-creer-compte");
     if (btnCreerCompte) {
-      btnCreerCompte.addEventListener("click", () => {
-        window.location.href = "creer-compte.html";
-      });
+      btnCreerCompte.addEventListener("click", () => { window.location.href = "creer-compte.html"; });
     }
   }
-
+  
   // ------------------ Inscription (creer-compte.html) ------------------
   const registerForm = document.getElementById("register-form");
   if (registerForm) {
@@ -119,13 +110,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
+  
   // ------------------ Mon-compte (mon-compte.html) ------------------
   if (document.getElementById("titre-bienvenue")) {
     const userData = getUser();
-    if (!userData) {
-      window.location.href = "utilisateur.html";
-    } else {
+    if (!userData) { window.location.href = "utilisateur.html"; }
+    else {
       const titreBienvenue = document.getElementById("titre-bienvenue");
       const infoMembre = document.getElementById("info-membre");
       titreBienvenue.textContent = `Bienvenue, ${userData.firstName} ${userData.lastName} (${userData.username})`;
@@ -143,15 +133,13 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = "utilisateur.html";
     });
   }
-
+  
   // ------------------ Chargement des sorties ------------------
   async function loadSorties() {
     const token = getToken();
     if (!token) return [];
     try {
-      const res = await fetch("/api/sorties", {
-        headers: { "Authorization": "Bearer " + token }
-      });
+      const res = await fetch("/api/sorties", { headers: { "Authorization": "Bearer " + token } });
       const sorties = await res.json();
       return sorties;
     } catch (err) {
@@ -159,19 +147,16 @@ document.addEventListener("DOMContentLoaded", () => {
       return [];
     }
   }
-
+  
   async function displaySorties() {
     const sorties = await loadSorties();
     const typeToDisplay = currentPath.includes("sorties-faites") ? "fait" : "a-faire";
-    const tableBody = document.getElementById(
-      currentPath.includes("sorties-faites") ? "table-body-fait" : "table-body-afaire"
-    );
+    const tableBody = document.getElementById(currentPath.includes("sorties-faites") ? "table-body-fait" : "table-body-afaire");
     if (tableBody) {
       tableBody.innerHTML = "";
       sorties.filter(s => s.type === typeToDisplay).forEach(s => {
         const newRow = document.createElement("tr");
         newRow.setAttribute("data-id", s._id);
-        // Ordre des colonnes : Actions, Sommet, Altitude, Dénivelé, Méthode, Cotation, Date/Année, Détails
         newRow.innerHTML = `
           <td>
             <button class="edit-btn" onclick="editRow(this.parentElement.parentElement, '${s.type}')">✏️</button>
@@ -190,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   displaySorties();
-
+  
   // ------------------ Formulaire "Sorties à faire" ------------------
   const formAFaire = document.getElementById("form-a-faire");
   if (formAFaire) {
@@ -235,7 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const cotation = cotationSelect.value;
       const annee = yearSelect.value;
       const details = detailsInput.value.trim();
-  
+      
       const sortieData = {
         type: "a-faire",
         sommet,
@@ -269,7 +254,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
+  
   // ------------------ Formulaire "Sorties faites" ------------------
   const formFait = document.getElementById("form-fait");
   if (formFait) {
@@ -339,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
+  
   // ------------------ Edition et suppression des sorties ------------------
   const methods = ["Alpinisme", "Randonnée", "Escalade"];
   const cotationsByMethod = {
