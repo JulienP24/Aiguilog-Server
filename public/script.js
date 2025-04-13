@@ -232,19 +232,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  // ---- Ajout d'une sortie "fait" ----
+    // --- Ajout d'une sortie "fait" ---
   const formFait = document.getElementById("form-fait");
   if (formFait) {
+    // Sélectionner les éléments du formulaire par leurs IDs exacts
     const methodeFaitSelect  = document.getElementById("methode-fait");
     const cotationFaitSelect = document.getElementById("cotation-fait");
     const dateInput          = document.getElementById("date");
     const detailsFait        = document.getElementById("details-fait");
+
+    // Définir la carte des cotations selon la méthode
     const cotationsMap = {
       "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED", "ABO"],
       "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
       "Escalade": ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"]
     };
-  
+
+    // Attacher l'événement pour actualiser le select de cotation quand la méthode change
     if (methodeFaitSelect && cotationFaitSelect) {
       methodeFaitSelect.addEventListener("change", () => {
         const val = methodeFaitSelect.value;
@@ -260,8 +264,11 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
     
+    // Attacher l'événement de soumission du formulaire
     formFait.addEventListener("submit", async (e) => {
       e.preventDefault();
+      console.log("Formulaire form-fait soumis");
+      // Récupérer les valeurs des champs
       const sommet = document.getElementById("sommet-fait").value.trim();
       const altitude = document.getElementById("altitude-fait").value.trim();
       const denivele = document.getElementById("denivele-fait").value.trim();
@@ -269,6 +276,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const cotation = cotationFaitSelect.value;
       const dateVal = dateInput.value;
       const details = detailsFait.value.trim();
+
+      // Vérifier que tous les champs requis sont remplis
+      if (!sommet || !altitude || !denivele || !methode || !cotation || !dateVal) {
+        alert("Veuillez remplir tous les champs requis.");
+        return;
+      }
       
       const sortieData = {
         type: "fait",
@@ -280,7 +293,9 @@ document.addEventListener("DOMContentLoaded", () => {
         date: dateVal,
         details
       };
+
       const token = getToken();
+      console.log("Token pour sortie faite :", token);
       try {
         const res = await fetch("/api/sorties", {
           method: "POST",
@@ -302,6 +317,8 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Erreur lors de la connexion au serveur");
       }
     });
+  } else {
+    console.error("Le formulaire 'form-fait' n'a pas été trouvé.");
   }
   
   // ---- Affichage du tableau de sorties + édition/suppression ----
