@@ -1,5 +1,3 @@
-/* style.css */
-
 :root {
   --primary: #007aff;
   --gray-light: #f2f2f7;
@@ -29,134 +27,120 @@ body {
   color: var(--dark);
 }
 
-/* Dark mode : */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --primary: #4a90e2;
-    --gray-light: #2c2c2c;
-    --gray: #444;
-    --dark: #f0f0f0;
-  }
-  body {
-    background-color: #1a1a1a;
-    color: var(--dark);
-  }
-  header, nav, form, table {
-    background-color: #2c2c2c;
-    color: var(--dark);
-  }
-  nav a {
-    background: rgba(255,255,255,0.2);
-  }
-  nav a.active {
-    background-color: var(--primary);
-    color: white;
-  }
-}
-
-/* ---------- BARRE FLOTTANTE BLEUE ARRONDIE ---------- */
-
-/* Couleur de fond (bleu) et coins arrondis en demi-cercle */
+/* ---------- HEADER MOBILE ---------- */
 .ios-header {
   position: sticky;
   top: 10px;
   z-index: 1000;
   background-color: var(--primary);
-  /* Large radius pour avoir des extrémités demi-circulaires */
   border-radius: 9999px;
   margin: 0 5%;
   padding: 10px 20px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-/* Conteneur interne */
 .nav-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-/* Logo à gauche : descendu légèrement */
-.nav-left {
-  display: flex;
-  align-items: flex-end; /* pour descendre un peu */
-}
-.nav-left img.logo-img {
-  height: 60px;         /* Logo plus grand */
-  margin-top: 4px;      /* Légère marge pour le descendre encore un peu */
-}
+/* Pas de contenu dans nav-left pour mobile */
+.nav-left { display: none; }
 
-/* Navigation centrée : chaque lien est un bouton blanc arrondi */
+/* Logo centré dans nav-center */
 .nav-center {
-  display: flex;
-  gap: 1rem;            /* espace entre les boutons */
+  text-align: center;
   flex: 1;
-  justify-content: center;
 }
-.nav-center a {
-  background-color: #fff;           /* Fond blanc */
-  color: var(--primary);           /* Texte en bleu */
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 1rem;
-  padding: 8px 18px;
-  border-radius: 9999px;           /* pour avoir les extrémités en demi-cercle */
-  transition: background 0.3s, color 0.3s;
+.nav-center a img.logo-img {
+  height: 60px;
 }
 
-/* Quand on survole un bouton */
-.nav-center a:hover {
-  background-color: rgba(255, 255, 255, 0.8);
-}
-
-/* Lien actif (pour la page en cours) */
-.nav-center a.active {
-  background-color: #fff;          /* On garde un fond blanc */
-  color: #005ecb;                  /* Bleu un peu plus foncé ? (optionnel) */
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.8) inset; /* Soulignement discret */
-}
-
-/* Icône utilisateur à droite */
+/* Bouton hamburger dans nav-right */
 .nav-right {
   display: flex;
-  align-items: flex-end; /* descend un peu aussi */
+  align-items: center;
 }
-.nav-right img.user-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  object-fit: cover;  /* évite la compression */
-  margin-top: 4px;    /* descend légèrement l'icône */
+#mobile-menu-toggle {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #fff;
   cursor: pointer;
 }
 
-/* ---------- DARK MODE ---------- */
-@media (prefers-color-scheme: dark) {
-  .ios-header {
-    background-color: #4a90e2;  /* Variation de bleu */
-  }
-  .nav-center a {
-    background-color: #333;     /* Boutons plus sombres */
-    color: #fff;               /* Texte en blanc */
-  }
-  .nav-center a.active {
-    background-color: #555;
-    color: #fff;
-  }
-  .nav-right img.user-icon {
-    /* Pas nécessairement de changement, mais vous pouvez ajuster si besoin */
-  }
+/* Menu mobile caché par défaut */
+#mobile-menu {
+  position: fixed;
+  top: 0;
+  right: -250px;
+  width: 250px;
+  height: 100%;
+  background-color: #fff;
+  box-shadow: -4px 0 12px rgba(0,0,0,0.2);
+  border-radius: 8px 0 0 8px;
+  transition: right 0.3s ease;
+  padding: 20px;
+}
+#mobile-menu.open {
+  right: 0;
+}
+#mobile-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+#mobile-menu ul li {
+  margin-bottom: 15px;
+}
+#mobile-menu ul li a {
+  text-decoration: none;
+  font-size: 1.2rem;
+  color: var(--primary);
+  font-weight: bold;
+}
+#mobile-menu .mobile-user {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+#mobile-menu .mobile-user a {
+  text-decoration: none;
+  font-size: 1.2rem;
+  color: var(--primary);
+  font-weight: bold;
 }
 
+/* Pour écran large, cacher le header mobile et utiliser l'ancien header */
+@media (min-width: 768px) {
+  #mobile-menu, #mobile-menu-toggle { display: none; }
+  .ios-header {
+    /* Vous pouvez conserver votre ancien header pour desktop ici */
+    position: sticky;
+    top: 0;
+    margin: 0;
+    border-radius: 0;
+    padding: 10px 20px;
+  }
+  .nav-container {
+    display: flex;
+    justify-content: space-between;
+  }
+  .nav-left, .nav-center, .nav-right { display: block; }
+  .nav-center { text-align: center; }
+}
 
-/* Container principal */
+/* ---------- AUTRES STYLES (formulaires, tableaux, etc.) ---------- */
+
 .container {
   max-width: 1000px;
   margin: auto;
   padding: 2rem;
 }
 
-/* Formulaires */
 form {
   background: white;
   padding: 1.5rem;
@@ -173,14 +157,12 @@ input, select, textarea {
   width: 100%;
 }
 
-/* Retirer les flèches des inputs de type number */
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-/* Boutons */
 button {
   padding: 0.75rem;
   background-color: var(--primary);
@@ -195,7 +177,6 @@ button:hover {
   background-color: #005ecb;
 }
 
-/* Grille en deux colonnes */
 .two-cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -213,7 +194,6 @@ button:hover {
   margin-top: 1rem;
 }
 
-/* Tableaux */
 table {
   width: 100%;
   border-collapse: collapse;

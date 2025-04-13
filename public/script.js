@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function formatValue(val) {
     return val ? `~${val}m` : "";
   }
-  
+
   function getUser() {
     const raw = localStorage.getItem("user");
     try {
@@ -12,12 +12,21 @@ document.addEventListener("DOMContentLoaded", () => {
       return null;
     }
   }
-  
+
   function getToken() {
     return localStorage.getItem("token");
   }
-  
-  // Met à jour le lien de l'icône utilisateur dans le header
+
+  // ------------------ MOBILE MENU TOGGLE ------------------
+  const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
+  const mobileMenu = document.getElementById("mobile-menu");
+  if (mobileMenuToggle && mobileMenu) {
+    mobileMenuToggle.addEventListener("click", () => {
+      mobileMenu.classList.toggle("open");
+    });
+  }
+
+  // ------------------ Mise à jour du lien utilisateur ------------------
   function updateUserIconLink() {
     const userIconLink = document.querySelector(".nav-right a");
     if (userIconLink) {
@@ -25,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   updateUserIconLink();
-  
+
   // ------------------ Redirection pour pages protégées ------------------
   const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
   const currentPath = window.location.pathname;
@@ -35,16 +44,16 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
   }
-  
-  // ------------------ Navigation ------------------
+
+  // ------------------ Navigation (Index) ------------------
   const btnGoLogin = document.getElementById("btn-go-login");
   if (btnGoLogin) {
     btnGoLogin.addEventListener("click", () => {
       window.location.href = "utilisateur.html";
     });
   }
-  
-  // ---- Connexion (utilisateur.html) ----
+
+  // ------------------ Connexion (utilisateur.html) ------------------
   const loginForm = document.getElementById("login-form");
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
@@ -78,8 +87,8 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   }
-  
-  // ---- Inscription (creer-compte.html) ----
+
+  // ------------------ Inscription (creer-compte.html) ------------------
   const registerForm = document.getElementById("register-form");
   if (registerForm) {
     registerForm.addEventListener("submit", async (e) => {
@@ -110,8 +119,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-  
-  // ---- Mon-compte (mon-compte.html) ----
+
+  // ------------------ Mon-compte (mon-compte.html) ------------------
   if (document.getElementById("titre-bienvenue")) {
     const userData = getUser();
     if (!userData) {
@@ -134,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = "utilisateur.html";
     });
   }
-  
+
   // ------------------ Chargement des sorties ------------------
   async function loadSorties() {
     const token = getToken();
@@ -150,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return [];
     }
   }
-  
+
   async function displaySorties() {
     const sorties = await loadSorties();
     const typeToDisplay = currentPath.includes("sorties-faites") ? "fait" : "a-faire";
@@ -181,7 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   displaySorties();
-  
+
   // ------------------ Formulaire "Sorties à faire" ------------------
   const formAFaire = document.getElementById("form-a-faire");
   if (formAFaire) {
@@ -260,7 +269,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-  
+
   // ------------------ Formulaire "Sorties faites" ------------------
   const formFait = document.getElementById("form-fait");
   if (formFait) {
@@ -330,7 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-  
+
   // ------------------ Edition et suppression des sorties ------------------
   const methods = ["Alpinisme", "Randonnée", "Escalade"];
   const cotationsByMethod = {
@@ -338,7 +347,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
     "Escalade": ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"]
   };
-  
+
   window.editRow = function(row, mode) {
     const cells = row.querySelectorAll("td");
     if (cells.length < 8) {
@@ -466,7 +475,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (confirm("Confirmez-vous la suppression ?")) { deleteRow(row); }
     });
   };
-  
+
   async function saveRow(row, mode) {
     const sortieId = row.getAttribute("data-id");
     const cells = row.querySelectorAll("td");
@@ -591,7 +600,9 @@ document.addEventListener("DOMContentLoaded", () => {
   async function displaySorties() {
     const sorties = await loadSorties();
     const typeToDisplay = currentPath.includes("sorties-faites") ? "fait" : "a-faire";
-    const tableBody = document.getElementById(currentPath.includes("sorties-faites") ? "table-body-fait" : "table-body-afaire");
+    const tableBody = document.getElementById(
+      currentPath.includes("sorties-faites") ? "table-body-fait" : "table-body-afaire"
+    );
     if (tableBody) {
       tableBody.innerHTML = "";
       sorties.filter(s => s.type === typeToDisplay).forEach(s => {

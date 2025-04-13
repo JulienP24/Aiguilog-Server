@@ -33,26 +33,30 @@
   </style>
 </head>
 <body>
+  <!-- Header mobile optimisé -->
   <header class="ios-header">
     <div class="nav-container">
-      <div class="nav-left">
+      <div class="nav-left"></div>
+      <div class="nav-center">
         <a href="index.html">
           <img src="images/logo.png" alt="Aiguilog" class="logo-img">
         </a>
       </div>
-      <nav class="nav-center">
-        <a href="sorties-faites.html">Fait</a>
-        <a href="sorties-a-faire.html" class="active">À Faire</a>
-        <a href="#">Rechercher</a>
-      </nav>
       <div class="nav-right">
-        <a href="utilisateur.html">
-          <img src="images/user-icon.png" alt="Icône utilisateur" class="user-icon">
-        </a>
+        <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">&#9776;</button>
       </div>
     </div>
-  </header>
-  
+    <nav id="mobile-menu">
+      <ul>
+        <li><a href="rechercher.html">Chercher</a></li>
+        <li><a href="sorties-faites.html">Fait</a></li>
+        <li><a href="sorties-a-faire.html" class="active">À Faire</a></li>
+      </ul>
+      <div class="mobile-user">
+        <a href="utilisateur.html">Utilisateur</a>
+      </div>
+    </nav>
+
   <div class="container">
     <h2>Sorties à faire</h2>
     <form id="form-a-faire" class="two-cols">
@@ -72,12 +76,10 @@
         <select id="cotation" required>
           <option value="" disabled selected>Cotation</option>
         </select>
-        <!-- Liste d'années -->
         <select id="year" required>
           <option value="" disabled selected>Année</option>
         </select>
       </div>
-      <!-- Champ Détails en bas -->
       <div class="full-width">
         <input type="text" id="details" placeholder="Détails" />
       </div>
@@ -88,7 +90,6 @@
     
     <table>
       <thead>
-        <!-- Ordre de colonnes : Action, Sommet, Altitude, Dénivelé, Méthode, Cotation, Année, Détails -->
         <tr>
           <th>Actions</th>
           <th>Sommet</th>

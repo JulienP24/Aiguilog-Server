@@ -33,31 +33,34 @@
   </style>
 </head>
 <body>
+  <!-- Header mobile optimisé -->
   <header class="ios-header">
     <div class="nav-container">
-      <div class="nav-left">
+      <div class="nav-left"></div>
+      <div class="nav-center">
         <a href="index.html">
           <img src="images/logo.png" alt="Aiguilog" class="logo-img">
         </a>
       </div>
-      <nav class="nav-center">
-        <a href="sorties-faites.html" class="active">Fait</a>
-        <a href="sorties-a-faire.html">À Faire</a>
-        <a href="#">Rechercher</a>
-      </nav>
       <div class="nav-right">
-        <a href="utilisateur.html">
-          <img src="images/user-icon.png" alt="Icône utilisateur" class="user-icon">
-        </a>
+        <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">&#9776;</button>
       </div>
     </div>
-  </header>
-  
+    <nav id="mobile-menu">
+      <ul>
+        <li><a href="rechercher.html">Chercher</a></li>
+        <li><a href="sorties-faites.html" class="active">Fait</a></li>
+        <li><a href="sorties-a-faire.html">À Faire</a></li>
+      </ul>
+      <div class="mobile-user">
+        <a href="utilisateur.html">Utilisateur</a>
+      </div>
+    </nav>
+
   <div class="container">
     <h2>Sorties faites</h2>
     <form id="form-fait" class="two-cols">
       <div class="col-left">
-        <!-- Modification de l'ID ici : "sommet-fait" au lieu de "sommet" -->
         <input type="text" id="sommet-fait" placeholder="Sommet" list="summits-list" required />
         <datalist id="summits-list"></datalist>
         <input type="number" id="altitude-fait" placeholder="Altitude (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
@@ -75,7 +78,6 @@
         </select>
         <input type="date" id="date" required />
       </div>
-      <!-- Champ Détails en bas -->
       <div class="full-width">
         <input type="text" id="details-fait" placeholder="Détails" />
       </div>
@@ -86,7 +88,6 @@
     
     <table>
       <thead>
-        <!-- Ordre de colonnes : Action, Sommet, Altitude, Dénivelé, Méthode, Cotation, Date, Détails -->
         <tr>
           <th>Actions</th>
           <th>Sommet</th>
