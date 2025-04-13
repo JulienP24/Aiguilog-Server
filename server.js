@@ -18,28 +18,24 @@ app.use(cors());
 app.use(express.static('public'));
 
 const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri); // Plus besoin de useUnifiedTopology avec les dernières versions
+const client = new MongoClient(uri); // useUnifiedTopology n'est plus nécessaire
 
 client.connect()
   .then(() => {
     console.log("Connecté à MongoDB Atlas");
-    const db = client.db("aiguilog"); // Assurez-vous d'utiliser le même nom que dans votre chaîne de connexion
+    const db = client.db("aiguilog");
 
-    // ----------- Endpoint d'inscription (REGISTER) -------------
-    // Attendu : { firstName, lastName, username, password, birthdate }
+    // ---------- Inscription (REGISTER) ----------
     app.post('/api/register', async (req, res) => {
       try {
         const { firstName, lastName, username, password, birthdate } = req.body;
-        // Vérifier que tous les champs sont fournis
         if (!firstName || !lastName || !username || !password || !birthdate) {
           return res.status(400).json({ error: "Tous les champs sont requis" });
         }
-        // Vérifier si l'identifiant est déjà utilisé
         const existingUser = await db.collection("users").findOne({ username });
         if (existingUser) {
           return res.status(400).json({ error: "Identifiant déjà utilisé" });
         }
-        // Hacher le mot de passe
         const passwordHash = await bcrypt.hash(password, 10);
         const userDoc = {
           firstName,
@@ -50,9 +46,7 @@ client.connect()
           createdAt: new Date()
         };
         const result = await db.collection("users").insertOne(userDoc);
-        // Générer le token JWT
         const token = jwt.sign({ userId: result.insertedId, username }, JWT_SECRET, { expiresIn: "1h" });
-        // Préparer la réponse sans le mot de passe
         const userResponse = {
           firstName,
           lastName,
@@ -67,8 +61,7 @@ client.connect()
       }
     });
 
-    // ----------- Endpoint de connexion (LOGIN) -------------
-    // Attendu : { username, password }
+    // ---------- Connexion (LOGIN) ----------
     app.post('/api/login', async (req, res) => {
       try {
         const { username, password } = req.body;
@@ -98,7 +91,7 @@ client.connect()
       }
     });
 
-    // ----------- Middleware d'authentification -------------
+    // ---------- Middleware d'authentification ----------
     function authMiddleware(req, res, next) {
       const authHeader = req.headers.authorization;
       if (!authHeader) return res.status(401).json({ error: "Non autorisé" });
@@ -112,12 +105,17 @@ client.connect()
       }
     }
 
-    // ----------- Endpoint pour ajouter une sortie -------------
-    // Utilisé pour les sorties "à faire" ou "faites"
+    // ---------- Ajout d'une sortie (SORTIES) ----------
     app.post('/api/sorties', authMiddleware, async (req, res) => {
       try {
         const sortieData = req.body;
-        // Vous pouvez ajouter ici une validation pour les champs requis
+        // Pour le type "fait", vérifiez que le champ "date" est présent ; pour "a-faire", que le champ "annee" est présent
+        if (sortieData.type === "fait" && !sortieData.date) {
+          return res.status(400).json({ error: "La date est requise pour une sortie réalisée" });
+        }
+        if (sortieData.type === "a-faire" && !sortieData.annee) {
+          return res.status(400).json({ error: "L'année est requise pour une sortie à faire" });
+        }
         sortieData.createdAt = new Date();
         sortieData.userId = ObjectId(req.user.userId);
         await db.collection("sorties").insertOne(sortieData);
@@ -128,7 +126,7 @@ client.connect()
       }
     });
 
-    // ----------- Endpoint pour récupérer les sorties de l'utilisateur -------------
+    // ---------- Récupération des sorties ----------
     app.get('/api/sorties', authMiddleware, async (req, res) => {
       try {
         const sorties = await db.collection("sorties").find({ userId: ObjectId(req.user.userId) }).toArray();

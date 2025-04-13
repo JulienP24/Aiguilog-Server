@@ -1,16 +1,16 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // ===== Contrôle de la connexion sur les pages protégées =====
+  // Fonction utilitaire pour formater des valeurs numériques
+  function formatValue(val) {
+    return val ? `~${val}m` : "";
+  }
+
+  // ===== Vérification de connexion sur pages protégées =====
   const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
-  // Utiliser window.location.pathname pour obtenir le chemin de la page
   const currentPath = window.location.pathname;
-  console.log("Chemin actuel :", currentPath);
   if (protectedPages.some(page => currentPath.endsWith(page))) {
     const token = localStorage.getItem("token");
     const user = localStorage.getItem("user");
-    console.log("Token trouvé :", token);
-    console.log("User trouvé :", user);
     if (!token || !user) {
-      // Rediriger l'utilisateur non connecté vers la page de connexion
       window.location.href = "utilisateur.html";
     }
   }
@@ -38,7 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const data = await res.json();
         if (res.ok && data.token) {
-          // Stockage persistant : on utilise localStorage pour garder la connexion
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
           window.location.href = "mon-compte.html";
@@ -63,7 +62,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (registerForm) {
     registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      // Récupération des champs
       const firstName = document.getElementById("register-firstname").value.trim();
       const lastName = document.getElementById("register-lastname").value.trim();
       const username = document.getElementById("register-username").value.trim();
@@ -77,7 +75,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const data = await res.json();
         if (res.ok && data.token) {
-          // Stocker dans localStorage pour persister la connexion
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
           window.location.href = "mon-compte.html";
@@ -91,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===== Pour mon-compte.html (Profil utilisateur) =====
+  // ===== Pour mon-compte.html (Profil) =====
   if (document.getElementById("titre-bienvenue")) {
     const storedUser = localStorage.getItem("user");
     if (!storedUser) {
@@ -143,8 +140,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     }
-
-    // Génération de la liste des années pour "sorties à faire"
     if (yearSelect) {
       const currentYear = new Date().getFullYear();
       const range = 10;
@@ -155,7 +150,6 @@ document.addEventListener("DOMContentLoaded", () => {
         yearSelect.appendChild(option);
       }
     }
-
     formAFaire.addEventListener("submit", async (e) => {
       e.preventDefault();
       const sommet = document.getElementById("sommet").value.trim();
@@ -213,7 +207,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===== Pour sorties-faites.html (Sorties déjà réalisées) =====
+  // ===== Pour sorties-faites.html (Sorties réalisées) =====
   const formFait = document.getElementById("form-fait");
   if (formFait) {
     const methodeFait = document.getElementById("methode-fait");
@@ -240,7 +234,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     }
-
     formFait.addEventListener("submit", async (e) => {
       e.preventDefault();
       const sommet = document.getElementById("sommet-fait").value.trim();
@@ -249,7 +242,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const details = document.getElementById("details-fait").value.trim();
       const methode = methodeFait.value;
       const cotation = cotationFait.value;
-      const date = dateInput.value;  // Champ type date
+      const date = dateInput.value;  // champ type date
       const sortieData = {
         type: "fait",
         sommet,
@@ -319,9 +312,4 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.textContent = "✏️";
     }
   };
-
-  // Utilitaire pour formater des valeurs numériques
-  function formatValue(val) {
-    return val ? `~${val}m` : "";
-  }
 });
