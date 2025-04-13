@@ -6,6 +6,7 @@
   <title>Aiguilog - Sorties à faire</title>
   <link rel="stylesheet" href="style.css" />
   <style>
+    /* Styles spécifiques pour cette page */
     .two-cols {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -44,6 +45,7 @@
   </header>
   <div class="container">
     <h2>Sorties à faire</h2>
+    <!-- Formulaire en deux colonnes -->
     <form id="form-a-faire" class="two-cols">
       <div class="col-left">
         <input type="text" id="sommet" placeholder="Sommet" required />
@@ -61,7 +63,10 @@
         <select id="cotation" required>
           <option value="" disabled selected>Cotation</option>
         </select>
-        <input type="date" id="date" required />
+        <!-- Remplace le champ date par une liste d'années -->
+        <select id="year" required>
+          <option value="" disabled selected>Année</option>
+        </select>
       </div>
       <div class="full-width">
         <button type="submit">Ajouter</button>
@@ -77,7 +82,7 @@
           <th>Détails</th>
           <th>Méthode</th>
           <th>Cotation</th>
-          <th>Date</th>
+          <th>Année</th>
         </tr>
       </thead>
       <tbody id="table-body-afaire"></tbody>

@@ -22,12 +22,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const data = await res.json();
         if (res.ok && data.token) {
-          // Sauvegarder le token et le nom d'utilisateur dans sessionStorage pour les utiliser ultérieurement
           sessionStorage.setItem("token", data.token);
           sessionStorage.setItem("connectedUser", username);
           window.location.href = "mon-compte.html";
         } else {
-          alert("Erreur de connexion: " + (data.error || "Inconnue"));
+          alert("Erreur de connexion : " + (data.error || "Inconnue"));
         }
       } catch (err) {
         console.error("Erreur lors de la connexion:", err);
@@ -61,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
           alert("Inscription réussie !");
           window.location.href = "utilisateur.html";
         } else {
-          alert("Erreur d'inscription: " + (data.error || "Inconnue"));
+          alert("Erreur d'inscription : " + (data.error || "Inconnue"));
         }
       } catch (err) {
         console.error("Erreur lors de l'inscription:", err);
@@ -78,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById("titre-bienvenue") && connectedUser) {
     const titreBienvenue = document.getElementById("titre-bienvenue");
     titreBienvenue.textContent = "Bienvenue, " + connectedUser;
-    // Vous pouvez effectuer ici des appels supplémentaires pour récupérer les données de l'utilisateur si nécessaire
+    // Vous pouvez récupérer et afficher d'autres infos via une API ici
   }
   const logoutBtn = document.getElementById("logout");
   if (logoutBtn) {
@@ -94,6 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (formAFaire) {
     const methodeSelect = document.getElementById("methode");
     const cotationSelect = document.getElementById("cotation");
+    const yearSelect = document.getElementById("year");
     const tableBodyAFaire = document.getElementById("table-body-afaire");
     const cotationsParMéthode = {
       "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED"],
@@ -116,6 +116,18 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
+    // Générer la liste des années pour sorties à faire
+    if (yearSelect) {
+      const currentYear = new Date().getFullYear();
+      const range = 10;
+      for (let i = 0; i < range; i++) {
+        const option = document.createElement("option");
+        option.value = currentYear + i;
+        option.textContent = currentYear + i;
+        yearSelect.appendChild(option);
+      }
+    }
+
     formAFaire.addEventListener("submit", (e) => {
       e.preventDefault();
       const sommet = document.getElementById("sommet").value.trim();
@@ -124,7 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const details = document.getElementById("details").value.trim();
       const methode = methodeSelect.value;
       const cotation = cotationSelect.value;
-      const date = document.getElementById("date").value;
+      const year = yearSelect.value;
 
       function formatValue(val) {
         return val ? `~${val}m` : "";
@@ -141,7 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${details}</td>
         <td>${methode}</td>
         <td>${cotation}</td>
-        <td>${date}</td>
+        <td>${year}</td>
       `;
       tableBodyAFaire.appendChild(newRow);
       formAFaire.reset();
@@ -154,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (formFait) {
     const methodeFait = document.getElementById("methode-fait");
     const cotationFait = document.getElementById("cotation-fait");
-    const yearFait = document.getElementById("year-fait");
+    const dateInput = document.getElementById("date"); // Ici on utilise le champ date
     const tableBodyFait = document.getElementById("table-body-fait");
     const cotationsParMéthode = {
       "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED"],
@@ -177,17 +189,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    if (yearFait) {
-      const currentYear = new Date().getFullYear();
-      const range = 10; // Génère 10 années à partir de l'année courante
-      for (let i = 0; i < range; i++) {
-        const option = document.createElement("option");
-        option.value = currentYear + i;
-        option.textContent = currentYear + i;
-        yearFait.appendChild(option);
-      }
-    }
-
     formFait.addEventListener("submit", (e) => {
       e.preventDefault();
       const sommet = document.getElementById("sommet-fait").value.trim();
@@ -196,7 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const details = document.getElementById("details-fait").value.trim();
       const methode = methodeFait.value;
       const cotation = cotationFait.value;
-      const annee = yearFait.value;
+      const date = dateInput.value;
 
       function formatValue(val) {
         return val ? `~${val}m` : "";
@@ -213,7 +214,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${details}</td>
         <td>${methode}</td>
         <td>${cotation}</td>
-        <td>${annee}</td>
+        <td>${date}</td>
       `;
       tableBodyFait.appendChild(newRow);
       formFait.reset();
