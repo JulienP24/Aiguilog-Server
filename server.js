@@ -18,24 +18,29 @@ app.use(cors());
 app.use(express.static('public'));
 
 const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri); // useUnifiedTopology n'est plus nécessaire
+const client = new MongoClient(uri);
 
 client.connect()
   .then(() => {
     console.log("Connecté à MongoDB Atlas");
-    const db = client.db("aiguilog");
+    const db = client.db("aiguilog"); // Veillez à ce que ce nom corresponde à vos attentes
 
-    // ---------- Inscription (REGISTER) ----------
+    // ----------- Endpoint d'inscription (REGISTER) -----------
+    // Attendu : { firstName, lastName, username, password, birthdate }
     app.post('/api/register', async (req, res) => {
       try {
         const { firstName, lastName, username, password, birthdate } = req.body;
         if (!firstName || !lastName || !username || !password || !birthdate) {
           return res.status(400).json({ error: "Tous les champs sont requis" });
         }
+  
+        // Vérifier l'unicité de l'identifiant
         const existingUser = await db.collection("users").findOne({ username });
         if (existingUser) {
           return res.status(400).json({ error: "Identifiant déjà utilisé" });
         }
+  
+        // Hacher le mot de passe
         const passwordHash = await bcrypt.hash(password, 10);
         const userDoc = {
           firstName,
@@ -45,8 +50,13 @@ client.connect()
           birthdate,
           createdAt: new Date()
         };
+  
         const result = await db.collection("users").insertOne(userDoc);
+  
+        // Générer le token JWT
         const token = jwt.sign({ userId: result.insertedId, username }, JWT_SECRET, { expiresIn: "1h" });
+  
+        // Préparer la réponse (sans le mot de passe)
         const userResponse = {
           firstName,
           lastName,
@@ -54,29 +64,35 @@ client.connect()
           birthdate,
           createdAt: userDoc.createdAt
         };
+  
         res.json({ message: "Inscription réussie", token, user: userResponse });
       } catch (err) {
         console.error("Erreur dans /api/register :", err);
         res.status(500).json({ error: "Erreur serveur lors de l'inscription" });
       }
     });
-
-    // ---------- Connexion (LOGIN) ----------
+  
+    // ----------- Endpoint de connexion (LOGIN) -----------
+    // Attendu : { username, password }
     app.post('/api/login', async (req, res) => {
       try {
         const { username, password } = req.body;
         if (!username || !password) {
           return res.status(400).json({ error: "Identifiant et mot de passe sont requis" });
         }
+  
         const user = await db.collection("users").findOne({ username });
         if (!user) {
           return res.status(400).json({ error: "Utilisateur non trouvé" });
         }
+  
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) {
           return res.status(400).json({ error: "Mot de passe incorrect" });
         }
+  
         const token = jwt.sign({ userId: user._id, username: user.username }, JWT_SECRET, { expiresIn: "1h" });
+  
         const userResponse = {
           firstName: user.firstName,
           lastName: user.lastName,
@@ -84,14 +100,15 @@ client.connect()
           birthdate: user.birthdate,
           createdAt: user.createdAt
         };
+  
         res.json({ token, user: userResponse });
       } catch (err) {
         console.error("Erreur dans /api/login :", err);
         res.status(500).json({ error: "Erreur serveur lors de la connexion" });
       }
     });
-
-    // ---------- Middleware d'authentification ----------
+  
+    // ----------- Middleware d'authentification -----------
     function authMiddleware(req, res, next) {
       const authHeader = req.headers.authorization;
       if (!authHeader) return res.status(401).json({ error: "Non autorisé" });
@@ -104,18 +121,25 @@ client.connect()
         return res.status(401).json({ error: "Token invalide" });
       }
     }
-
-    // ---------- Ajout d'une sortie (SORTIES) ----------
+  
+    // ----------- Endpoint pour ajouter une sortie (SORTIES) -----------
+    // On gère ici les deux types :
+    // - Pour "fait" : le front-end envoie { date, ... }.
+    // - Pour "a-faire" : le front-end envoie { annee, ... }.
     app.post('/api/sorties', authMiddleware, async (req, res) => {
       try {
         const sortieData = req.body;
-        // Pour le type "fait", vérifiez que le champ "date" est présent ; pour "a-faire", que le champ "annee" est présent
-        if (sortieData.type === "fait" && !sortieData.date) {
-          return res.status(400).json({ error: "La date est requise pour une sortie réalisée" });
+        // Vérifier les champs requis selon le type de sortie
+        if (sortieData.type === "fait") {
+          if (!sortieData.date) {
+            return res.status(400).json({ error: "La date est requise pour une sortie réalisée" });
+          }
+        } else if (sortieData.type === "a-faire") {
+          if (!sortieData.annee) {
+            return res.status(400).json({ error: "L'année est requise pour une sortie à faire" });
+          }
         }
-        if (sortieData.type === "a-faire" && !sortieData.annee) {
-          return res.status(400).json({ error: "L'année est requise pour une sortie à faire" });
-        }
+  
         sortieData.createdAt = new Date();
         sortieData.userId = ObjectId(req.user.userId);
         await db.collection("sorties").insertOne(sortieData);
@@ -125,8 +149,8 @@ client.connect()
         res.status(500).json({ error: "Erreur serveur lors de l'ajout de la sortie" });
       }
     });
-
-    // ---------- Récupération des sorties ----------
+  
+    // ----------- Endpoint pour récupérer les sorties de l'utilisateur -----------
     app.get('/api/sorties', authMiddleware, async (req, res) => {
       try {
         const sorties = await db.collection("sorties").find({ userId: ObjectId(req.user.userId) }).toArray();
@@ -136,11 +160,10 @@ client.connect()
         res.status(500).json({ error: "Erreur serveur lors de la récupération des sorties" });
       }
     });
-
+  
     app.listen(PORT, () => {
       console.log(`Serveur démarré sur http://localhost:${PORT}`);
     });
-
   })
   .catch(err => {
     console.error("Erreur lors de la connexion à MongoDB Atlas :", err);
