@@ -10,21 +10,29 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== Pour utilisateur.html (Login) =====
   const loginForm = document.getElementById("login-form");
   if (loginForm) {
-    loginForm.addEventListener("submit", (e) => {
+    loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const username = document.getElementById("login-username").value.trim();
       const password = document.getElementById("login-password").value.trim();
-      const userData = JSON.parse(localStorage.getItem('user_' + username));
-      if (!userData) {
-        alert("Cet identifiant n'existe pas. Veuillez créer un compte.");
-        return;
+      try {
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (res.ok && data.token) {
+          // Sauvegarder le token et le nom d'utilisateur dans sessionStorage pour les utiliser ultérieurement
+          sessionStorage.setItem("token", data.token);
+          sessionStorage.setItem("connectedUser", username);
+          window.location.href = "mon-compte.html";
+        } else {
+          alert("Erreur de connexion: " + (data.error || "Inconnue"));
+        }
+      } catch (err) {
+        console.error("Erreur lors de la connexion:", err);
+        alert("Erreur lors de la connexion");
       }
-      if (userData.password !== password) {
-        alert("Mot de passe incorrect.");
-        return;
-      }
-      sessionStorage.setItem('connectedUser', username);
-      window.location.href = "mon-compte.html";
     });
     const btnCreerCompte = document.getElementById("btn-creer-compte");
     if (btnCreerCompte) {
@@ -37,25 +45,28 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== Pour creer-compte.html (Registration) =====
   const registerForm = document.getElementById("register-form");
   if (registerForm) {
-    registerForm.addEventListener("submit", (e) => {
+    registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const username = document.getElementById("register-username").value.trim();
       const password = document.getElementById("register-password").value.trim();
       const birthdate = document.getElementById("register-birthdate").value;
-      if (localStorage.getItem("user_" + username)) {
-        alert("Cet identifiant existe déjà, veuillez en choisir un autre.");
-        return;
+      try {
+        const res = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password, birthdate })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert("Inscription réussie !");
+          window.location.href = "utilisateur.html";
+        } else {
+          alert("Erreur d'inscription: " + (data.error || "Inconnue"));
+        }
+      } catch (err) {
+        console.error("Erreur lors de l'inscription:", err);
+        alert("Erreur lors de l'inscription");
       }
-      const createdAt = new Date().toISOString();
-      const userData = {
-        username: username,
-        password: password,
-        birthdate: birthdate,
-        createdAt: createdAt
-      };
-      localStorage.setItem("user_" + username, JSON.stringify(userData));
-      sessionStorage.setItem("connectedUser", username);
-      window.location.href = "mon-compte.html";
     });
   }
 
@@ -65,54 +76,17 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "utilisateur.html";
   }
   if (document.getElementById("titre-bienvenue") && connectedUser) {
-    const userData = JSON.parse(localStorage.getItem("user_" + connectedUser) || "{}");
     const titreBienvenue = document.getElementById("titre-bienvenue");
-    const infoMembre = document.getElementById("info-membre");
-    if (userData.username) {
-      titreBienvenue.textContent = "Bienvenue, " + userData.username;
-      if (userData.createdAt) {
-        const date = new Date(userData.createdAt);
-        infoMembre.textContent = "Membre depuis le " + date.toLocaleDateString("fr-FR");
-      }
-    }
-
-    const changeUsernameForm = document.getElementById("change-username-form");
-    if (changeUsernameForm) {
-      changeUsernameForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const newUsername = document.getElementById("new-username").value.trim();
-        if (localStorage.getItem("user_" + newUsername)) {
-          alert("Ce nom d'utilisateur est déjà utilisé.");
-          return;
-        }
-        localStorage.removeItem("user_" + userData.username);
-        userData.username = newUsername;
-        localStorage.setItem("user_" + newUsername, JSON.stringify(userData));
-        sessionStorage.setItem("connectedUser", newUsername);
-        alert("Nom d'utilisateur mis à jour avec succès !");
-        window.location.reload();
-      });
-    }
-
-    const changePasswordForm = document.getElementById("change-password-form");
-    if (changePasswordForm) {
-      changePasswordForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const newPassword = document.getElementById("new-password").value.trim();
-        userData.password = newPassword;
-        localStorage.setItem("user_" + userData.username, JSON.stringify(userData));
-        alert("Mot de passe mis à jour avec succès !");
-        window.location.reload();
-      });
-    }
-
-    const logoutBtn = document.getElementById("logout");
-    if (logoutBtn) {
-      logoutBtn.addEventListener("click", () => {
-        sessionStorage.removeItem("connectedUser");
-        window.location.href = "index.html";
-      });
-    }
+    titreBienvenue.textContent = "Bienvenue, " + connectedUser;
+    // Vous pouvez effectuer ici des appels supplémentaires pour récupérer les données de l'utilisateur si nécessaire
+  }
+  const logoutBtn = document.getElementById("logout");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("connectedUser");
+      window.location.href = "index.html";
+    });
   }
 
   // ===== Pour sorties-a-faire.html =====
@@ -205,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (yearFait) {
       const currentYear = new Date().getFullYear();
-      const range = 10; // Par exemple, 10 prochaines années
+      const range = 10; // Génère 10 années à partir de l'année courante
       for (let i = 0; i < range; i++) {
         const option = document.createElement("option");
         option.value = currentYear + i;
@@ -248,7 +222,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===== Fonction de basculement du mode édition =====
-  window.toggleEdit = function (btn) {
+  window.toggleEdit = function(btn) {
     const row = btn.parentElement.parentElement;
     const isEditing = row.getAttribute("data-editing") === "true";
     const cells = row.querySelectorAll("td:not(:first-child)");
@@ -256,7 +230,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return val ? `~${val}m` : "";
     }
     if (!isEditing) {
-      // Activer l'édition
       cells.forEach(cell => {
         cell.contentEditable = "true";
         cell.classList.add("editable");
@@ -264,7 +237,6 @@ document.addEventListener("DOMContentLoaded", () => {
       row.setAttribute("data-editing", "true");
       btn.textContent = "✔️";
     } else {
-      // Désactiver l'édition et reformater les colonnes altitude et dénivelé
       cells.forEach(cell => {
         cell.contentEditable = "false";
         cell.classList.remove("editable");
@@ -280,5 +252,5 @@ document.addEventListener("DOMContentLoaded", () => {
       row.setAttribute("data-editing", "false");
       btn.textContent = "✏️";
     }
-  }
+  };
 });
