@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById("titre-bienvenue") && connectedUser) {
     const titreBienvenue = document.getElementById("titre-bienvenue");
     titreBienvenue.textContent = "Bienvenue, " + connectedUser;
-    // Vous pouvez récupérer et afficher d'autres infos via une API ici
+    // Ici, vous pouvez ajouter des appels à l'API pour récupérer des infos supplémentaires
   }
   const logoutBtn = document.getElementById("logout");
   if (logoutBtn) {
@@ -116,10 +116,10 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // Générer la liste des années pour sorties à faire
+    // Génération de la liste d'années pour les sorties à faire
     if (yearSelect) {
       const currentYear = new Date().getFullYear();
-      const range = 10;
+      const range = 10; // 10 prochaines années
       for (let i = 0; i < range; i++) {
         const option = document.createElement("option");
         option.value = currentYear + i;
@@ -128,7 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    formAFaire.addEventListener("submit", (e) => {
+    formAFaire.addEventListener("submit", async (e) => {
       e.preventDefault();
       const sommet = document.getElementById("sommet").value.trim();
       const altitudeVal = document.getElementById("altitude").value.trim();
@@ -138,26 +138,57 @@ document.addEventListener("DOMContentLoaded", () => {
       const cotation = cotationSelect.value;
       const year = yearSelect.value;
 
-      function formatValue(val) {
-        return val ? `~${val}m` : "";
-      }
-      const altFormatted = formatValue(altitudeVal);
-      const denFormatted = formatValue(deniveleVal);
+      const sortieData = {
+        type: "a-faire", // Pour distinguer, si besoin
+        sommet,
+        altitude: altitudeVal,
+        denivele: deniveleVal,
+        details,
+        methode,
+        cotation,
+        annee: year
+      };
 
-      const newRow = document.createElement("tr");
-      newRow.innerHTML = `
-        <td><button class="edit-btn" onclick="toggleEdit(this)">✏️</button></td>
-        <td>${sommet}</td>
-        <td>${altFormatted}</td>
-        <td>${denFormatted}</td>
-        <td>${details}</td>
-        <td>${methode}</td>
-        <td>${cotation}</td>
-        <td>${year}</td>
-      `;
-      tableBodyAFaire.appendChild(newRow);
-      formAFaire.reset();
-      cotationSelect.innerHTML = '<option value="" disabled selected>Cotation</option>';
+      // Récupérer le token pour l'envoi avec authentification
+      const token = sessionStorage.getItem("token");
+
+      try {
+        const res = await fetch("/api/sorties", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify(sortieData)
+        });
+        const data = await res.json();
+        if (res.ok) {
+          // Ajout dans le tableau en cas de succès
+          function formatValue(val) { return val ? `~${val}m` : ""; }
+          const altFormatted = formatValue(altitudeVal);
+          const denFormatted = formatValue(deniveleVal);
+          const newRow = document.createElement("tr");
+          newRow.innerHTML = `
+            <td><button class="edit-btn" onclick="toggleEdit(this)">✏️</button></td>
+            <td>${sommet}</td>
+            <td>${altFormatted}</td>
+            <td>${denFormatted}</td>
+            <td>${details}</td>
+            <td>${methode}</td>
+            <td>${cotation}</td>
+            <td>${year}</td>
+          `;
+          tableBodyAFaire.appendChild(newRow);
+          formAFaire.reset();
+          cotationSelect.innerHTML = '<option value="" disabled selected>Cotation</option>';
+          alert("Sortie ajoutée avec succès !");
+        } else {
+          alert("Erreur lors de l'ajout de la sortie : " + (data.error || "Inconnue"));
+        }
+      } catch (err) {
+        console.error("Erreur lors de la requête :", err);
+        alert("Erreur lors de la connexion au serveur");
+      }
     });
   }
 
@@ -166,7 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (formFait) {
     const methodeFait = document.getElementById("methode-fait");
     const cotationFait = document.getElementById("cotation-fait");
-    const dateInput = document.getElementById("date"); // Ici on utilise le champ date
+    const dateInput = document.getElementById("date"); // champ type date pour sorties faites
     const tableBodyFait = document.getElementById("table-body-fait");
     const cotationsParMéthode = {
       "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED"],
@@ -189,7 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    formFait.addEventListener("submit", (e) => {
+    formFait.addEventListener("submit", async (e) => {
       e.preventDefault();
       const sommet = document.getElementById("sommet-fait").value.trim();
       const altitudeVal = document.getElementById("altitude-fait").value.trim();
@@ -197,28 +228,57 @@ document.addEventListener("DOMContentLoaded", () => {
       const details = document.getElementById("details-fait").value.trim();
       const methode = methodeFait.value;
       const cotation = cotationFait.value;
-      const date = dateInput.value;
+      const date = dateInput.value; // La date réelle
 
-      function formatValue(val) {
-        return val ? `~${val}m` : "";
+      const sortieData = {
+        type: "fait", // Permet de distinguer entre sorties "à faire" et "faites"
+        sommet,
+        altitude: altitudeVal,
+        denivele: deniveleVal,
+        details,
+        methode,
+        cotation,
+        date // On envoie la date complète
+      };
+
+      const token = sessionStorage.getItem("token");
+
+      try {
+        const res = await fetch("/api/sorties", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify(sortieData)
+        });
+        const data = await res.json();
+        if (res.ok) {
+          function formatValue(val) { return val ? `~${val}m` : ""; }
+          const altFormatted = formatValue(altitudeVal);
+          const denFormatted = formatValue(deniveleVal);
+          const newRow = document.createElement("tr");
+          newRow.innerHTML = `
+            <td><button class="edit-btn" onclick="toggleEdit(this)">✏️</button></td>
+            <td>${sommet}</td>
+            <td>${altFormatted}</td>
+            <td>${denFormatted}</td>
+            <td>${details}</td>
+            <td>${methode}</td>
+            <td>${cotation}</td>
+            <td>${date}</td>
+          `;
+          tableBodyFait.appendChild(newRow);
+          formFait.reset();
+          cotationFait.innerHTML = '<option value="" disabled selected>Cotation</option>';
+          alert("Sortie ajoutée avec succès !");
+        } else {
+          alert("Erreur lors de l'ajout de la sortie : " + (data.error || "Inconnue"));
+        }
+      } catch (err) {
+        console.error("Erreur lors de la requête :", err);
+        alert("Erreur lors de la connexion au serveur");
       }
-      const altFormatted = formatValue(altitudeVal);
-      const denFormatted = formatValue(deniveleVal);
-
-      const newRow = document.createElement("tr");
-      newRow.innerHTML = `
-        <td><button class="edit-btn" onclick="toggleEdit(this)">✏️</button></td>
-        <td>${sommet}</td>
-        <td>${altFormatted}</td>
-        <td>${denFormatted}</td>
-        <td>${details}</td>
-        <td>${methode}</td>
-        <td>${cotation}</td>
-        <td>${date}</td>
-      `;
-      tableBodyFait.appendChild(newRow);
-      formFait.reset();
-      cotationFait.innerHTML = '<option value="" disabled selected>Cotation</option>';
     });
   }
 
