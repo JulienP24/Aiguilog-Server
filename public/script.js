@@ -488,4 +488,47 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Erreur lors de la connexion au serveur");
     }
   };
+
+  // Fonction pour mettre à jour le datalist avec les suggestions de sommets
+  async function updateSummitsDatalist() {
+    const inputSommet = document.getElementById("sommet");
+    const datalist = document.getElementById("summits-list");
+    const query = inputSommet.value.trim();
+    if (query.length < 2) {
+      datalist.innerHTML = "";
+      return;
+    }
+    try {
+      const res = await fetch(`/api/summits?q=${encodeURIComponent(query)}`);
+      const suggestions = await res.json();
+      // Remplir le datalist avec des <option> contenant le nom et un attribut data-altitude
+      datalist.innerHTML = suggestions.map(s =>
+        `<option data-altitude="${s.elevation}" value="${s.name}">`
+      ).join('');
+    } catch (err) {
+      console.error("Erreur lors de l'auto-complétion des sommets :", err);
+    }
+  }
+
+  // Attacher l'événement d'entrée sur le champ "sommet"
+  const sommetInput = document.getElementById("sommet");
+  if (sommetInput) {
+    sommetInput.addEventListener("input", updateSummitsDatalist);
+
+    // Lors du changement, vérifier la sélection et remplir le champ "Altitude" avec l'altitude correspondante
+    sommetInput.addEventListener("change", () => {
+      const datalist = document.getElementById("summits-list");
+      const options = datalist.options;
+      for (let i = 0; i < options.length; i++) {
+        if (options[i].value.toLowerCase() === sommetInput.value.trim().toLowerCase()) {
+          const altitudeInput = document.getElementById("altitude");
+          if (altitudeInput) {
+            altitudeInput.value = options[i].getAttribute("data-altitude") || "";
+          }
+          break;
+        }
+      }
+    });
+  }
+
 });

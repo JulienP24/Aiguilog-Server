@@ -46,6 +46,22 @@ client.connect()
       }
     });
 
+    // Endpoint pour rechercher des sommets dans la collection "summits"
+    app.get('/api/summits', async (req, res) => {
+      const q = req.query.q;
+      if (!q) return res.json([]);
+      try {
+        // Recherche insensible à la casse sur le champ "name"
+        const results = await db.collection("summits").find({
+          name: { $regex: q, $options: "i" }
+        }).toArray();
+        res.json(results);
+      } catch (err) {
+        console.error("Erreur dans /api/summits :", err);
+        res.status(500).json({ error: "Erreur serveur lors de la recherche" });
+      }
+    });
+
     // ---------- Connexion ----------
     app.post('/api/login', async (req, res) => {
       try {

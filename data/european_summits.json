@@ -1,0 +1,24 @@
+[
+    { "name": "Mont Blanc", "elevation": 4808 },
+    { "name": "Dufourspitze", "elevation": 4634 },
+    { "name": "Matterhorn", "elevation": 4478 },
+    { "name": "Weisshorn", "elevation": 4506 },
+    { "name": "Dom", "elevation": 4545 },
+    { "name": "Liskamm", "elevation": 4527 },
+    { "name": "Grand Combin", "elevation": 4314 },
+    { "name": "Finsteraarhorn", "elevation": 4274 },
+    { "name": "Jungfrau", "elevation": 4158 },
+    { "name": "Aletschhorn", "elevation": 4193 },
+    { "name": "Mönch", "elevation": 4107 },
+    { "name": "Eiger", "elevation": 3967 },
+    { "name": "Piz Bernina", "elevation": 4049 },
+    { "name": "Gran Paradiso", "elevation": 4061 },
+    { "name": "Grossglockner", "elevation": 3798 },
+    { "name": "Monte Viso", "elevation": 3841 },
+    { "name": "Piz Palü", "elevation": 3901 },
+    { "name": "Mulhacén", "elevation": 3478 },
+    { "name": "Aneto", "elevation": 3404 },
+    { "name": "Mont Ventoux", "elevation": 1912 },
+    { "name": "Ben Nevis", "elevation": 1345 }
+  ]
+  
