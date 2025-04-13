@@ -20,23 +20,27 @@ document.addEventListener("DOMContentLoaded", () => {
     return localStorage.getItem("token");
   }
   
-  // --- Mise à jour du lien utilisateur dans le header ---
+  // --- Redirection pour les pages protégées ---
+  // On vérifie si l'URL contient l'un des chemins protégés.
+  const protectedPages = ["/mon-compte", "/sorties-a-faire", "/sorties-faites"];
+  const currentPath = window.location.pathname;
+  if (protectedPages.some(page => currentPath.includes(page))) {
+    const token = getToken();
+    const user = getUser();
+    // Si l'une des informations manque, rediriger vers la page de connexion
+    if (!token || !user) {
+      window.location.href = "utilisateur.html";
+      return;
+    }
+  }
+  
+  // --- Pour mettre à jour le lien dans l'avatar (dans le header) ---
   const navLinks = document.querySelectorAll("nav a[href='utilisateur.html']");
   const user = getUser();
   if (navLinks) {
     navLinks.forEach(link => {
       link.href = user ? "mon-compte.html" : "utilisateur.html";
     });
-  }
-  
-  // --- Redirection sur pages protégées ---
-  const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
-  const currentPath = window.location.pathname;
-  if (protectedPages.some(page => currentPath.endsWith(page))) {
-    if (!getToken() || !getUser()) {
-      window.location.href = "utilisateur.html";
-      return;
-    }
   }
   
   // --- Pour index.html ---
@@ -155,7 +159,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Pour sorties-a-faire.html (Sorties à faire) ---
   const formAFaire = document.getElementById("form-a-faire");
   if (formAFaire) {
-    // Charger les sorties de type "a-faire"
     loadSorties().then((sorties) => {
       const filtered = sorties.filter(s => s.type === "a-faire");
       const tableBodyAFaire = document.getElementById("table-body-afaire");
@@ -219,7 +222,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const methode = methodeSelect.value;
       const cotation = cotationSelect.value;
       const year = yearSelect.value;
-  
       const sortieData = {
         type: "a-faire",
         sommet,
@@ -324,7 +326,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const methode = methodeFait.value;
       const cotation = cotationFait.value;
       const date = dateInput.value;
-  
       const sortieData = {
         type: "fait",
         sommet,
