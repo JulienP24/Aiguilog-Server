@@ -441,22 +441,29 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
+  // Fonction pour envoyer la mise à jour via PUT
   async function saveRow(row, mode) {
     const sortieId = row.getAttribute("data-id");
     const cells = row.querySelectorAll("td");
+    // Récupération des valeurs depuis les champs d'édition
     const updatedData = {
-      sommet: cells[1].querySelector("input").value.trim(),
-      altitude: cells[2].querySelector("input").value.trim(),
-      denivele: cells[3].querySelector("input").value.trim(),
-      methode: cells[4].querySelector("select").value,
-      cotation: cells[5].querySelector("select").value,
-      details: cells[7].querySelector("textarea").value.trim()
+      sommet: cells[1].querySelector("input") ? cells[1].querySelector("input").value.trim() : "",
+      altitude: cells[2].querySelector("input") ? cells[2].querySelector("input").value.trim() : "",
+      denivele: cells[3].querySelector("input") ? cells[3].querySelector("input").value.trim() : "",
+      methode: cells[4].querySelector("select") ? cells[4].querySelector("select").value : "",
+      cotation: cells[5].querySelector("select") ? cells[5].querySelector("select").value : "",
+      details: cells[7].querySelector("textarea") ? cells[7].querySelector("textarea").value.trim() : ""
     };
+
+    // Pour le champ date (ou année) selon le mode d'affichage ("fait" ou "a-faire")
     if (mode === "fait") {
-      updatedData.date = cells[6].querySelector("input[type=date]").value;
+      const dateInput = cells[6].querySelector("input[type=date]");
+      updatedData.date = dateInput ? dateInput.value : "";
     } else {
-      updatedData.annee = cells[6].querySelector("select").value;
+      const yearSelect = cells[6].querySelector("select");
+      updatedData.annee = yearSelect ? yearSelect.value : "";
     }
+
     const token = getToken();
     try {
       const res = await fetch(`/api/sorties/${sortieId}`, {
@@ -479,6 +486,7 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Erreur lors de la connexion au serveur");
     }
   }
+
 
   window.deleteRow = async function(row) {
     const sortieId = row.getAttribute("data-id");
