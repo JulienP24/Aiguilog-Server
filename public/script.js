@@ -1,23 +1,23 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // ----------------- UTILITAIRES -----------------
+  // ------------------ UTILITAIRES ------------------
   function formatValue(val) {
     return val ? `~${val}m` : "";
   }
-
+  
   function getUser() {
     const raw = localStorage.getItem("user");
     try {
       return raw ? JSON.parse(raw) : null;
-    } catch {
+    } catch (e) {
       return null;
     }
   }
-
+  
   function getToken() {
     return localStorage.getItem("token");
   }
-
-  // Met à jour le lien sur l'icône utilisateur
+  
+  // Met à jour le lien de l'icône utilisateur dans le header
   function updateUserIconLink() {
     const userIconLink = document.querySelector(".nav-right a");
     if (userIconLink) {
@@ -25,8 +25,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   updateUserIconLink();
-
-  // ----------------- Vérification des pages protégées -----------------
+  
+  // ------------------ Redirection pour pages protégées ------------------
   const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
   const currentPath = window.location.pathname;
   if (protectedPages.some(page => currentPath.endsWith(page))) {
@@ -35,16 +35,16 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
   }
-
-  // ----------------- Navigation (Index, Connexion, Inscription) -----------------
+  
+  // ------------------ Navigation ------------------
   const btnGoLogin = document.getElementById("btn-go-login");
   if (btnGoLogin) {
     btnGoLogin.addEventListener("click", () => {
       window.location.href = "utilisateur.html";
     });
   }
-
-  // Connexion (utilisateur.html)
+  
+  // ---- Connexion (utilisateur.html) ----
   const loginForm = document.getElementById("login-form");
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
@@ -78,8 +78,8 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   }
-
-  // Inscription (creer-compte.html)
+  
+  // ---- Inscription (creer-compte.html) ----
   const registerForm = document.getElementById("register-form");
   if (registerForm) {
     registerForm.addEventListener("submit", async (e) => {
@@ -110,8 +110,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
-  // Mon-compte (mon-compte.html)
+  
+  // ---- Mon-compte (mon-compte.html) ----
   if (document.getElementById("titre-bienvenue")) {
     const userData = getUser();
     if (!userData) {
@@ -134,8 +134,8 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = "utilisateur.html";
     });
   }
-
-  // ----------------- Chargement des sorties -----------------
+  
+  // ------------------ Chargement des sorties ------------------
   async function loadSorties() {
     const token = getToken();
     if (!token) return [];
@@ -150,8 +150,39 @@ document.addEventListener("DOMContentLoaded", () => {
       return [];
     }
   }
-
-  // ----------------- Ajout d'une sortie "à faire" -----------------
+  
+  async function displaySorties() {
+    const sorties = await loadSorties();
+    const typeToDisplay = currentPath.includes("sorties-faites") ? "fait" : "a-faire";
+    const tableBody = document.getElementById(
+      currentPath.includes("sorties-faites") ? "table-body-fait" : "table-body-afaire"
+    );
+    if (tableBody) {
+      tableBody.innerHTML = "";
+      sorties.filter(s => s.type === typeToDisplay).forEach(s => {
+        const newRow = document.createElement("tr");
+        newRow.setAttribute("data-id", s._id);
+        // Ordre des colonnes : Actions, Sommet, Altitude, Dénivelé, Méthode, Cotation, Date/Année, Détails
+        newRow.innerHTML = `
+          <td>
+            <button class="edit-btn" onclick="editRow(this.parentElement.parentElement, '${s.type}')">✏️</button>
+            <button class="delete-btn" onclick="deleteRow(this.parentElement.parentElement)">🗑</button>
+          </td>
+          <td>${s.sommet}</td>
+          <td>${formatValue(s.altitude)}</td>
+          <td>${formatValue(s.denivele)}</td>
+          <td>${s.methode}</td>
+          <td>${s.cotation}</td>
+          <td>${s.type === "fait" ? s.date : s.annee || ""}</td>
+          <td>${s.details}</td>
+        `;
+        tableBody.appendChild(newRow);
+      });
+    }
+  }
+  displaySorties();
+  
+  // ------------------ Formulaire "Sorties à faire" ------------------
   const formAFaire = document.getElementById("form-a-faire");
   if (formAFaire) {
     const methodeSelect = document.getElementById("methode");
@@ -163,7 +194,6 @@ document.addEventListener("DOMContentLoaded", () => {
       "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
       "Escalade": ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"]
     };
-  
     if (methodeSelect && cotationSelect) {
       methodeSelect.addEventListener("change", () => {
         const val = methodeSelect.value;
@@ -187,7 +217,6 @@ document.addEventListener("DOMContentLoaded", () => {
         yearSelect.appendChild(op);
       }
     }
-    
     formAFaire.addEventListener("submit", async (e) => {
       e.preventDefault();
       const sommet = document.getElementById("sommet").value.trim();
@@ -231,8 +260,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
-  // ----------------- Ajout d'une sortie "fait" -----------------
+  
+  // ------------------ Formulaire "Sorties faites" ------------------
   const formFait = document.getElementById("form-fait");
   if (formFait) {
     const methodeFaitSelect = document.getElementById("methode-fait");
@@ -244,7 +273,6 @@ document.addEventListener("DOMContentLoaded", () => {
       "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
       "Escalade": ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"]
     };
-  
     if (methodeFaitSelect && cotationFaitSelect) {
       methodeFaitSelect.addEventListener("change", () => {
         const val = methodeFaitSelect.value;
@@ -259,7 +287,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     }
-    
     formFait.addEventListener("submit", async (e) => {
       e.preventDefault();
       const sommet = document.getElementById("sommet-fait").value.trim();
@@ -268,7 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const methode = methodeFaitSelect.value;
       const cotation = cotationFaitSelect.value;
       const dateVal = dateInput.value;
-      const details = detailsFait.value.trim();
+      const details = document.getElementById("details-fait").value.trim();
       
       const sortieData = {
         type: "fait",
@@ -303,64 +330,23 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
-  // ----------------- Affichage des sorties -----------------
-  async function loadSorties() {
-    const token = getToken();
-    if (!token) return [];
-    try {
-      const res = await fetch("/api/sorties", {
-        headers: { "Authorization": "Bearer " + token }
-      });
-      const sorties = await res.json();
-      return sorties;
-    } catch (err) {
-      console.error("Erreur lors du chargement des sorties :", err);
-      return [];
-    }
-  }
-
-  async function displaySorties() {
-    const sorties = await loadSorties();
-    const typeToDisplay = currentPath.includes("sorties-faites") ? "fait" : "a-faire";
-    const tableBody = document.getElementById(currentPath.includes("sorties-faites") ? "table-body-fait" : "table-body-afaire");
-    if (tableBody) {
-      tableBody.innerHTML = "";
-      sorties.filter(s => s.type === typeToDisplay).forEach(s => {
-        const newRow = document.createElement("tr");
-        newRow.setAttribute("data-id", s._id);
-        // Ordre : Actions, Sommet, Altitude, Dénivelé, Méthode, Cotation, Date/Année, Détails
-        newRow.innerHTML = `
-          <td>
-            <button class="edit-btn" onclick="editRow(this.parentElement.parentElement, '${s.type}')">✏️</button>
-            <button class="delete-btn" onclick="deleteRow(this.parentElement.parentElement)">🗑</button>
-          </td>
-          <td>${s.sommet}</td>
-          <td>${formatValue(s.altitude)}</td>
-          <td>${formatValue(s.denivele)}</td>
-          <td>${s.methode}</td>
-          <td>${s.cotation}</td>
-          <td>${s.type === "fait" ? s.date : s.annee || ""}</td>
-          <td>${s.details}</td>
-        `;
-        tableBody.appendChild(newRow);
-      });
-    }
-  }
-  displaySorties();
-
-  // ----------------- Fonction d'édition et de suppression -----------------
+  
+  // ------------------ Edition et suppression des sorties ------------------
   const methods = ["Alpinisme", "Randonnée", "Escalade"];
   const cotationsByMethod = {
     "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED", "ABO"],
     "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
     "Escalade": ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"]
   };
-
-  // Fonction d'édition d'une ligne (mode "fait" ou "a-faire")
+  
   window.editRow = function(row, mode) {
     const cells = row.querySelectorAll("td");
-    // Indices : 1: Sommet, 2: Altitude, 3: Dénivelé, 4: Méthode, 5: Cotation, 6: Date/Année, 7: Détails
+    if (cells.length < 8) {
+      console.error("La ligne n'a pas le nombre de cellules attendu.", row);
+      return;
+    }
+    
+    // Récupération des valeurs existantes
     const sommetVal = cells[1].textContent;
     const altitudeVal = cells[2].textContent.replace(/^~/, "").replace(/m$/, "").trim();
     const deniveleVal = cells[3].textContent.replace(/^~/, "").replace(/m$/, "").trim();
@@ -369,101 +355,150 @@ document.addEventListener("DOMContentLoaded", () => {
     const dateOrYearVal = cells[6].textContent;
     const detailsVal = cells[7].textContent;
     
-    cells[1].innerHTML = `<input type="text" value="${sommetVal}" style="width:100%;">`;
-    cells[2].innerHTML = `<input type="number" value="${altitudeVal}" style="width:100%;">`;
-    cells[3].innerHTML = `<input type="number" value="${deniveleVal}" style="width:100%;">`;
+    // Sommet
+    const inputSommet = document.createElement("input");
+    inputSommet.type = "text";
+    inputSommet.style.width = "100%";
+    inputSommet.value = sommetVal;
+    cells[1].innerHTML = "";
+    cells[1].appendChild(inputSommet);
     
-    // Méthode (select)
-    let methodSelectHTML = `<select style="width:100%;">`;
+    // Altitude
+    const inputAltitude = document.createElement("input");
+    inputAltitude.type = "number";
+    inputAltitude.style.width = "100%";
+    inputAltitude.value = altitudeVal;
+    cells[2].innerHTML = "";
+    cells[2].appendChild(inputAltitude);
+    
+    // Dénivelé
+    const inputDenivele = document.createElement("input");
+    inputDenivele.type = "number";
+    inputDenivele.style.width = "100%";
+    inputDenivele.value = deniveleVal;
+    cells[3].innerHTML = "";
+    cells[3].appendChild(inputDenivele);
+    
+    // Méthode
+    const selectMethode = document.createElement("select");
+    selectMethode.style.width = "100%";
     methods.forEach(opt => {
-      methodSelectHTML += `<option value="${opt}" ${opt === methodeVal ? "selected" : ""}>${opt}</option>`;
+      const option = document.createElement("option");
+      option.value = opt;
+      option.textContent = opt;
+      if (opt === methodeVal) option.selected = true;
+      selectMethode.appendChild(option);
     });
-    methodSelectHTML += `</select>`;
-    cells[4].innerHTML = methodSelectHTML;
+    cells[4].innerHTML = "";
+    cells[4].appendChild(selectMethode);
     
-    // Cotation (select) en fonction de la méthode
-    let currentMethod = (cells[4].querySelector("select") || {}).value || methodeVal;
-    let options = cotationsByMethod[currentMethod] || [];
-    let cotSelectHTML = `<select style="width:100%;">`;
-    options.forEach(opt => {
-      cotSelectHTML += `<option value="${opt}" ${opt === cotationVal ? "selected" : ""}>${opt}</option>`;
+    // Cotation
+    let currentMethod = selectMethode.value;
+    const selectCotation = document.createElement("select");
+    selectCotation.style.width = "100%";
+    (cotationsByMethod[currentMethod] || []).forEach(opt => {
+      const option = document.createElement("option");
+      option.value = opt;
+      option.textContent = opt;
+      if (opt === cotationVal) option.selected = true;
+      selectCotation.appendChild(option);
     });
-    cotSelectHTML += `</select>`;
-    cells[5].innerHTML = cotSelectHTML;
+    cells[5].innerHTML = "";
+    cells[5].appendChild(selectCotation);
     
-    // Si la méthode change, actualiser la cotation
-    cells[4].querySelector("select").addEventListener("change", function() {
+    // Actualiser cotation si méthode change
+    selectMethode.addEventListener("change", function() {
       const newMethod = this.value;
-      const newOptions = cotationsByMethod[newMethod] || [];
-      let newCotHTML = `<select style="width:100%;">`;
-      newOptions.forEach(o => {
-        newCotHTML += `<option value="${o}">${o}</option>`;
+      selectCotation.innerHTML = "";
+      (cotationsByMethod[newMethod] || []).forEach(opt => {
+        const option = document.createElement("option");
+        option.value = opt;
+        option.textContent = opt;
+        selectCotation.appendChild(option);
       });
-      newCotHTML += `</select>`;
-      cells[5].innerHTML = newCotHTML;
     });
     
     // Date ou Année
+    cells[6].innerHTML = "";
     if (mode === "fait") {
-      cells[6].innerHTML = `<input type="date" value="${dateOrYearVal}" style="width:100%;">`;
+      const inputDate = document.createElement("input");
+      inputDate.type = "date";
+      inputDate.style.width = "100%";
+      inputDate.value = dateOrYearVal || "";
+      cells[6].appendChild(inputDate);
     } else {
+      const selectYear = document.createElement("select");
+      selectYear.style.width = "100%";
       const currentYear = new Date().getFullYear();
-      let yearSelectHTML = `<select style="width:100%;">`;
       for (let i = 0; i < 10; i++) {
         const yr = currentYear + i;
-        yearSelectHTML += `<option value="${yr}" ${yr == dateOrYearVal ? "selected" : ""}>${yr}</option>`;
+        const option = document.createElement("option");
+        option.value = yr;
+        option.textContent = yr;
+        if (String(yr) === dateOrYearVal) option.selected = true;
+        selectYear.appendChild(option);
       }
-      yearSelectHTML += `</select>`;
-      cells[6].innerHTML = yearSelectHTML;
-      // Actualiser la cotation si la méthode change, déjà géré ci-dessus
+      cells[6].appendChild(selectYear);
     }
     
-    // Détails (textarea)
-    cells[7].innerHTML = `<textarea style="width:100%;">${detailsVal}</textarea>`;
+    // Détails
+    const textareaDetails = document.createElement("textarea");
+    textareaDetails.style.width = "100%";
+    textareaDetails.value = detailsVal;
+    cells[7].innerHTML = "";
+    cells[7].appendChild(textareaDetails);
     
-    // Actions : Sauvegarder, Annuler, Supprimer
-    cells[0].innerHTML = `
-      <button class="save-btn">✔️</button>
-      <button class="cancel-btn">↩</button>
-      <button class="delete-btn">🗑</button>
-    `;
-    cells[0].querySelector(".save-btn").addEventListener("click", () => {
-      saveRow(row, mode);
-    });
-    cells[0].querySelector(".cancel-btn").addEventListener("click", () => {
-      window.location.reload();
-    });
-    // Le bouton Supprimer ici doit fonctionner toujours, même hors mode édition, donc cette fonction est identique
-    cells[0].querySelector(".delete-btn").addEventListener("click", () => {
-      if (confirm("Confirmez-vous la suppression ?")) {
-        deleteRow(row);
-      }
+    // Boutons
+    cells[0].innerHTML = "";
+    const saveBtn = document.createElement("button");
+    saveBtn.textContent = "✔️";
+    const cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "↩";
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "🗑";
+    cells[0].appendChild(saveBtn);
+    cells[0].appendChild(cancelBtn);
+    cells[0].appendChild(deleteBtn);
+    
+    saveBtn.addEventListener("click", () => { saveRow(row, mode); });
+    cancelBtn.addEventListener("click", () => { window.location.reload(); });
+    deleteBtn.addEventListener("click", () => {
+      if (confirm("Confirmez-vous la suppression ?")) { deleteRow(row); }
     });
   };
-
-  // Fonction pour envoyer la mise à jour via PUT
+  
   async function saveRow(row, mode) {
     const sortieId = row.getAttribute("data-id");
     const cells = row.querySelectorAll("td");
-    // Récupération des valeurs depuis les champs d'édition
-    const updatedData = {
-      sommet: cells[1].querySelector("input") ? cells[1].querySelector("input").value.trim() : "",
-      altitude: cells[2].querySelector("input") ? cells[2].querySelector("input").value.trim() : "",
-      denivele: cells[3].querySelector("input") ? cells[3].querySelector("input").value.trim() : "",
-      methode: cells[4].querySelector("select") ? cells[4].querySelector("select").value : "",
-      cotation: cells[5].querySelector("select") ? cells[5].querySelector("select").value : "",
-      details: cells[7].querySelector("textarea") ? cells[7].querySelector("textarea").value.trim() : ""
-    };
-
-    // Pour le champ date (ou année) selon le mode d'affichage ("fait" ou "a-faire")
-    if (mode === "fait") {
-      const dateInput = cells[6].querySelector("input[type=date]");
-      updatedData.date = dateInput ? dateInput.value : "";
-    } else {
-      const yearSelect = cells[6].querySelector("select");
-      updatedData.annee = yearSelect ? yearSelect.value : "";
+    const inputSommet = cells[1].querySelector("input");
+    const inputAltitude = cells[2].querySelector("input");
+    const inputDenivele = cells[3].querySelector("input");
+    const selectMethode = cells[4].querySelector("select");
+    const selectCotation = cells[5].querySelector("select");
+    const textareaDetails = cells[7].querySelector("textarea");
+    
+    if (!inputSommet || !inputAltitude || !inputDenivele || !selectMethode || !selectCotation || !textareaDetails) {
+      console.error("Erreur : un ou plusieurs champs sont introuvables.");
+      return;
     }
-
+    
+    const updatedData = {
+      sommet: inputSommet.value.trim(),
+      altitude: inputAltitude.value.trim(),
+      denivele: inputDenivele.value.trim(),
+      methode: selectMethode.value,
+      cotation: selectCotation.value,
+      details: textareaDetails.value.trim()
+    };
+    
+    if (mode === "fait") {
+      const inputDate = cells[6].querySelector("input[type=date]");
+      updatedData.date = inputDate ? inputDate.value : "";
+    } else {
+      const selectYear = cells[6].querySelector("select");
+      updatedData.annee = selectYear ? selectYear.value : "";
+    }
+    
     const token = getToken();
     try {
       const res = await fetch(`/api/sorties/${sortieId}`, {
@@ -486,8 +521,7 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Erreur lors de la connexion au serveur");
     }
   }
-
-
+  
   window.deleteRow = async function(row) {
     const sortieId = row.getAttribute("data-id");
     if (!sortieId) return;
@@ -509,9 +543,8 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Erreur lors de la connexion au serveur");
     }
   };
-
-  // ----------------- Auto-complétion pour le champ Sommet -----------------
-  // Selon la page, le champ de saisie peut être "sommet" (pour sorties à faire) ou "sommet-fait" (pour sorties faites)
+  
+  // ------------------ Auto-complétion pour le champ Sommet ------------------
   let sommetInput = document.getElementById("sommet");
   if (!sommetInput) {
     sommetInput = document.getElementById("sommet-fait");
@@ -523,7 +556,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const options = datalist.options;
       for (let i = 0; i < options.length; i++) {
         if (options[i].value.toLowerCase() === sommetInput.value.trim().toLowerCase()) {
-          // Pour le champ altitude, le nom peut différer selon la page
           let altitudeInput = document.getElementById("altitude");
           if (!altitudeInput) {
             altitudeInput = document.getElementById("altitude-fait");
@@ -536,8 +568,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
-  // Fonction pour mettre à jour le datalist
+  
   async function updateSummitsDatalist() {
     const query = sommetInput.value.trim();
     const datalist = document.getElementById("summits-list");
@@ -555,8 +586,8 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Erreur lors de l'auto-complétion des sommets :", err);
     }
   }
-
-  // ----------------- Affichage initial des sorties -----------------
+  
+  // ------------------ Affichage initial des sorties ------------------
   async function displaySorties() {
     const sorties = await loadSorties();
     const typeToDisplay = currentPath.includes("sorties-faites") ? "fait" : "a-faire";
