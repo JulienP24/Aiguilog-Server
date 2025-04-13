@@ -1,57 +1,51 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // --- UTILITAIRES ---
+  // ----------------- UTILS -----------------
   function formatValue(val) {
     return val ? `~${val}m` : "";
   }
-  
+
   function getUser() {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const raw = localStorage.getItem("user");
+    if (raw) {
       try {
-        return JSON.parse(storedUser);
+        return JSON.parse(raw);
       } catch (e) {
         return null;
       }
     }
     return null;
   }
-  
+
   function getToken() {
     return localStorage.getItem("token");
   }
-  
-  // --- Redirection pour les pages protégées ---
-  // On vérifie si l'URL contient l'un des chemins protégés.
-  const protectedPages = ["/mon-compte", "/sorties-a-faire", "/sorties-faites"];
+
+  // ----------------- PAGES PROTÉGÉES -----------------
+  const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
   const currentPath = window.location.pathname;
-  if (protectedPages.some(page => currentPath.includes(page))) {
-    const token = getToken();
-    const user = getUser();
-    // Si l'une des informations manque, rediriger vers la page de connexion
-    if (!token || !user) {
+  // Utilisation de endsWith pour matcher la fin du pathname
+  if (protectedPages.some(page => currentPath.endsWith(page))) {
+    if (!getToken() || !getUser()) {
+      // Redirection vers la page de connexion
       window.location.href = "utilisateur.html";
-      return;
+      return; // Stoppe l'exécution
     }
   }
-  
-  // --- Pour mettre à jour le lien dans l'avatar (dans le header) ---
-  const navLinks = document.querySelectorAll("nav a[href='utilisateur.html']");
-  const user = getUser();
-  if (navLinks) {
-    navLinks.forEach(link => {
-      link.href = user ? "mon-compte.html" : "utilisateur.html";
-    });
-  }
-  
-  // --- Pour index.html ---
+
+  // Met à jour le lien de l'avatar pour rediriger vers mon-compte.html si l'utilisateur est connecté
+  document.querySelectorAll("nav a[href='utilisateur.html']").forEach(link => {
+    link.href = getUser() ? "mon-compte.html" : "utilisateur.html";
+  });
+
+  // ----------------- INDEX.HTML -----------------
   const btnGoLogin = document.getElementById("btn-go-login");
   if (btnGoLogin) {
     btnGoLogin.addEventListener("click", () => {
       window.location.href = "utilisateur.html";
     });
   }
-  
-  // --- Pour utilisateur.html (Connexion) ---
+
+  // ----------------- UTILISATEUR.HTML (Connexion) -----------------
   const loginForm = document.getElementById("login-form");
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
@@ -77,6 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Erreur lors de la connexion");
       }
     });
+
     const btnCreerCompte = document.getElementById("btn-creer-compte");
     if (btnCreerCompte) {
       btnCreerCompte.addEventListener("click", () => {
@@ -84,16 +79,16 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   }
-  
-  // --- Pour creer-compte.html (Inscription) ---
+
+  // ----------------- CREER-COMPTE.HTML (Inscription) -----------------
   const registerForm = document.getElementById("register-form");
   if (registerForm) {
     registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const firstName = document.getElementById("register-firstname").value.trim();
-      const lastName = document.getElementById("register-lastname").value.trim();
-      const username = document.getElementById("register-username").value.trim();
-      const password = document.getElementById("register-password").value.trim();
+      const lastName  = document.getElementById("register-lastname").value.trim();
+      const username  = document.getElementById("register-username").value.trim();
+      const password  = document.getElementById("register-password").value.trim();
       const birthdate = document.getElementById("register-birthdate").value;
       try {
         const res = await fetch("/api/register", {
@@ -115,18 +110,18 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-  
-  // --- Pour mon-compte.html (Profil utilisateur) ---
+
+  // ----------------- MON-COMPTE.HTML (Profil utilisateur) -----------------
   if (document.getElementById("titre-bienvenue")) {
-    const storedUser = getUser();
-    if (!storedUser) {
+    const userData = getUser();
+    if (!userData) {
       window.location.href = "utilisateur.html";
     } else {
       const titreBienvenue = document.getElementById("titre-bienvenue");
-      const infoMembre = document.getElementById("info-membre");
-      titreBienvenue.textContent = `Bienvenue, ${storedUser.firstName} ${storedUser.lastName} (${storedUser.username})`;
-      if (storedUser.birthdate) {
-        const date = new Date(storedUser.birthdate);
+      const infoMembre    = document.getElementById("info-membre");
+      titreBienvenue.textContent = `Bienvenue, ${userData.firstName} ${userData.lastName} (${userData.username})`;
+      if (userData.birthdate) {
+        const date = new Date(userData.birthdate);
         infoMembre.textContent = `Né(e) le ${date.toLocaleDateString("fr-FR")}`;
       }
     }
@@ -139,8 +134,8 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = "utilisateur.html";
     });
   }
-  
-  // --- Fonction pour charger toutes les sorties depuis le serveur ---
+
+  // ----------------- Chargement des sorties depuis le serveur -----------------
   async function loadSorties() {
     const token = getToken();
     if (!token) return [];
@@ -155,10 +150,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return [];
     }
   }
-  
-  // --- Pour sorties-a-faire.html (Sorties à faire) ---
+
+  // ----------------- POUR SORTIES-A-FAIRE.HTML -----------------
   const formAFaire = document.getElementById("form-a-faire");
   if (formAFaire) {
+    // Charger les sorties de type "a-faire"
     loadSorties().then((sorties) => {
       const filtered = sorties.filter(s => s.type === "a-faire");
       const tableBodyAFaire = document.getElementById("table-body-afaire");
@@ -180,7 +176,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
     const methodeSelect = document.getElementById("methode");
     const cotationSelect = document.getElementById("cotation");
-    const yearSelect = document.getElementById("year");
+    const yearSelect     = document.getElementById("year");
     const cotationsParMéthode = {
       "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED"],
       "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
@@ -271,7 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  // --- Pour sorties-faites.html (Sorties réalisées) ---
+  // ----------------- POUR SORTIES-FAITES.HTML -----------------
   const formFait = document.getElementById("form-fait");
   if (formFait) {
     loadSorties().then((sorties) => {
@@ -375,7 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  // --- Fonction de basculement du mode édition ---
+  // ----------------- Fonction de basculement de l'édition -----------------
   window.toggleEdit = function(btn) {
     const row = btn.parentElement.parentElement;
     const isEditing = row.getAttribute("data-editing") === "true";
