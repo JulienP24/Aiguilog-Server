@@ -54,67 +54,97 @@ body {
   }
 }
 
-/* ---------- Nouveau style pour le header flottant ---------- */
+/* ---------- BARRE FLOTTANTE BLEUE ARRONDIE ---------- */
+
+/* Couleur de fond (bleu) et coins arrondis en demi-cercle */
 .ios-header {
-  position: sticky;           /* Collé en haut pendant le scroll */
-  top: 10px;                  /* Petite marge du haut pour l'effet "flottant" */
+  position: sticky;
+  top: 10px;
   z-index: 1000;
-  background-color: var(--primary);  /* Utilise le bleu défini dans --primary */
-  border-radius: 12px;        /* Coins arrondis */
-  margin: 0 5%;               /* Marge horizontale pour centrer la barre */
-  padding: 10px 20px;         /* Augmenté pour agrandir la barre */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Légère ombre pour l'effet flottant */
+  background-color: var(--primary);
+  /* Large radius pour avoir des extrémités demi-circulaires */
+  border-radius: 9999px;
+  margin: 0 5%;
+  padding: 10px 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-/* Conteneur interne pour aligner le contenu (logo, liens, icône utilisateur) */
+/* Conteneur interne */
 .nav-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-/* Logo : agrandi */
-.nav-left img.logo-img {
-  height: 60px;  /* Augmentez cette valeur pour un logo plus grand */
-}
-
-/* Navigation centrée */
-.nav-center {
-  flex: 1; /* Prend l'espace restant */
+/* Logo à gauche : descendu légèrement */
+.nav-left {
   display: flex;
+  align-items: flex-end; /* pour descendre un peu */
+}
+.nav-left img.logo-img {
+  height: 60px;         /* Logo plus grand */
+  margin-top: 4px;      /* Légère marge pour le descendre encore un peu */
+}
+
+/* Navigation centrée : chaque lien est un bouton blanc arrondi */
+.nav-center {
+  display: flex;
+  gap: 1rem;            /* espace entre les boutons */
+  flex: 1;
   justify-content: center;
-  gap: 30px; /* Espacement plus grand entre les liens */
 }
-
 .nav-center a {
+  background-color: #fff;           /* Fond blanc */
+  color: var(--primary);           /* Texte en bleu */
   text-decoration: none;
-  color: white;     /* Texte en blanc pour contraster avec le bleu */
   font-weight: 600;
-  font-size: 1.1rem;
-  padding: 8px 12px;
-  border-radius: 8px;
-  transition: background 0.3s;
+  font-size: 1rem;
+  padding: 8px 18px;
+  border-radius: 9999px;           /* pour avoir les extrémités en demi-cercle */
+  transition: background 0.3s, color 0.3s;
 }
 
+/* Quand on survole un bouton */
 .nav-center a:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+/* Lien actif (pour la page en cours) */
+.nav-center a.active {
+  background-color: #fff;          /* On garde un fond blanc */
+  color: #005ecb;                  /* Bleu un peu plus foncé ? (optionnel) */
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.8) inset; /* Soulignement discret */
 }
 
 /* Icône utilisateur à droite */
+.nav-right {
+  display: flex;
+  align-items: flex-end; /* descend un peu aussi */
+}
 .nav-right img.user-icon {
-  height: 40px;     /* Taille de l'icône utilisateur */
-  width: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
+  object-fit: cover;  /* évite la compression */
+  margin-top: 4px;    /* descend légèrement l'icône */
   cursor: pointer;
 }
 
-/* Pour le mode sombre, on peut ajuster un peu */
+/* ---------- DARK MODE ---------- */
 @media (prefers-color-scheme: dark) {
   .ios-header {
-    background-color: #4a90e2; /* Ajustement du bleu pour le dark mode */
+    background-color: #4a90e2;  /* Variation de bleu */
   }
   .nav-center a {
-    color: #f0f0f0;
+    background-color: #333;     /* Boutons plus sombres */
+    color: #fff;               /* Texte en blanc */
+  }
+  .nav-center a.active {
+    background-color: #555;
+    color: #fff;
+  }
+  .nav-right img.user-icon {
+    /* Pas nécessairement de changement, mais vous pouvez ajuster si besoin */
   }
 }
 
