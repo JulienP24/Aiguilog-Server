@@ -57,7 +57,8 @@
     <h2>Sorties faites</h2>
     <form id="form-fait" class="two-cols">
       <div class="col-left">
-        <input type="text" id="sommet-fait" placeholder="Sommet" required />
+        <input type="text" id="sommet" placeholder="Sommet" list="summits-list" required />
+        <datalist id="summits-list"></datalist>
         <input type="number" id="altitude-fait" placeholder="Altitude (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
         <input type="number" id="denivele-fait" placeholder="Dénivelé (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
       </div>
