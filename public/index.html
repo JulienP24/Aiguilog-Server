@@ -7,35 +7,42 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Header commun pour desktop et mobile -->
-  <header class="ios-header">
+  <header class="main-header">
     <div class="nav-container">
-      <!-- Version Desktop -->
+      <!-- Navigation Desktop (visible sur écran large) -->
       <div class="desktop-nav">
+        <!-- Logo à gauche -->
         <a href="index.html" class="logo-link">
           <img src="images/logo.png" alt="Aiguilog" class="logo-img">
         </a>
+        <!-- Liens de navigation centrés -->
         <nav class="nav-links">
-          <a href="sorties-faites.html">Fait</a>
-          <a href="sorties-a-faire.html">À Faire</a>
-          <a href="rechercher.html">Rechercher</a>
-          <a href="mon-compte.html">Mon compte</a>
+          <!-- Ajoutez la classe "active" au lien de la page courante -->
+          <a href="sorties-faites.html" class="nav-btn">Fait</a>
+          <a href="sorties-a-faire.html" class="nav-btn">À Faire</a>
+          <a href="rechercher.html" class="nav-btn">Rechercher</a>
+          <a href="mon-compte.html" class="nav-btn">Mon compte</a>
         </nav>
       </div>
-      <!-- Version Mobile -->
+      
+      <!-- Navigation Mobile (visible sur petit écran) -->
       <div class="mobile-nav">
-        <a href="index.html" class="logo-link">
+        <!-- Logo centré -->
+        <a href="index.html" class="logo-link-mobile">
           <img src="images/logo.png" alt="Aiguilog" class="logo-img">
         </a>
+        <!-- Bouton Hamburger -->
         <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">&#9776;</button>
       </div>
     </div>
+    
+    <!-- Menu mobile latéral (caché par défaut, visible via CSS/mobile JS) -->
     <nav id="mobile-menu">
       <ul>
-        <li><a href="sorties-faites.html">Fait</a></li>
-        <li><a href="sorties-a-faire.html">À Faire</a></li>
-        <li><a href="rechercher.html">Rechercher</a></li>
-        <li><a href="mon-compte.html">Mon compte</a></li>
+        <li><a href="sorties-faites.html" class="nav-btn">Fait</a></li>
+        <li><a href="sorties-a-faire.html" class="nav-btn">À Faire</a></li>
+        <li><a href="rechercher.html" class="nav-btn">Rechercher</a></li>
+        <li><a href="mon-compte.html" class="nav-btn">Mon compte</a></li>
       </ul>
     </nav>
   </header>
