@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+
   /* =================== UTILITAIRES =================== */
   function formatValue(val) {
     return val ? `~${val}m` : "";
@@ -21,7 +22,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (mobileMenuToggle && mobileMenu) {
     mobileMenuToggle.addEventListener("click", () => {
       mobileMenu.classList.toggle("open");
-      // Astuce : change l'icône et la couleur selon l'état
       if (mobileMenu.classList.contains("open")) {
         mobileMenuToggle.innerHTML = "✕";
         mobileMenuToggle.style.color = "var(--primary)";
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   updateUserIconLink();
 
-  // Redirection si page protégée
+  // Redirection pour pages protégées
   const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
   if (protectedPages.some(page => currentPath.endsWith(page))) {
     if (!getToken() || !getUser()) {
@@ -235,6 +235,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     formAFaire.addEventListener("submit", async (e) => {
       e.preventDefault();
+      // Vérification du token avant soumission
+      const token = getToken();
+      if (!token) {
+        alert("Vous n'êtes pas connecté.");
+        window.location.href = "utilisateur.html";
+        return;
+      }
       const sommet = document.getElementById("sommet").value.trim();
       const altitude = document.getElementById("altitude").value.trim();
       const denivele = document.getElementById("denivele").value.trim();
@@ -253,7 +260,7 @@ document.addEventListener("DOMContentLoaded", () => {
         annee,
         details
       };
-      const token = getToken();
+
       try {
         const res = await fetch("/api/sorties", {
           method: "POST",
@@ -307,6 +314,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     formFait.addEventListener("submit", async (e) => {
       e.preventDefault();
+      const token = getToken();
+      if (!token) {
+        alert("Vous n'êtes pas connecté.");
+        window.location.href = "utilisateur.html";
+        return;
+      }
       const sommet = document.getElementById("sommet-fait").value.trim();
       const altitude = document.getElementById("altitude-fait").value.trim();
       const denivele = document.getElementById("denivele-fait").value.trim();
@@ -325,7 +338,7 @@ document.addEventListener("DOMContentLoaded", () => {
         date: dateVal,
         details
       };
-      const token = getToken();
+
       try {
         const res = await fetch("/api/sorties", {
           method: "POST",
@@ -349,7 +362,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* =================== ÉDITION DES SORTIES (sans bouton de suppression en édition) =================== */
+  /* =================== ÉDITION DES SORTIES =================== */
   const methods = ["Alpinisme", "Randonnée", "Escalade"];
   const cotationsByMethod = {
     "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED", "ABO"],
@@ -371,7 +384,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const dateOrYearVal = cells[6].textContent;
     const detailsVal = cells[7].textContent;
 
-    // On remplace les cellules par des inputs/editables
+    // Remplacer les cellules par des champs éditables
     cells[1].innerHTML = `<input type="text" value="${sommetVal}" style="width:100%;">`;
     cells[2].innerHTML = `<input type="number" value="${altitudeVal}" style="width:100%;">`;
     cells[3].innerHTML = `<input type="number" value="${deniveleVal}" style="width:100%;">`;
@@ -393,7 +406,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cotSelectHTML += `</select>`;
     cells[5].innerHTML = cotSelectHTML;
 
-    // Actualiser cotation si méthode change
+    // Changement de méthode actualise la liste de cotation
     cells[4].querySelector("select").addEventListener("change", function() {
       const newMethod = this.value;
       const newCotSelect = document.createElement("select");
@@ -426,7 +439,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Détails
     cells[7].innerHTML = `<textarea style="width:100%;">${detailsVal}</textarea>`;
 
-    // On masque le bouton corbeille => on n'affiche que Save/Cancel
+    // Masquer le bouton de suppression et afficher Save/Cancel
     cells[0].innerHTML = "";
     const saveBtn = document.createElement("button");
     saveBtn.textContent = "✔️";
@@ -544,8 +557,9 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const res = await fetch(`/api/summits?q=${encodeURIComponent(query)}`);
       const suggestions = await res.json();
+      // Utilisation de la clé "altitude" au lieu de "elevation"
       datalist.innerHTML = suggestions.map(s =>
-        `<option data-altitude="${s.elevation}" value="${s.name}">`
+        `<option data-altitude="${s.altitude}" value="${s.name}">`
       ).join('');
     } catch (err) {
       console.error("Erreur lors de l'auto-complétion des sommets :", err);

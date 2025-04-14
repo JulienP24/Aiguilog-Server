@@ -1,5 +1,3 @@
-// server.js
-
 require('dotenv').config();
 console.log("MONGODB_URI:", process.env.MONGODB_URI);
 
@@ -106,7 +104,6 @@ client.connect()
         sortieData.createdAt = new Date();
         sortieData.userId = new ObjectId(req.user.userId);
         const result = await db.collection("sorties").insertOne(sortieData);
-        // On renvoie l'id inséré pour l'utilisation client
         res.json({ message: "Sortie ajoutée", id: result.insertedId });
       } catch (err) {
         console.error("Erreur /api/sorties (POST):", err);

@@ -19,25 +19,27 @@ body {
   font-family: var(--font);
   background: var(--background);
   color: var(--dark);
-  overflow-x: hidden; /* évite le scroll horizontal */
+  overflow-x: hidden;
 }
 
 /* ---------- HEADER COMMUN ---------- */
 .main-header {
   position: sticky;
-  top: 10px;                 /* Un peu moins grand qu'avant */
+  top: 10px;
   z-index: 1000;
   background: var(--primary);
   color: #fff;
-  padding: 0.7rem;          /* Moins de padding vertical => moins de hauteur */
+  padding: 0.7rem;
   border-radius: var(--pill);
   margin: 0 2%;
   box-shadow: var(--shadow);
 }
+
+/* Utilisation d'une grille pour centrer la nav en desktop */
 .nav-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
 }
 
 /* --- Desktop nav --- */
@@ -48,14 +50,12 @@ body {
 }
 .logo-link .logo-img,
 .logo-link-mobile .logo-img {
-  height: 60px;  /* Logo un peu réduit */
+  height: 60px;
 }
 .nav-links {
   display: flex;
   gap: 1rem;
-  flex-grow: 1;
-  justify-content: center; 
-  background: transparent;
+  justify-content: center;
 }
 .nav-btn {
   text-decoration: none;
@@ -65,6 +65,7 @@ body {
   border-radius: var(--pill);
   font-weight: 500;
   transition: background 0.3s, color 0.3s, border 0.3s;
+  border: 2px solid transparent; /* Pour stabiliser la taille */
 }
 .nav-btn:hover {
   background: #e0e0e0;
@@ -79,7 +80,7 @@ body {
   text-decoration: none;
 }
 .user-icon {
-  height: 55px;   /* Un peu plus grand qu'avant */
+  height: 55px;
   width: 55px;
   border-radius: 50%;
   object-fit: cover;
@@ -99,19 +100,19 @@ body {
   color: #fff;
   font-size: 2rem;
   cursor: pointer;
-  z-index: 1200; /* au-dessus du menu mobile */
+  z-index: 1200;
 }
 
-/* Menu latéral mobile */
+/* Menu latéral mobile - disposition en flex pour placer l’icône en bas */
 #mobile-menu {
   position: fixed;
   top: 0; 
   right: -250px;
   width: 250px;
   height: 100%;
-  background: #fff;         /* Couleur par défaut en mode clair */
+  background: #fff;
   color: var(--dark);
-  padding: 3rem 1rem 1rem;  /* un peu de marge en haut pour la croix */
+  padding: 3rem 1rem 1rem;
   box-shadow: -4px 0 10px rgba(0,0,0,0.2);
   border-radius: 0 0 0 8px;
   transition: right 0.3s ease;
@@ -121,9 +122,10 @@ body {
   list-style: none;
   margin: 0;
   padding: 0;
-}
-#mobile-menu ul li {
-  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
 }
 #mobile-menu ul li a {
   text-decoration: none;
@@ -133,11 +135,6 @@ body {
 }
 #mobile-menu.open {
   right: 0;
-}
-
-/* On décale les entrées du menu pour qu'elles soient sous la croix */
-#mobile-menu-toggle {
-  /* la couleur est gérée dynamiquement dans JS quand on ouvre/ferme le menu */
 }
 
 /* --- Responsive Breakpoint --- */
@@ -246,7 +243,6 @@ th {
   .main-header {
     background: var(--primary);
   }
-  /* Pour le menu mobile en mode sombre */
   #mobile-menu {
     background: #1a1a1a;
     color: #fff;
@@ -258,5 +254,15 @@ th {
     color: var(--primary);
     border: 2px solid var(--primary);
   }
-  /* etc. */
+  /* Personnalisation des tableaux en dark mode */
+  table {
+    background: #2c2c2c;
+  }
+  th, td {
+    color: #f0f0f0;
+    border-bottom: 1px solid #444;
+  }
+  th {
+    background-color: #1a1a1a;
+  }
 }
