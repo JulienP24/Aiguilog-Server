@@ -32,11 +32,19 @@ client.connect()
         }
         const existingUser = await db.collection("users").findOne({ username });
         if (existingUser) return res.status(400).json({ error: "Identifiant déjà utilisé" });
+        
         const passwordHash = await bcrypt.hash(password, 10);
         const userDoc = { firstName, lastName, username, passwordHash, birthdate, createdAt: new Date() };
         const result = await db.collection("users").insertOne(userDoc);
+        
         const token = jwt.sign({ userId: result.insertedId, username }, JWT_SECRET, { expiresIn: "1h" });
-        const userResponse = { firstName, lastName, username, birthdate, createdAt: userDoc.createdAt };
+        const userResponse = {
+          firstName,
+          lastName,
+          username,
+          birthdate,
+          createdAt: userDoc.createdAt
+        };
         res.json({ message: "Inscription réussie", token, user: userResponse });
       } catch (err) {
         console.error("Erreur /api/register :", err);
@@ -44,14 +52,14 @@ client.connect()
       }
     });
 
-    // Endpoint pour rechercher des sommets dans la collection "summits"
+    // ---------- Recherche de sommets (mise à jour : champ "nom") ----------
     app.get('/api/summits', async (req, res) => {
       const q = req.query.q;
       if (!q) return res.json([]);
       try {
-        // Recherche insensible à la casse sur le champ "name"
+        // Recherche insensible à la casse sur le champ "nom"
         const results = await db.collection("summits").find({
-          name: { $regex: q, $options: "i" }
+          nom: { $regex: q, $options: "i" }
         }).toArray();
         res.json(results);
       } catch (err) {
@@ -65,12 +73,21 @@ client.connect()
       try {
         const { username, password } = req.body;
         if (!username || !password) return res.status(400).json({ error: "Identifiant et mot de passe requis" });
+        
         const user = await db.collection("users").findOne({ username });
         if (!user) return res.status(400).json({ error: "Utilisateur non trouvé" });
+        
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return res.status(400).json({ error: "Mot de passe incorrect" });
+        
         const token = jwt.sign({ userId: user._id, username: user.username }, JWT_SECRET, { expiresIn: "1h" });
-        const userResponse = { firstName: user.firstName, lastName: user.lastName, username: user.username, birthdate: user.birthdate, createdAt: user.createdAt };
+        const userResponse = {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          username: user.username,
+          birthdate: user.birthdate,
+          createdAt: user.createdAt
+        };
         res.json({ token, user: userResponse });
       } catch (err) {
         console.error("Erreur /api/login :", err);
@@ -103,6 +120,7 @@ client.connect()
         }
         sortieData.createdAt = new Date();
         sortieData.userId = new ObjectId(req.user.userId);
+        
         const result = await db.collection("sorties").insertOne(sortieData);
         res.json({ message: "Sortie ajoutée", id: result.insertedId });
       } catch (err) {
@@ -114,7 +132,9 @@ client.connect()
     // ---------- Récupérer les sorties ----------
     app.get('/api/sorties', authMiddleware, async (req, res) => {
       try {
-        const sorties = await db.collection("sorties").find({ userId: new ObjectId(req.user.userId) }).toArray();
+        const sorties = await db.collection("sorties").find({
+          userId: new ObjectId(req.user.userId)
+        }).toArray();
         res.json(sorties);
       } catch (err) {
         console.error("Erreur /api/sorties (GET):", err);
@@ -127,6 +147,7 @@ client.connect()
       try {
         const sortieId = req.params.id;
         const updateData = req.body;
+
         const result = await db.collection("sorties").updateOne(
           { _id: new ObjectId(sortieId), userId: new ObjectId(req.user.userId) },
           { $set: updateData }

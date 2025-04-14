@@ -35,28 +35,35 @@ body {
   box-shadow: var(--shadow);
 }
 
-/* Utilisation d'une grille pour centrer la nav en desktop */
+/* On utilise flex pour .nav-container afin de mieux contrôler l'espacement */
 .nav-container {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
 /* --- Desktop nav --- */
 .desktop-nav {
+  /* Cet élément contiendra: Logo, Nav Links, Icône utilisateur */
   display: flex;
   align-items: center;
+  justify-content: flex-start; /* On démarre à gauche... */
   width: 100%;
 }
+
 .logo-link .logo-img,
 .logo-link-mobile .logo-img {
   height: 60px;
+  /* éventuellement un margin-right si besoin */
 }
+
 .nav-links {
   display: flex;
   gap: 1rem;
-  justify-content: center;
+  flex: 1; /* prendre l'espace restant pour centrer */
+  justify-content: center; /* "Fait/À Faire/Rechercher" au milieu */
 }
+
 .nav-btn {
   text-decoration: none;
   background: #fff;
@@ -65,7 +72,7 @@ body {
   border-radius: var(--pill);
   font-weight: 500;
   transition: background 0.3s, color 0.3s, border 0.3s;
-  border: 2px solid transparent; /* Pour stabiliser la taille */
+  border: 2px solid transparent; /* Stabilise la taille */
 }
 .nav-btn:hover {
   background: #e0e0e0;
@@ -75,9 +82,10 @@ body {
   border: 2px solid var(--primary);
 }
 
-/* Icône utilisateur (desktop) */
+/* Icône utilisateur (desktop) à l’extrémité droite */
 .user-icon-link {
   text-decoration: none;
+  margin-left: auto; /* Pousse l'icône complètement à droite */
 }
 .user-icon {
   height: 55px;
@@ -103,7 +111,7 @@ body {
   z-index: 1200;
 }
 
-/* Menu latéral mobile - disposition en flex pour placer l’icône en bas */
+/* Menu latéral mobile */
 #mobile-menu {
   position: fixed;
   top: 0; 
@@ -118,6 +126,7 @@ body {
   transition: right 0.3s ease;
   z-index: 1100;
 }
+
 #mobile-menu ul {
   list-style: none;
   margin: 0;
@@ -127,12 +136,14 @@ body {
   height: 100%;
   justify-content: space-between;
 }
+
 #mobile-menu ul li a {
   text-decoration: none;
   font-size: 1.2rem;
   color: var(--primary);
   font-weight: 600;
 }
+
 #mobile-menu.open {
   right: 0;
 }
@@ -254,7 +265,6 @@ th {
     color: var(--primary);
     border: 2px solid var(--primary);
   }
-  /* Personnalisation des tableaux en dark mode */
   table {
     background: #2c2c2c;
   }

@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function formatValue(val) {
     return val ? `~${val}m` : "";
   }
+
   function getUser() {
     const raw = localStorage.getItem("user");
     try {
@@ -12,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return null;
     }
   }
+
   function getToken() {
     return localStorage.getItem("token") || "";
   }
@@ -34,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* =================== NAVIGATION & REDIRECTION =================== */
   const currentPath = window.location.pathname;
+
   function updateUserIconLink() {
     const links = document.querySelectorAll("a[href='mon-compte.html']");
     links.forEach(link => {
@@ -42,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   updateUserIconLink();
 
-  // Redirection pour pages protégées
+  // Redirection si page protégée
   const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
   if (protectedPages.some(page => currentPath.endsWith(page))) {
     if (!getToken() || !getUser()) {
@@ -72,6 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify({ username, password })
         });
         const data = await res.json();
+        
         if (res.ok && data.token) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
@@ -85,6 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Erreur lors de la connexion");
       }
     });
+
     const btnCreerCompte = document.getElementById("btn-creer-compte");
     if (btnCreerCompte) {
       btnCreerCompte.addEventListener("click", () => {
@@ -110,6 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify({ firstName, lastName, username, password, birthdate })
         });
         const data = await res.json();
+        
         if (res.ok && data.token) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
@@ -140,6 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
+
   const logoutBtn = document.getElementById("logout");
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
@@ -223,6 +230,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     }
+
     if (yearSelect) {
       const currentYear = new Date().getFullYear();
       for (let i = 0; i < 10; i++) {
@@ -235,13 +243,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     formAFaire.addEventListener("submit", async (e) => {
       e.preventDefault();
-      // Vérification du token avant soumission
       const token = getToken();
       if (!token) {
         alert("Vous n'êtes pas connecté.");
         window.location.href = "utilisateur.html";
         return;
       }
+
       const sommet = document.getElementById("sommet").value.trim();
       const altitude = document.getElementById("altitude").value.trim();
       const denivele = document.getElementById("denivele").value.trim();
@@ -291,6 +299,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const cotationFaitSelect = document.getElementById("cotation-fait");
     const dateInput = document.getElementById("date");
     const detailsFait = document.getElementById("details-fait");
+
     const cotationsMap = {
       "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED", "ABO"],
       "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
@@ -320,6 +329,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "utilisateur.html";
         return;
       }
+
       const sommet = document.getElementById("sommet-fait").value.trim();
       const altitude = document.getElementById("altitude-fait").value.trim();
       const denivele = document.getElementById("denivele-fait").value.trim();
@@ -376,6 +386,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("La ligne n'a pas le nombre de cellules attendu.", row);
       return;
     }
+
     const sommetVal = cells[1].textContent;
     const altitudeVal = cells[2].textContent.replace(/^~/, "").replace(/m$/, "").trim();
     const deniveleVal = cells[3].textContent.replace(/^~/, "").replace(/m$/, "").trim();
@@ -384,9 +395,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const dateOrYearVal = cells[6].textContent;
     const detailsVal = cells[7].textContent;
 
-    // Remplacer les cellules par des champs éditables
+    // Sommet
     cells[1].innerHTML = `<input type="text" value="${sommetVal}" style="width:100%;">`;
+    // Altitude
     cells[2].innerHTML = `<input type="number" value="${altitudeVal}" style="width:100%;">`;
+    // Dénivelé
     cells[3].innerHTML = `<input type="number" value="${deniveleVal}" style="width:100%;">`;
 
     // Méthode
@@ -406,7 +419,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cotSelectHTML += `</select>`;
     cells[5].innerHTML = cotSelectHTML;
 
-    // Changement de méthode actualise la liste de cotation
+    // Mise à jour de la cotation quand la méthode change
     cells[4].querySelector("select").addEventListener("change", function() {
       const newMethod = this.value;
       const newCotSelect = document.createElement("select");
@@ -439,7 +452,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Détails
     cells[7].innerHTML = `<textarea style="width:100%;">${detailsVal}</textarea>`;
 
-    // Masquer le bouton de suppression et afficher Save/Cancel
+    // Boutons Save/Cancel
     cells[0].innerHTML = "";
     const saveBtn = document.createElement("button");
     saveBtn.textContent = "✔️";
@@ -537,7 +550,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!altitudeInput) { 
             altitudeInput = document.getElementById("altitude-fait");
           }
-          if (altitudeInput) { 
+          if (altitudeInput) {
             altitudeInput.value = options[i].getAttribute("data-altitude") || "";
           }
           break;
@@ -550,16 +563,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const query = sommetInput.value.trim();
     const datalist = document.getElementById("summits-list");
     if (!datalist) return;
-    if (query.length < 2) { 
-      datalist.innerHTML = ""; 
+    if (query.length < 2) {
+      datalist.innerHTML = "";
       return;
     }
     try {
+      // Recherche sur /api/summits?q= ...
       const res = await fetch(`/api/summits?q=${encodeURIComponent(query)}`);
       const suggestions = await res.json();
-      // Utilisation de la clé "altitude" au lieu de "elevation"
+
+      // Utilisation de "s.nom" pour la valeur et "s.altitude" pour data-altitude
       datalist.innerHTML = suggestions.map(s =>
-        `<option data-altitude="${s.altitude}" value="${s.name}">`
+        `<option data-altitude="${s.altitude}" value="${s.nom}">`
       ).join('');
     } catch (err) {
       console.error("Erreur lors de l'auto-complétion des sommets :", err);
