@@ -24,15 +24,16 @@ body {
 /* ---------- HEADER COMMUN (Desktop & Mobile) ---------- */
 .main-header {
   position: sticky;
-  top: 0;
+  top: 0;                   /* Collé en haut lors du scroll */
   z-index: 999;
   background: var(--primary);
   color: #fff;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px; /* Demi-cercle aux extrémités */
-  margin: 0 5%;
+  padding: 1rem;            /* Ajuste la hauteur/épaisseur de la barre */
+  border-radius: 9999px;    /* Coins très arrondis (forme de pilule) */
+  margin: 2%;               /* 2% de marge sur les 4 côtés */
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
+
 
 /* Conteneur du header */
 .nav-container {
