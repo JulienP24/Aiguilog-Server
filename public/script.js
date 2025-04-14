@@ -1,9 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
-  /* ------------------ UTILITAIRES ------------------ */
+  /* =================== UTILITAIRES =================== */
+  // Formatage d'une valeur numérique (ex: altitude) avec le préfixe "~" et le suffixe "m"
   function formatValue(val) {
     return val ? `~${val}m` : "";
   }
-  
+
+  // Récupère l'objet utilisateur stocké dans le localStorage (parsé en JSON)
   function getUser() {
     const raw = localStorage.getItem("user");
     try {
@@ -13,22 +15,29 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   
+  // Récupère le token stocké dans le localStorage
   function getToken() {
     return localStorage.getItem("token");
   }
   
-  /* ------------------ MOBILE MENU TOGGLE ------------------ */
+  /* =================== MOBILE MENU TOGGLE =================== */
   const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
   const mobileMenu = document.getElementById("mobile-menu");
   if (mobileMenuToggle && mobileMenu) {
     mobileMenuToggle.addEventListener("click", () => {
       mobileMenu.classList.toggle("open");
+      // Astuce : changer l'icône du hamburger en "✕" si le menu est ouvert, sinon rétablir l'icône hamburger
+      if (mobileMenu.classList.contains("open")) {
+        mobileMenuToggle.innerHTML = "✕";
+      } else {
+        mobileMenuToggle.innerHTML = "&#9776;";
+      }
     });
   }
   
-  /* ------------------ Navigation & Redirection ------------------ */
+  /* =================== NAVIGATION & REDIRECTION =================== */
   function updateUserIconLink() {
-    // Met à jour les liens "Mon compte" dans la navigation
+    // Met à jour les liens "Mon compte" dans la navigation pour rediriger selon que l'utilisateur soit connecté ou non
     const links = document.querySelectorAll("a[href='mon-compte.html']");
     links.forEach(link => {
       link.href = getUser() ? "mon-compte.html" : "utilisateur.html";
@@ -36,7 +45,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   updateUserIconLink();
   
-  // Redirige les pages protégées si non connecté
   const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
   const currentPath = window.location.pathname;
   if (protectedPages.some(page => currentPath.endsWith(page))) {
@@ -53,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  /* ------------------ Connexion (utilisateur.html) ------------------ */
+  /* =================== CONNEXION (utilisateur.html) =================== */
   const loginForm = document.getElementById("login-form");
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
@@ -88,7 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   
-  /* ------------------ Inscription (creer-compte.html) ------------------ */
+  /* =================== INSCRIPTION (creer-compte.html) =================== */
   const registerForm = document.getElementById("register-form");
   if (registerForm) {
     registerForm.addEventListener("submit", async (e) => {
@@ -120,11 +128,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  /* ------------------ Mon-compte (mon-compte.html) ------------------ */
+  /* =================== MON COMPTE (mon-compte.html) =================== */
   if (document.getElementById("titre-bienvenue")) {
     const userData = getUser();
-    if (!userData) {
-      window.location.href = "utilisateur.html";
+    if (!userData) { 
+      window.location.href = "utilisateur.html"; 
     } else {
       const titreBienvenue = document.getElementById("titre-bienvenue");
       const infoMembre = document.getElementById("info-membre");
@@ -144,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  /* ------------------ Chargement & Affichage des Sorties ------------------ */
+  /* =================== CHARGEMENT & AFFICHAGE DES SORTIES =================== */
   async function loadSorties() {
     const token = getToken();
     if (!token) return [];
@@ -157,7 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return [];
     }
   }
-
+  
   async function displaySorties() {
     const sorties = await loadSorties();
     const typeToDisplay = currentPath.includes("sorties-faites") ? "fait" : "a-faire";
@@ -187,8 +195,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   displaySorties();
-
-  /* ------------------ Formulaire "Sorties à faire" ------------------ */
+  
+  /* =================== FORMULAIRE "SORTIES À FAIRE" =================== */
   const formAFaire = document.getElementById("form-a-faire");
   if (formAFaire) {
     const methodeSelect = document.getElementById("methode");
@@ -267,7 +275,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  /* ------------------ Formulaire "Sorties faites" ------------------ */
+  /* =================== FORMULAIRE "SORTIES FAITES" =================== */
   const formFait = document.getElementById("form-fait");
   if (formFait) {
     const methodeFaitSelect = document.getElementById("methode-fait");
@@ -337,7 +345,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  /* ------------------ Edition (Sans bouton de suppression en mode édition) ------------------ */
+  /* =================== ÉDITION DES SORTIES (sans bouton de suppression en mode édition) =================== */
   const methods = ["Alpinisme", "Randonnée", "Escalade"];
   const cotationsByMethod = {
     "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED", "ABO"],
@@ -345,7 +353,6 @@ document.addEventListener("DOMContentLoaded", () => {
     "Escalade": ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"]
   };
 
-  // Lorsqu'on clique sur "éditer", on remplace les cellules par des inputs/éléments modifiables.
   window.editRow = function(row, mode) {
     const cells = row.querySelectorAll("td");
     if (cells.length < 8) {
@@ -353,7 +360,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     
-    // Récupération des valeurs actuelles
+    // Récupération des valeurs existantes
     const sommetVal = cells[1].textContent;
     const altitudeVal = cells[2].textContent.replace(/^~/, "").replace(/m$/, "").trim();
     const deniveleVal = cells[3].textContent.replace(/^~/, "").replace(/m$/, "").trim();
@@ -367,7 +374,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cells[2].innerHTML = `<input type="number" value="${altitudeVal}" style="width:100%;">`;
     cells[3].innerHTML = `<input type="number" value="${deniveleVal}" style="width:100%;">`;
     
-    // Méthode
+    // Méthode : Select
     let methodSelectHTML = `<select style="width:100%;">`;
     methods.forEach(opt => {
       methodSelectHTML += `<option value="${opt}" ${opt === methodeVal ? "selected" : ""}>${opt}</option>`;
@@ -384,7 +391,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cotSelectHTML += `</select>`;
     cells[5].innerHTML = cotSelectHTML;
     
-    // Mettre à jour cotation si méthode change
+    // Mettre à jour la cotation si la méthode change
     cells[4].querySelector("select").addEventListener("change", function() {
       const newMethod = this.value;
       const newCotSelect = document.createElement("select");
@@ -400,6 +407,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     
     // Date ou Année
+    cells[6].innerHTML = "";
     if (mode === "fait") {
       cells[6].innerHTML = `<input type="date" value="${dateOrYearVal}" style="width:100%;">`;
     } else {
@@ -407,7 +415,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const currentYear = new Date().getFullYear();
       for (let i = 0; i < 10; i++) {
         const yr = currentYear + i;
-        selectYearHTML += `<option value="${yr}" ${String(yr)===dateOrYearVal ? "selected" : ""}>${yr}</option>`;
+        selectYearHTML += `<option value="${yr}" ${String(yr) === dateOrYearVal ? "selected" : ""}>${yr}</option>`;
       }
       selectYearHTML += `</select>`;
       cells[6].innerHTML = selectYearHTML;
@@ -416,7 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Détails
     cells[7].innerHTML = `<textarea style="width:100%;">${detailsVal}</textarea>`;
     
-    // Boutons en mode édition (seulement "save" et "cancel")
+    // Boutons mode édition (supprimer le bouton de suppression)
     cells[0].innerHTML = "";
     const saveBtn = document.createElement("button");
     saveBtn.textContent = "✔️";
@@ -440,11 +448,13 @@ document.addEventListener("DOMContentLoaded", () => {
       cotation: cells[5].querySelector("select").value,
       details: cells[7].querySelector("textarea").value.trim()
     };
+    
     if (mode === "fait") {
       updatedData.date = cells[6].querySelector("input[type=date]").value;
     } else {
       updatedData.annee = cells[6].querySelector("select").value;
     }
+    
     const token = getToken();
     try {
       const res = await fetch(`/api/sorties/${sortieId}`, {
@@ -467,7 +477,7 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Erreur lors de la connexion au serveur");
     }
   }
-
+  
   window.deleteRow = async function(row) {
     const sortieId = row.getAttribute("data-id");
     if (!sortieId) return;
@@ -490,7 +500,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  /* ------------------ Auto-complétion pour le champ Sommet ------------------ */
+  /* =================== AUTO-COMPLÉTION POUR LE CHAMP "SOMMET" =================== */
   let sommetInput = document.getElementById("sommet");
   if (!sommetInput) { sommetInput = document.getElementById("sommet-fait"); }
   if (sommetInput) {
@@ -524,7 +534,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  /* ------------------ Affichage initial des sorties ------------------ */
+  /* =================== AFFICHAGE INITIAL DES SORTIES =================== */
   async function loadSorties() {
     const token = getToken();
     if (!token) return [];

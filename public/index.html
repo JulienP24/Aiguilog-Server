@@ -9,43 +9,48 @@
 <body>
   <header class="main-header">
     <div class="nav-container">
-      <!-- Navigation Desktop (visible sur écran large) -->
+      <!-- LOGO + NAV Desktop -->
       <div class="desktop-nav">
-        <!-- Logo à gauche -->
         <a href="index.html" class="logo-link">
           <img src="images/logo.png" alt="Aiguilog" class="logo-img">
         </a>
-        <!-- Liens de navigation centrés -->
         <nav class="nav-links">
-          <!-- Ajoutez la classe "active" au lien de la page courante -->
           <a href="sorties-faites.html" class="nav-btn">Fait</a>
           <a href="sorties-a-faire.html" class="nav-btn">À Faire</a>
           <a href="rechercher.html" class="nav-btn">Rechercher</a>
-          <a href="mon-compte.html" class="nav-btn">Mon compte</a>
         </nav>
+        <!-- Icône utilisateur à droite -->
+        <a href="mon-compte.html" class="user-icon-link">
+          <img src="images/user-icon.png" alt="Compte" class="user-icon">
+        </a>
       </div>
       
-      <!-- Navigation Mobile (visible sur petit écran) -->
+      <!-- LOGO + BOUTON HAMBURGER Mobile -->
       <div class="mobile-nav">
-        <!-- Logo centré -->
         <a href="index.html" class="logo-link-mobile">
           <img src="images/logo.png" alt="Aiguilog" class="logo-img">
         </a>
-        <!-- Bouton Hamburger -->
         <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">&#9776;</button>
       </div>
     </div>
     
-    <!-- Menu mobile latéral (caché par défaut, visible via CSS/mobile JS) -->
+    <!-- MENU MOBILE LATERAL -->
     <nav id="mobile-menu">
       <ul>
-        <li><a href="sorties-faites.html" class="nav-btn">Fait</a></li>
-        <li><a href="sorties-a-faire.html" class="nav-btn">À Faire</a></li>
-        <li><a href="rechercher.html" class="nav-btn">Rechercher</a></li>
-        <li><a href="mon-compte.html" class="nav-btn">Mon compte</a></li>
+        <li><a href="sorties-faites.html">Fait</a></li>
+        <li><a href="sorties-a-faire.html">À Faire</a></li>
+        <li><a href="rechercher.html">Rechercher</a></li>
+        
+        <!-- Icône utilisateur en bas du menu mobile, par exemple -->
+        <li style="margin-top: 2rem;">
+          <a href="mon-compte.html">
+            <img src="images/user-icon.png" alt="Compte" style="height:40px;">
+          </a>
+        </li>
       </ul>
     </nav>
   </header>
+  
 
   <div class="container" style="text-align:center;">
     <h1>Bienvenue sur Aiguilog</h1>
