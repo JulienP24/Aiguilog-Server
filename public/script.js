@@ -4,7 +4,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function formatValue(val) {
     return val ? `~${val}m` : "";
   }
-
   function getUser() {
     const raw = localStorage.getItem("user");
     try {
@@ -13,7 +12,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return null;
     }
   }
-
   function getToken() {
     return localStorage.getItem("token") || "";
   }
@@ -25,18 +23,29 @@ document.addEventListener("DOMContentLoaded", () => {
     mobileMenuToggle.addEventListener("click", () => {
       mobileMenu.classList.toggle("open");
       if (mobileMenu.classList.contains("open")) {
-        mobileMenuToggle.innerHTML = "✕";
-        mobileMenuToggle.style.color = "var(--primary)";
+        // Bouton "close" (X)
+        mobileMenuToggle.innerHTML = `
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="images/close-white.png">
+            <source media="(prefers-color-scheme: light)" srcset="images/close-black.png">
+            <img src="images/close-black.png" alt="Fermer le menu" class="hamburger-icon">
+          </picture>
+        `;
       } else {
-        mobileMenuToggle.innerHTML = "&#9776;";
-        mobileMenuToggle.style.color = "#fff";
+        // Bouton "hamburger"
+        mobileMenuToggle.innerHTML = `
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png">
+            <source media="(prefers-color-scheme: light)" srcset="images/hamburger-black.png">
+            <img src="images/hamburger-black.png" alt="Menu" class="hamburger-icon">
+          </picture>
+        `;
       }
     });
   }
 
   /* =================== NAVIGATION & REDIRECTION =================== */
   const currentPath = window.location.pathname;
-
   function updateUserIconLink() {
     const links = document.querySelectorAll("a[href='mon-compte.html']");
     links.forEach(link => {
@@ -45,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   updateUserIconLink();
 
-  // Redirection si page protégée
+  // Redirection pour pages protégées
   const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
   if (protectedPages.some(page => currentPath.endsWith(page))) {
     if (!getToken() || !getUser()) {
@@ -75,7 +84,6 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify({ username, password })
         });
         const data = await res.json();
-        
         if (res.ok && data.token) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
@@ -89,7 +97,6 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Erreur lors de la connexion");
       }
     });
-
     const btnCreerCompte = document.getElementById("btn-creer-compte");
     if (btnCreerCompte) {
       btnCreerCompte.addEventListener("click", () => {
@@ -115,7 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify({ firstName, lastName, username, password, birthdate })
         });
         const data = await res.json();
-        
         if (res.ok && data.token) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
@@ -146,7 +152,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
-
   const logoutBtn = document.getElementById("logout");
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
@@ -210,6 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const cotationSelect = document.getElementById("cotation");
     const yearSelect = document.getElementById("year");
     const detailsInput = document.getElementById("details");
+
     const cotationsMap = {
       "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED", "ABO"],
       "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
@@ -230,7 +236,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     }
-
     if (yearSelect) {
       const currentYear = new Date().getFullYear();
       for (let i = 0; i < 10; i++) {
@@ -249,7 +254,6 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "utilisateur.html";
         return;
       }
-
       const sommet = document.getElementById("sommet").value.trim();
       const altitude = document.getElementById("altitude").value.trim();
       const denivele = document.getElementById("denivele").value.trim();
@@ -329,7 +333,6 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "utilisateur.html";
         return;
       }
-
       const sommet = document.getElementById("sommet-fait").value.trim();
       const altitude = document.getElementById("altitude-fait").value.trim();
       const denivele = document.getElementById("denivele-fait").value.trim();
@@ -386,7 +389,6 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("La ligne n'a pas le nombre de cellules attendu.", row);
       return;
     }
-
     const sommetVal = cells[1].textContent;
     const altitudeVal = cells[2].textContent.replace(/^~/, "").replace(/m$/, "").trim();
     const deniveleVal = cells[3].textContent.replace(/^~/, "").replace(/m$/, "").trim();
@@ -395,11 +397,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const dateOrYearVal = cells[6].textContent;
     const detailsVal = cells[7].textContent;
 
-    // Sommet
+    // Transforme la ligne en champ éditable
     cells[1].innerHTML = `<input type="text" value="${sommetVal}" style="width:100%;">`;
-    // Altitude
     cells[2].innerHTML = `<input type="number" value="${altitudeVal}" style="width:100%;">`;
-    // Dénivelé
     cells[3].innerHTML = `<input type="number" value="${deniveleVal}" style="width:100%;">`;
 
     // Méthode
@@ -419,7 +419,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cotSelectHTML += `</select>`;
     cells[5].innerHTML = cotSelectHTML;
 
-    // Mise à jour de la cotation quand la méthode change
+    // Changer la cotation si la méthode change
     cells[4].querySelector("select").addEventListener("change", function() {
       const newMethod = this.value;
       const newCotSelect = document.createElement("select");
@@ -452,7 +452,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Détails
     cells[7].innerHTML = `<textarea style="width:100%;">${detailsVal}</textarea>`;
 
-    // Boutons Save/Cancel
+    // Boutons Save / Cancel
     cells[0].innerHTML = "";
     const saveBtn = document.createElement("button");
     saveBtn.textContent = "✔️";
@@ -568,11 +568,8 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     try {
-      // Recherche sur /api/summits?q= ...
       const res = await fetch(`/api/summits?q=${encodeURIComponent(query)}`);
       const suggestions = await res.json();
-
-      // Utilisation de "s.nom" pour la valeur et "s.altitude" pour data-altitude
       datalist.innerHTML = suggestions.map(s =>
         `<option data-altitude="${s.altitude}" value="${s.nom}">`
       ).join('');

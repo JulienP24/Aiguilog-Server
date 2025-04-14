@@ -12,7 +12,11 @@
         <!-- Desktop Navigation -->
         <div class="desktop-nav">
           <a href="index.html" class="logo-link">
-            <img src="images/logo.png" alt="Aiguilog" class="logo-img" />
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png">
+              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png">
+              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img">
+            </picture>
           </a>
           <nav class="nav-links">
             <a href="sorties-faites.html" class="nav-btn">Fait</a>
@@ -20,27 +24,46 @@
             <a href="rechercher.html" class="nav-btn">Rechercher</a>
           </nav>
           <a href="mon-compte.html" class="user-icon-link">
-            <img src="images/user-icon.png" alt="Compte" class="user-icon" />
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png">
+              <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png">
+              <img src="images/user-icon-black.png" alt="Compte" class="user-icon">
+            </picture>
           </a>
         </div>
+
         <!-- Mobile Navigation -->
         <div class="mobile-nav">
           <a href="index.html" class="logo-link-mobile">
-            <img src="images/logo.png" alt="Aiguilog" class="logo-img" />
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png">
+              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png">
+              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img">
+            </picture>
           </a>
-          <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">&#9776;</button>
+          <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png">
+              <source media="(prefers-color-scheme: light)" srcset="images/hamburger-black.png">
+              <img src="images/hamburger-black.png" alt="Menu" class="hamburger-icon">
+            </picture>
+          </button>
         </div>
       </div>
       <nav id="mobile-menu">
         <ul>
+          <li class="menu-user-icon">
+            <a href="mon-compte.html">
+              <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png">
+                <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png">
+                <img src="images/user-icon-black.png" alt="Compte" class="user-icon-menu">
+              </picture>
+            </a>
+          </li>
           <li><a href="sorties-faites.html">Fait</a></li>
           <li><a href="sorties-a-faire.html">À Faire</a></li>
           <li><a href="rechercher.html">Rechercher</a></li>
-          <li>
-            <a href="mon-compte.html">
-              <img src="images/user-icon.png" alt="Compte" style="height:44px;" />
-            </a>
-          </li>
         </ul>
       </nav>
     </header>
