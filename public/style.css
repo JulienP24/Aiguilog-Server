@@ -18,7 +18,7 @@ body {
   font-family: var(--font);
   background: var(--background);
   color: var(--dark);
-  overflow-x: hidden; /* évite le scroll horizontal */
+  overflow-x: hidden;
 }
 
 /* ---------- HEADER COMMUN ---------- */
@@ -28,7 +28,7 @@ body {
   z-index: 1000;
   background: var(--primary);
   color: #fff;
-  padding: 1rem;
+  padding: 0.8rem 1rem; /* Moins haut */
   border-radius: var(--pill);
   margin: 0 2%;
   box-shadow: var(--shadow);
@@ -38,22 +38,23 @@ body {
   align-items: center;
   justify-content: space-between;
 }
-/* Desktop nav */
+/* Desktop Navigation */
 .desktop-nav {
   display: flex;
   align-items: center;
   width: 100%;
 }
-.logo-link .logo-img,
-.logo-link-mobile .logo-img {
-  height: 70px; /* Agrandir le logo */
+.logo-link .logo-img {
+  height: 70px; /* Logo agrandi */
+  /* Vous pouvez ajuster le margin-top si besoin */
+  margin-top: 5px;
 }
 .nav-links {
   display: flex;
   gap: 1rem;
   flex-grow: 1;
-  justify-content: center; /* Centre les boutons Fait, À Faire, Rechercher */
-  background: transparent; /* rend la zone derrière invisible */
+  justify-content: center;
+  background: transparent;
 }
 .nav-btn {
   text-decoration: none;
@@ -76,32 +77,40 @@ body {
   text-decoration: none;
 }
 .user-icon {
-  height: 50px;
-  width: 50px;
+  height: 55px; /* Légèrement agrandi */
+  width: 55px;
   border-radius: 50%;
   object-fit: cover;
   margin-left: 1rem;
 }
 
-/* Mobile nav */
+/* ---------- Mobile Navigation ---------- */
 .mobile-nav {
   display: none;
   align-items: center;
   justify-content: space-between;
   width: 100%;
 }
+.logo-link-mobile {
+  text-decoration: none;
+}
+.mobile-nav .logo-img {
+  height: 70px;
+  /* Optionnel : ajuster margin-top pour aligner le logo dans la nav mobile */
+  margin-top: 5px;
+}
 #mobile-menu-toggle {
   background: none;
   border: none;
-  color: #fff;
+  color: var(--primary); /* L'icône hamburger (et X) en bleu */
   font-size: 2rem;
   cursor: pointer;
-  z-index: 1200; /* au-dessus du menu */
+  z-index: 1200;
 }
-/* Menu latéral */
+/* Menu mobile latéral */
 #mobile-menu {
   position: fixed;
-  top: 0; 
+  top: 0;
   right: -250px;
   width: 250px;
   height: 100%;
@@ -111,7 +120,7 @@ body {
   box-shadow: -4px 0 10px rgba(0,0,0,0.2);
   border-radius: 0 0 0 8px;
   transition: right 0.3s ease;
-  z-index: 1100; /* en dessous du hamburger (1200) */
+  z-index: 1100;
 }
 #mobile-menu ul {
   list-style: none;
@@ -130,15 +139,41 @@ body {
 #mobile-menu.open {
   right: 0;
 }
-
-/* Media queries */
-@media (min-width: 768px) {
-  .desktop-nav { display: flex; }
-  .mobile-nav, #mobile-menu { display: none; }
-}
+/* Place l'icône utilisateur en bas du menu mobile */
 @media (max-width: 767px) {
-  .desktop-nav { display: none; }
-  .mobile-nav { display: flex; }
+  #mobile-menu ul li:last-child {
+    margin-top: auto;
+    text-align: center;
+  }
+}
+
+/* Dark mode pour mobile menu : fond noir */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: #4a90e2;
+    --background: #2c2c2c;
+    --gray: #444;
+    --dark: #f0f0f0;
+  }
+  body {
+    background: #1a1a1a;
+    color: var(--dark);
+  }
+  .main-header {
+    background: var(--primary);
+  }
+  .nav-btn.active {
+    color: var(--primary);
+    border: 2px solid var(--primary);
+  }
+  /* Pour le menu mobile en dark mode, changer le fond en noir */
+  #mobile-menu {
+    background: #000;
+    color: var(--dark);
+  }
+  #mobile-menu ul li a {
+    color: var(--primary);
+  }
 }
 
 /* ---------- Container principal ---------- */
@@ -162,6 +197,11 @@ input, select, textarea {
   border: 1px solid var(--gray);
   font-size: 1rem;
   width: 100%;
+}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 button {
   padding: 0.75rem;
@@ -195,7 +235,7 @@ button:hover {
 
 /* ---------- Tableaux + Scroll interne ---------- */
 .table-container {
-  max-height: 400px; /* Hauteur fixe -> scroll interne */
+  max-height: 400px;
   overflow-y: auto;
   margin-bottom: 2rem;
   border: 1px solid var(--gray);
@@ -209,9 +249,18 @@ table {
 th, td {
   padding: 1rem;
   border-bottom: 1px solid var(--gray);
+  text-align: left;
 }
 th {
   background-color: var(--background);
+}
+.editable { background-color: #eef; }
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: #fff;
+  padding-right: 2rem;
 }
 
 /* ---------- Dark Mode ---------- */
@@ -233,5 +282,4 @@ th {
     color: var(--primary);
     border: 2px solid var(--primary);
   }
-  /* etc. vous pouvez adapter... */
 }

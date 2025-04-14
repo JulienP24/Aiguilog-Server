@@ -9,7 +9,7 @@
 <body>
   <header class="main-header">
     <div class="nav-container">
-      <!-- LOGO + NAV Desktop -->
+      <!-- Desktop Navigation -->
       <div class="desktop-nav">
         <a href="index.html" class="logo-link">
           <img src="images/logo.png" alt="Aiguilog" class="logo-img">
@@ -19,13 +19,11 @@
           <a href="sorties-a-faire.html" class="nav-btn">À Faire</a>
           <a href="rechercher.html" class="nav-btn">Rechercher</a>
         </nav>
-        <!-- Icône utilisateur à droite -->
         <a href="mon-compte.html" class="user-icon-link">
           <img src="images/user-icon.png" alt="Compte" class="user-icon">
         </a>
       </div>
-      
-      <!-- LOGO + BOUTON HAMBURGER Mobile -->
+      <!-- Mobile Navigation -->
       <div class="mobile-nav">
         <a href="index.html" class="logo-link-mobile">
           <img src="images/logo.png" alt="Aiguilog" class="logo-img">
@@ -33,25 +31,20 @@
         <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">&#9776;</button>
       </div>
     </div>
-    
-    <!-- MENU MOBILE LATERAL -->
     <nav id="mobile-menu">
       <ul>
-        <li><a href="sorties-faites.html">Fait</a></li>
-        <li><a href="sorties-a-faire.html">À Faire</a></li>
-        <li><a href="rechercher.html">Rechercher</a></li>
-        
-        <!-- Icône utilisateur en bas du menu mobile, par exemple -->
-        <li style="margin-top: 2rem;">
+        <li><a href="sorties-faites.html" class="nav-btn">Fait</a></li>
+        <li><a href="sorties-a-faire.html" class="nav-btn">À Faire</a></li>
+        <li><a href="rechercher.html" class="nav-btn">Rechercher</a></li>
+        <li style="margin-top: 2rem; text-align: center;">
           <a href="mon-compte.html">
-            <img src="images/user-icon.png" alt="Compte" style="height:40px;">
+            <img src="images/user-icon.png" alt="Compte" class="user-icon-mobile">
           </a>
         </li>
       </ul>
     </nav>
   </header>
-  
-  
+
   <div class="container">
     <h2>Connexion</h2>
     <form id="login-form" class="two-cols">
@@ -61,7 +54,7 @@
       <button type="button" id="btn-creer-compte">Créer un compte</button>
     </form>
   </div>
-  
+
   <script src="script.js"></script>
 </body>
 </html>
