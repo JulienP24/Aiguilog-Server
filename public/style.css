@@ -22,7 +22,7 @@ body {
 }
 
 /* ---------- HEADER COMMUN ---------- */
-.main-header {
+.ios-header {
   position: sticky;
   top: 20px; /* Décalage sticky à 20px du haut */
   z-index: 999;
