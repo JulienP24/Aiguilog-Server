@@ -1,71 +1,72 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Aiguilog - Créer un compte</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <!-- Header commun -->
-  <header class="main-header">
-    <div class="nav-container">
-      <!-- Desktop Navigation -->
-      <div class="desktop-nav">
-        <a href="index.html" class="logo-link">
-          <img src="images/logo.png" alt="Aiguilog" class="logo-img">
-        </a>
-        <nav class="nav-links">
-          <a href="sorties-faites.html" class="nav-btn">Fait</a>
-          <a href="sorties-a-faire.html" class="nav-btn">À Faire</a>
-          <a href="rechercher.html" class="nav-btn">Rechercher</a>
-        </nav>
-        <a href="mon-compte.html" class="user-icon-link">
-          <img src="images/user-icon.png" alt="Compte" class="user-icon">
-        </a>
-      </div>
-      <!-- Mobile Navigation -->
-      <div class="mobile-nav">
-        <a href="index.html" class="logo-link-mobile">
-          <img src="images/logo.png" alt="Aiguilog" class="logo-img">
-        </a>
-        <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">&#9776;</button>
-      </div>
-    </div>
-    <!-- Menu mobile latéral -->
-    <nav id="mobile-menu">
-      <ul>
-        <li><a href="sorties-faites.html" class="nav-btn">Fait</a></li>
-        <li><a href="sorties-a-faire.html" class="nav-btn">À Faire</a></li>
-        <li><a href="rechercher.html" class="nav-btn">Rechercher</a></li>
-        <!-- Icône utilisateur en bas du menu mobile -->
-        <li style="margin-top: 2rem; text-align: center;">
-          <a href="mon-compte.html">
-            <img src="images/user-icon.png" alt="Compte" class="user-icon-mobile">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aiguilog - Créer un compte</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Header commun -->
+    <header class="main-header">
+      <div class="nav-container">
+        <!-- Desktop Navigation -->
+        <div class="desktop-nav">
+          <a href="index.html" class="logo-link">
+            <img src="images/logo.png" alt="Aiguilog" class="logo-img" />
           </a>
-        </li>
-      </ul>
-    </nav>
-  </header>
+          <nav class="nav-links">
+            <a href="sorties-faites.html" class="nav-btn">Fait</a>
+            <a href="sorties-a-faire.html" class="nav-btn">À Faire</a>
+            <a href="rechercher.html" class="nav-btn">Rechercher</a>
+          </nav>
+          <!-- Icône utilisateur (remplace "Mon compte") -->
+          <a href="mon-compte.html" class="user-icon-link">
+            <img src="images/user-icon.png" alt="Compte" class="user-icon" />
+          </a>
+        </div>
+        <!-- Mobile Navigation -->
+        <div class="mobile-nav">
+          <a href="index.html" class="logo-link-mobile">
+            <img src="images/logo.png" alt="Aiguilog" class="logo-img" />
+          </a>
+          <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">&#9776;</button>
+        </div>
+      </div>
+      <!-- Menu mobile latéral -->
+      <nav id="mobile-menu">
+        <ul>
+          <li><a href="sorties-faites.html">Fait</a></li>
+          <li><a href="sorties-a-faire.html">À Faire</a></li>
+          <li><a href="rechercher.html">Rechercher</a></li>
+          <!-- Icône utilisateur en bas du menu mobile -->
+          <li style="margin-top: 2rem; text-align:center;">
+            <a href="mon-compte.html">
+              <img src="images/user-icon.png" alt="Compte" style="height:44px;" />
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </header>
 
-  <div class="container">
-    <h2>Créer un compte</h2>
-    <form id="register-form" class="two-cols">
-      <div class="col-left">
-        <input type="text" id="register-firstname" placeholder="Prénom" required />
-        <input type="text" id="register-lastname" placeholder="Nom" required />
-      </div>
-      <div class="col-right">
-        <input type="text" id="register-username" placeholder="Identifiant" required />
-        <input type="password" id="register-password" placeholder="Mot de passe" required />
-        <input type="date" id="register-birthdate" placeholder="Date de naissance" required />
-      </div>
-      <div class="full-width">
-        <button type="submit" id="btn-valider">Créer le compte</button>
-      </div>
-    </form>
-  </div>
+    <div class="container">
+      <h2>Créer un compte</h2>
+      <form id="register-form" class="two-cols">
+        <div class="col-left">
+          <input type="text" id="register-firstname" placeholder="Prénom" required />
+          <input type="text" id="register-lastname" placeholder="Nom" required />
+        </div>
+        <div class="col-right">
+          <input type="text" id="register-username" placeholder="Identifiant" required />
+          <input type="password" id="register-password" placeholder="Mot de passe" required />
+          <input type="date" id="register-birthdate" placeholder="Date de naissance" required />
+        </div>
+        <div class="full-width">
+          <button type="submit" id="btn-valider">Créer le compte</button>
+        </div>
+      </form>
+    </div>
 
-  <script src="script.js"></script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>

@@ -1,11 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
   /* =================== UTILITAIRES =================== */
-  // Formate une valeur en y ajoutant "~" en préfixe et "m" en suffixe (ex: altitude)
   function formatValue(val) {
     return val ? `~${val}m` : "";
   }
-
-  // Récupération de l'utilisateur stocké dans le localStorage (objet JSON)
   function getUser() {
     const raw = localStorage.getItem("user");
     try {
@@ -14,8 +11,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return null;
     }
   }
-
-  // Récupération du token de connexion depuis le localStorage
   function getToken() {
     return localStorage.getItem("token") || "";
   }
@@ -26,10 +21,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (mobileMenuToggle && mobileMenu) {
     mobileMenuToggle.addEventListener("click", () => {
       mobileMenu.classList.toggle("open");
-      // Change l'icône du bouton : affiche un "✕" en bleu lorsque le menu est ouvert, sinon le hamburger
+      // Astuce : change l'icône et la couleur selon l'état
       if (mobileMenu.classList.contains("open")) {
         mobileMenuToggle.innerHTML = "✕";
-        mobileMenuToggle.style.color = "var(--primary)"; // bleu
+        mobileMenuToggle.style.color = "var(--primary)";
       } else {
         mobileMenuToggle.innerHTML = "&#9776;";
         mobileMenuToggle.style.color = "#fff";
@@ -38,8 +33,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =================== NAVIGATION & REDIRECTION =================== */
+  const currentPath = window.location.pathname;
   function updateUserIconLink() {
-    // Met à jour tous les liens menant à "mon-compte.html" selon que l'utilisateur soit connecté ou non
     const links = document.querySelectorAll("a[href='mon-compte.html']");
     links.forEach(link => {
       link.href = getUser() ? "mon-compte.html" : "utilisateur.html";
@@ -47,8 +42,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   updateUserIconLink();
 
+  // Redirection si page protégée
   const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
-  const currentPath = window.location.pathname;
   if (protectedPages.some(page => currentPath.endsWith(page))) {
     if (!getToken() || !getUser()) {
       window.location.href = "utilisateur.html";
@@ -58,7 +53,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const btnGoLogin = document.getElementById("btn-go-login");
   if (btnGoLogin) {
-    btnGoLogin.addEventListener("click", () => { window.location.href = "utilisateur.html"; });
+    btnGoLogin.addEventListener("click", () => {
+      window.location.href = "utilisateur.html";
+    });
   }
 
   /* =================== CONNEXION (utilisateur.html) =================== */
@@ -90,7 +87,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     const btnCreerCompte = document.getElementById("btn-creer-compte");
     if (btnCreerCompte) {
-      btnCreerCompte.addEventListener("click", () => { window.location.href = "creer-compte.html"; });
+      btnCreerCompte.addEventListener("click", () => {
+        window.location.href = "creer-compte.html";
+      });
     }
   }
 
@@ -173,29 +172,31 @@ document.addEventListener("DOMContentLoaded", () => {
     );
     if (tableBody) {
       tableBody.innerHTML = "";
-      sorties.filter(s => s.type === typeToDisplay).forEach(s => {
-        const tr = document.createElement("tr");
-        tr.setAttribute("data-id", s._id);
-        tr.innerHTML = `
-          <td>
-            <button class="edit-btn" onclick="editRow(this.parentElement.parentElement, '${s.type}')">✏️</button>
-            <button class="delete-btn" onclick="deleteRow(this.parentElement.parentElement)">🗑</button>
-          </td>
-          <td>${s.sommet}</td>
-          <td>${formatValue(s.altitude)}</td>
-          <td>${formatValue(s.denivele)}</td>
-          <td>${s.methode}</td>
-          <td>${s.cotation}</td>
-          <td>${s.type === "fait" ? s.date : s.annee || ""}</td>
-          <td>${s.details}</td>
-        `;
-        tableBody.appendChild(tr);
-      });
+      sorties
+        .filter(s => s.type === typeToDisplay)
+        .forEach(s => {
+          const tr = document.createElement("tr");
+          tr.setAttribute("data-id", s._id);
+          tr.innerHTML = `
+            <td>
+              <button class="edit-btn" onclick="editRow(this.parentElement.parentElement, '${s.type}')">✏️</button>
+              <button class="delete-btn" onclick="deleteRow(this.parentElement.parentElement)">🗑</button>
+            </td>
+            <td>${s.sommet}</td>
+            <td>${formatValue(s.altitude)}</td>
+            <td>${formatValue(s.denivele)}</td>
+            <td>${s.methode}</td>
+            <td>${s.cotation}</td>
+            <td>${s.type === "fait" ? s.date : s.annee || ""}</td>
+            <td>${s.details}</td>
+          `;
+          tableBody.appendChild(tr);
+        });
     }
   }
   displaySorties();
 
-  /* =================== FORMULAIRE "SORTIES À FAIRE" =================== */
+  /* =================== FORM "SORTIES À FAIRE" =================== */
   const formAFaire = document.getElementById("form-a-faire");
   if (formAFaire) {
     const methodeSelect = document.getElementById("methode");
@@ -207,16 +208,17 @@ document.addEventListener("DOMContentLoaded", () => {
       "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
       "Escalade": ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"]
     };
+
     if (methodeSelect && cotationSelect) {
       methodeSelect.addEventListener("change", () => {
         const val = methodeSelect.value;
         cotationSelect.innerHTML = `<option value="" disabled selected>Cotation</option>`;
         if (cotationsMap[val]) {
           cotationsMap[val].forEach(opt => {
-            const option = document.createElement("option");
-            option.value = opt;
-            option.textContent = opt;
-            cotationSelect.appendChild(option);
+            const o = document.createElement("option");
+            o.value = opt;
+            o.textContent = opt;
+            cotationSelect.appendChild(o);
           });
         }
       });
@@ -230,6 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
         yearSelect.appendChild(op);
       }
     }
+
     formAFaire.addEventListener("submit", async (e) => {
       e.preventDefault();
       const sommet = document.getElementById("sommet").value.trim();
@@ -239,7 +242,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const cotation = cotationSelect.value;
       const annee = yearSelect.value;
       const details = detailsInput.value.trim();
-      
+
       const sortieData = {
         type: "a-faire",
         sommet,
@@ -274,7 +277,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* =================== FORMULAIRE "SORTIES FAITES" =================== */
+  /* =================== FORM "SORTIES FAITES" =================== */
   const formFait = document.getElementById("form-fait");
   if (formFait) {
     const methodeFaitSelect = document.getElementById("methode-fait");
@@ -286,20 +289,22 @@ document.addEventListener("DOMContentLoaded", () => {
       "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
       "Escalade": ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"]
     };
+
     if (methodeFaitSelect && cotationFaitSelect) {
       methodeFaitSelect.addEventListener("change", () => {
         const val = methodeFaitSelect.value;
         cotationFaitSelect.innerHTML = `<option value="" disabled selected>Cotation</option>`;
         if (cotationsMap[val]) {
           cotationsMap[val].forEach(opt => {
-            const option = document.createElement("option");
-            option.value = opt;
-            option.textContent = opt;
-            cotationFaitSelect.appendChild(option);
+            const o = document.createElement("option");
+            o.value = opt;
+            o.textContent = opt;
+            cotationFaitSelect.appendChild(o);
           });
         }
       });
     }
+
     formFait.addEventListener("submit", async (e) => {
       e.preventDefault();
       const sommet = document.getElementById("sommet-fait").value.trim();
@@ -308,8 +313,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const methode = methodeFaitSelect.value;
       const cotation = cotationFaitSelect.value;
       const dateVal = dateInput.value;
-      const details = document.getElementById("details-fait").value.trim();
-      
+      const details = detailsFait.value.trim();
+
       const sortieData = {
         type: "fait",
         sommet,
@@ -344,7 +349,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* =================== ÉDITION DES SORTIES (sans bouton de suppression en mode édition) =================== */
+  /* =================== ÉDITION DES SORTIES (sans bouton de suppression en édition) =================== */
   const methods = ["Alpinisme", "Randonnée", "Escalade"];
   const cotationsByMethod = {
     "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED", "ABO"],
@@ -358,8 +363,6 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("La ligne n'a pas le nombre de cellules attendu.", row);
       return;
     }
-    
-    // Récupération des valeurs existantes
     const sommetVal = cells[1].textContent;
     const altitudeVal = cells[2].textContent.replace(/^~/, "").replace(/m$/, "").trim();
     const deniveleVal = cells[3].textContent.replace(/^~/, "").replace(/m$/, "").trim();
@@ -367,21 +370,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const cotationVal = cells[5].textContent;
     const dateOrYearVal = cells[6].textContent;
     const detailsVal = cells[7].textContent;
-    
-    // Remplacer les cellules par des champs éditables
+
+    // On remplace les cellules par des inputs/editables
     cells[1].innerHTML = `<input type="text" value="${sommetVal}" style="width:100%;">`;
     cells[2].innerHTML = `<input type="number" value="${altitudeVal}" style="width:100%;">`;
     cells[3].innerHTML = `<input type="number" value="${deniveleVal}" style="width:100%;">`;
-    
-    // Méthode : Select
+
+    // Méthode
     let methodSelectHTML = `<select style="width:100%;">`;
     methods.forEach(opt => {
       methodSelectHTML += `<option value="${opt}" ${opt === methodeVal ? "selected" : ""}>${opt}</option>`;
     });
     methodSelectHTML += `</select>`;
     cells[4].innerHTML = methodSelectHTML;
-    
-    // Cotation : Select
+
+    // Cotation
     let currentMethod = cells[4].querySelector("select").value;
     let cotSelectHTML = `<select style="width:100%;">`;
     (cotationsByMethod[currentMethod] || []).forEach(opt => {
@@ -389,22 +392,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     cotSelectHTML += `</select>`;
     cells[5].innerHTML = cotSelectHTML;
-    
-    // Mettre à jour la cotation si méthode change
+
+    // Actualiser cotation si méthode change
     cells[4].querySelector("select").addEventListener("change", function() {
       const newMethod = this.value;
       const newCotSelect = document.createElement("select");
       newCotSelect.style.width = "100%";
-      (cotationsByMethod[newMethod] || []).forEach(opt => {
+      (cotationsByMethod[newMethod] || []).forEach(o => {
         const option = document.createElement("option");
-        option.value = opt;
-        option.textContent = opt;
+        option.value = o;
+        option.textContent = o;
         newCotSelect.appendChild(option);
       });
       cells[5].innerHTML = "";
       cells[5].appendChild(newCotSelect);
     });
-    
+
     // Date ou Année
     cells[6].innerHTML = "";
     if (mode === "fait") {
@@ -419,11 +422,11 @@ document.addEventListener("DOMContentLoaded", () => {
       selectYearHTML += `</select>`;
       cells[6].innerHTML = selectYearHTML;
     }
-    
-    // Détails : Textarea
+
+    // Détails
     cells[7].innerHTML = `<textarea style="width:100%;">${detailsVal}</textarea>`;
-    
-    // Boutons mode édition (afficher uniquement Save et Cancel)
+
+    // On masque le bouton corbeille => on n'affiche que Save/Cancel
     cells[0].innerHTML = "";
     const saveBtn = document.createElement("button");
     saveBtn.textContent = "✔️";
@@ -431,7 +434,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cancelBtn.textContent = "↩";
     cells[0].appendChild(saveBtn);
     cells[0].appendChild(cancelBtn);
-    
+
     saveBtn.addEventListener("click", () => { saveRow(row, mode); });
     cancelBtn.addEventListener("click", () => { window.location.reload(); });
   };
@@ -444,16 +447,21 @@ document.addEventListener("DOMContentLoaded", () => {
       altitude: cells[2].querySelector("input").value.trim(),
       denivele: cells[3].querySelector("input").value.trim(),
       methode: cells[4].querySelector("select").value,
-      cotation: cells[5].querySelector("select").value,
       details: cells[7].querySelector("textarea").value.trim()
     };
-    
-    if (mode === "fait") {
-      updatedData.date = cells[6].querySelector("input[type=date]").value;
-    } else {
-      updatedData.annee = cells[6].querySelector("select").value;
+
+    const cotationSel = cells[5].querySelector("select");
+    if (cotationSel) {
+      updatedData.cotation = cotationSel.value;
     }
-    
+    if (mode === "fait") {
+      const dateField = cells[6].querySelector("input[type=date]");
+      updatedData.date = dateField ? dateField.value : "";
+    } else {
+      const yearSel = cells[6].querySelector("select");
+      updatedData.annee = yearSel ? yearSel.value : "";
+    }
+
     const token = getToken();
     try {
       const res = await fetch(`/api/sorties/${sortieId}`, {
@@ -499,7 +507,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  /* =================== AUTO-COMPLÉTION POUR "SOMMET" =================== */
+  /* =================== AUTO-COMPLÉTION "SOMMET" =================== */
   let sommetInput = document.getElementById("sommet");
   if (!sommetInput) { 
     sommetInput = document.getElementById("sommet-fait");
@@ -508,6 +516,7 @@ document.addEventListener("DOMContentLoaded", () => {
     sommetInput.addEventListener("input", updateSummitsDatalist);
     sommetInput.addEventListener("change", () => {
       const datalist = document.getElementById("summits-list");
+      if (!datalist) return;
       const options = datalist.options;
       for (let i = 0; i < options.length; i++) {
         if (options[i].value.toLowerCase() === sommetInput.value.trim().toLowerCase()) {
@@ -523,10 +532,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-  
+
   async function updateSummitsDatalist() {
     const query = sommetInput.value.trim();
     const datalist = document.getElementById("summits-list");
+    if (!datalist) return;
     if (query.length < 2) { 
       datalist.innerHTML = ""; 
       return;
@@ -542,49 +552,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  /* =================== AFFICHAGE INITIAL DES SORTIES =================== */
-  async function loadSorties() {
-    const token = getToken();
-    if (!token) return [];
-    try {
-      const res = await fetch("/api/sorties", {
-        headers: { "Authorization": "Bearer " + token }
-      });
-      const sorties = await res.json();
-      return sorties;
-    } catch (err) {
-      console.error("Erreur lors du chargement des sorties :", err);
-      return [];
-    }
-  }
-  
-  async function displaySorties() {
-    const sorties = await loadSorties();
-    const typeToDisplay = currentPath.includes("sorties-faites") ? "fait" : "a-faire";
-    const tableBody = document.getElementById(
-      currentPath.includes("sorties-faites") ? "table-body-fait" : "table-body-afaire"
-    );
-    if (tableBody) {
-      tableBody.innerHTML = "";
-      sorties.filter(s => s.type === typeToDisplay).forEach(s => {
-        const tr = document.createElement("tr");
-        tr.setAttribute("data-id", s._id);
-        tr.innerHTML = `
-          <td>
-            <button class="edit-btn" onclick="editRow(this.parentElement.parentElement, '${s.type}')">✏️</button>
-            <button class="delete-btn" onclick="deleteRow(this.parentElement.parentElement)">🗑</button>
-          </td>
-          <td>${s.sommet}</td>
-          <td>${formatValue(s.altitude)}</td>
-          <td>${formatValue(s.denivele)}</td>
-          <td>${s.methode}</td>
-          <td>${s.cotation}</td>
-          <td>${s.type === "fait" ? s.date : s.annee || ""}</td>
-          <td>${s.details}</td>
-        `;
-        tableBody.appendChild(tr);
-      });
-    }
-  }
-  displaySorties();
 });

@@ -14,21 +14,22 @@
   margin: 0;
   padding: 0;
 }
+
 body {
   font-family: var(--font);
   background: var(--background);
   color: var(--dark);
-  overflow-x: hidden;
+  overflow-x: hidden; /* évite le scroll horizontal */
 }
 
 /* ---------- HEADER COMMUN ---------- */
 .main-header {
   position: sticky;
-  top: 20px;
+  top: 10px;                 /* Un peu moins grand qu'avant */
   z-index: 1000;
   background: var(--primary);
   color: #fff;
-  padding: 0.8rem 1rem; /* Moins haut */
+  padding: 0.7rem;          /* Moins de padding vertical => moins de hauteur */
   border-radius: var(--pill);
   margin: 0 2%;
   box-shadow: var(--shadow);
@@ -38,29 +39,29 @@ body {
   align-items: center;
   justify-content: space-between;
 }
-/* Desktop Navigation */
+
+/* --- Desktop nav --- */
 .desktop-nav {
   display: flex;
   align-items: center;
   width: 100%;
 }
-.logo-link .logo-img {
-  height: 70px; /* Logo agrandi */
-  /* Vous pouvez ajuster le margin-top si besoin */
-  margin-top: 5px;
+.logo-link .logo-img,
+.logo-link-mobile .logo-img {
+  height: 60px;  /* Logo un peu réduit */
 }
 .nav-links {
   display: flex;
   gap: 1rem;
   flex-grow: 1;
-  justify-content: center;
+  justify-content: center; 
   background: transparent;
 }
 .nav-btn {
   text-decoration: none;
   background: #fff;
   color: #000;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 1rem;
   border-radius: var(--pill);
   font-weight: 500;
   transition: background 0.3s, color 0.3s, border 0.3s;
@@ -72,51 +73,45 @@ body {
   color: var(--primary);
   border: 2px solid var(--primary);
 }
+
 /* Icône utilisateur (desktop) */
 .user-icon-link {
   text-decoration: none;
 }
 .user-icon {
-  height: 55px; /* Légèrement agrandi */
+  height: 55px;   /* Un peu plus grand qu'avant */
   width: 55px;
   border-radius: 50%;
   object-fit: cover;
   margin-left: 1rem;
 }
 
-/* ---------- Mobile Navigation ---------- */
+/* --- Mobile nav --- */
 .mobile-nav {
   display: none;
   align-items: center;
   justify-content: space-between;
   width: 100%;
 }
-.logo-link-mobile {
-  text-decoration: none;
-}
-.mobile-nav .logo-img {
-  height: 70px;
-  /* Optionnel : ajuster margin-top pour aligner le logo dans la nav mobile */
-  margin-top: 5px;
-}
 #mobile-menu-toggle {
   background: none;
   border: none;
-  color: var(--primary); /* L'icône hamburger (et X) en bleu */
+  color: #fff;
   font-size: 2rem;
   cursor: pointer;
-  z-index: 1200;
+  z-index: 1200; /* au-dessus du menu mobile */
 }
-/* Menu mobile latéral */
+
+/* Menu latéral mobile */
 #mobile-menu {
   position: fixed;
-  top: 0;
+  top: 0; 
   right: -250px;
   width: 250px;
   height: 100%;
-  background: #fff;
+  background: #fff;         /* Couleur par défaut en mode clair */
   color: var(--dark);
-  padding: 2rem 1rem;
+  padding: 3rem 1rem 1rem;  /* un peu de marge en haut pour la croix */
   box-shadow: -4px 0 10px rgba(0,0,0,0.2);
   border-radius: 0 0 0 8px;
   transition: right 0.3s ease;
@@ -124,8 +119,8 @@ body {
 }
 #mobile-menu ul {
   list-style: none;
-  padding: 0;
   margin: 0;
+  padding: 0;
 }
 #mobile-menu ul li {
   margin-bottom: 1rem;
@@ -139,40 +134,27 @@ body {
 #mobile-menu.open {
   right: 0;
 }
-/* Place l'icône utilisateur en bas du menu mobile */
-@media (max-width: 767px) {
-  #mobile-menu ul li:last-child {
-    margin-top: auto;
-    text-align: center;
-  }
+
+/* On décale les entrées du menu pour qu'elles soient sous la croix */
+#mobile-menu-toggle {
+  /* la couleur est gérée dynamiquement dans JS quand on ouvre/ferme le menu */
 }
 
-/* Dark mode pour mobile menu : fond noir */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --primary: #4a90e2;
-    --background: #2c2c2c;
-    --gray: #444;
-    --dark: #f0f0f0;
+/* --- Responsive Breakpoint --- */
+@media (max-width: 768px) {
+  .desktop-nav {
+    display: none;
   }
-  body {
-    background: #1a1a1a;
-    color: var(--dark);
+  .mobile-nav {
+    display: flex;
   }
-  .main-header {
-    background: var(--primary);
+}
+@media (min-width: 769px) {
+  .desktop-nav {
+    display: flex;
   }
-  .nav-btn.active {
-    color: var(--primary);
-    border: 2px solid var(--primary);
-  }
-  /* Pour le menu mobile en dark mode, changer le fond en noir */
-  #mobile-menu {
-    background: #000;
-    color: var(--dark);
-  }
-  #mobile-menu ul li a {
-    color: var(--primary);
+  .mobile-nav {
+    display: none;
   }
 }
 
@@ -197,11 +179,6 @@ input, select, textarea {
   border: 1px solid var(--gray);
   font-size: 1rem;
   width: 100%;
-}
-input[type=number]::-webkit-inner-spin-button,
-input[type=number]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
 }
 button {
   padding: 0.75rem;
@@ -249,18 +226,9 @@ table {
 th, td {
   padding: 1rem;
   border-bottom: 1px solid var(--gray);
-  text-align: left;
 }
 th {
   background-color: var(--background);
-}
-.editable { background-color: #eef; }
-select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background: #fff;
-  padding-right: 2rem;
 }
 
 /* ---------- Dark Mode ---------- */
@@ -278,8 +246,17 @@ select {
   .main-header {
     background: var(--primary);
   }
+  /* Pour le menu mobile en mode sombre */
+  #mobile-menu {
+    background: #1a1a1a;
+    color: #fff;
+  }
+  #mobile-menu ul li a {
+    color: var(--primary);
+  }
   .nav-btn.active {
     color: var(--primary);
     border: 2px solid var(--primary);
   }
+  /* etc. */
 }
