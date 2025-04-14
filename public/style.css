@@ -3,9 +3,10 @@
   --background: #f2f2f7;
   --gray: #d1d1d6;
   --dark: #1c1c1e;
-  --radius: 1rem;
-  --shadow: 0 4px 10px rgba(0,0,0,0.05);
   --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Pour obtenir un effet pill sur les éléments nécessitant des demi-cercle, on utilise une valeur très élevée pour le border-radius */
+  --pill: 9999px;
+  --shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 
 /* RESET */
@@ -14,26 +15,27 @@
   margin: 0;
   padding: 0;
 }
-
 body {
   font-family: var(--font);
   background: var(--background);
   color: var(--dark);
+  overflow-x: hidden;
 }
 
 /* ---------- HEADER COMMUN ---------- */
-.ios-header {
+.main-header, .ios-header {
   position: sticky;
-  top: 20px; /* Décalage sticky à 20px du haut */
-  z-index: 999;
+  top: 20px; /* Espace sticky de 20px du haut */
+  z-index: 1000;
   background: var(--primary);
   color: #fff;
   padding: 1rem;
-  border-radius: 9999px;  /* Coins arrondis (effet pill) */
-  margin: 0 2%;           /* 2% sur les côtés ; le top est géré par top:20px */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-radius: var(--pill);
+  margin: 0 2%; /* 2% sur les côtés */
+  box-shadow: var(--shadow);
 }
 
+/* Conteneur du header */
 .nav-container {
   display: flex;
   align-items: center;
@@ -46,38 +48,32 @@ body {
   align-items: center;
   width: 100%;
 }
-
 .desktop-nav .logo-link {
   display: inline-block;
   margin-right: 1rem;
 }
-
 .desktop-nav .logo-img {
-  height: 60px;
+  height: 70px; /* Logo agrandi */
 }
-
 .nav-links {
   display: flex;
   gap: 1rem;
   flex-grow: 1;
+  justify-content: center;
 }
-
 .nav-links a {
   text-decoration: none;
   background: #fff;
   color: #000;
   padding: 0.5rem 1rem;
-  border-radius: 9999px; /* forme pill */
+  border-radius: var(--pill);
   font-weight: 500;
   transition: background 0.3s, color 0.3s;
 }
-
 .nav-links a:hover {
   background: #e0e0e0;
 }
-
 .nav-links a.active {
-  background: #fff;
   color: var(--primary);
   border: 2px solid var(--primary);
 }
@@ -89,16 +85,12 @@ body {
   justify-content: space-between;
   width: 100%;
 }
-
 .logo-link-mobile {
   text-decoration: none;
 }
-
 .mobile-nav .logo-img {
-  height: 60px;
+  height: 70px;
 }
-
-/* Le bouton hamburger reste visible sur mobile */
 #mobile-menu-toggle {
   background: none;
   border: none;
@@ -111,35 +103,31 @@ body {
 #mobile-menu {
   position: fixed;
   top: 0;
-  right: -250px;  /* Hors écran par défaut */
+  right: -250px;
   width: 250px;
   height: 100%;
   background: #fff;
   color: var(--dark);
   padding: 2rem 1rem;
   box-shadow: -4px 0 10px rgba(0,0,0,0.2);
-  border-radius: 8px 0 0 8px;
+  border-radius: 0 0 0 8px;
   transition: right 0.3s ease;
-  z-index: 1000;
+  z-index: 1100;
 }
-
 #mobile-menu ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
-
 #mobile-menu ul li {
   margin-bottom: 1rem;
 }
-
 #mobile-menu ul li a {
   text-decoration: none;
   font-size: 1.2rem;
   color: var(--primary);
   font-weight: 600;
 }
-
 #mobile-menu.open {
   right: 0;
 }
@@ -149,7 +137,6 @@ body {
   .desktop-nav { display: flex; }
   .mobile-nav, #mobile-menu { display: none; }
 }
-
 @media (max-width: 767px) {
   .desktop-nav { display: none; }
   .mobile-nav { display: flex; }
@@ -162,58 +149,49 @@ body {
   padding: 2rem;
 }
 
-/* ---------- Formulaires & Tableaux ---------- */
-/* (Vos styles existants pour form, .two-cols, table, etc. restent inchangés) */
-
+/* ---------- Formulaires ---------- */
 form {
   background: #fff;
   padding: 1.5rem;
-  border-radius: var(--radius);
+  border-radius: 1rem;
   box-shadow: var(--shadow);
   margin-bottom: 2rem;
 }
-
 input, select, textarea {
   padding: 0.75rem;
-  border-radius: var(--radius);
+  border-radius: 0.5rem;
   border: 1px solid var(--gray);
   font-size: 1rem;
   width: 100%;
 }
-
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-
 button {
   padding: 0.75rem;
   background-color: var(--primary);
   color: #fff;
   border: none;
-  border-radius: var(--radius);
+  border-radius: 0.5rem;
   cursor: pointer;
   font-weight: bold;
   transition: background 0.3s;
 }
-
 button:hover {
   background-color: #005ecb;
 }
-
 .two-cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
-
 .col-left, .col-right {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
-
 .full-width {
   grid-column: 1 / span 2;
   display: flex;
@@ -222,33 +200,33 @@ button:hover {
 }
 
 /* ---------- Tableaux ---------- */
+/* Conteneur pour un scroll interne du tableau */
+.table-container {
+  max-height: 400px; /* Ajustez la hauteur selon vos besoins */
+  overflow-y: auto;
+  margin-bottom: 2rem;
+  border: 1px solid var(--gray);
+  border-radius: 0.5rem;
+}
 table {
   width: 100%;
   border-collapse: collapse;
   background: #fff;
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: var(--shadow);
 }
-
 th, td {
   padding: 1rem;
   text-align: left;
   border-bottom: 1px solid var(--gray);
 }
-
 th {
   background-color: var(--background);
 }
-
 .editable { background-color: #eef; }
-
 select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background: #fff var(--dropdown-arrow) no-repeat right center;
-  background-size: 1rem;
+  background: #fff;
   padding-right: 2rem;
 }
 
