@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Aiguilog - Mon compte</title>
+  <title>Aiguilog - Connexion</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="main-header">
     <div class="nav-container">
       <div class="desktop-nav">
-        <a href="acceuil-connecte.html" class="logo-link">
+        <a href="index.html" class="logo-link">
           <picture>
             <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
             <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
@@ -18,11 +18,11 @@
           </picture>
         </a>
         <nav class="nav-links">
-          <a href="sorties-faites.html" class="nav-btn">Fait</a>
-          <a href="sorties-a-faire.html" class="nav-btn">À Faire</a>
+          <a href="sorties-faites.html" class="nav-btn disabled">Fait</a>
+          <a href="sorties-a-faire.html" class="nav-btn disabled">À Faire</a>
           <a href="rechercher.html" class="nav-btn">Rechercher</a>
         </nav>
-        <a href="mon-compte.html" class="user-icon-link">
+        <a href="connexion.html" class="user-icon-link">
           <picture>
             <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png" />
             <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png" />
@@ -32,7 +32,7 @@
       </div>
 
       <div class="mobile-nav">
-        <a href="acceuil-connecte.html" class="logo-link-mobile">
+        <a href="index.html" class="logo-link-mobile">
           <picture>
             <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
             <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
@@ -51,21 +51,23 @@
 
     <nav id="mobile-menu">
       <ul>
-        <li><a href="mon-compte.html" class="active">Mon compte</a></li>
-        <li><a href="sorties-faites.html">Fait</a></li>
-        <li><a href="sorties-a-faire.html">À Faire</a></li>
+        <li><a href="connexion.html" class="active">Se connecter</a></li>
+        <li><a href="creer-compte.html">Créer un compte</a></li>
         <li><a href="rechercher.html">Rechercher</a></li>
-        <li><button id="logout-mobile-btn" class="btn-logout-menu">Se déconnecter</button></li>
       </ul>
     </nav>
   </header>
 
-  <main class="container" style="max-width:600px; margin:auto; text-align:center;">
-    <h2>Mon compte</h2>
-    <p>Bienvenue <span id="user-fullname"></span> (<span id="user-username"></span>)</p>
-    <p>Date de naissance : <span id="user-birthdate"></span></p>
-
-    <button id="logout-btn" class="btn-logout">Se déconnecter</button>
+  <main class="container" style="max-width:400px; margin:auto;">
+    <h2>Connexion</h2>
+    <form id="login-form">
+      <input type="text" id="login-username" placeholder="Identifiant" required />
+      <input type="password" id="login-password" placeholder="Mot de passe" required />
+      <button type="submit" class="btn-primary" id="btn-connexion">Se connecter</button>
+    </form>
+    <p style="margin-top:1rem;">
+      Pas encore de compte ? <a href="creer-compte.html">Créer un compte</a>
+    </p>
   </main>
 
   <script src="script.js"></script>
