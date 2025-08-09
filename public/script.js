@@ -1,129 +1,181 @@
-// script.js
+// Gestion du DOM au chargement
+document.addEventListener('DOMContentLoaded', () => {
+  // ---------- Connexion ----------
+  const loginForm = document.getElementById('login-form');
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
 
-const API_URL = 'http://localhost:3000/api';
+      if (!username || !password) {
+        alert('Veuillez remplir tous les champs');
+        return;
+      }
 
-// Gestion menu mobile (toggle)
-document.getElementById('mobile-menu-toggle')?.addEventListener('click', () => {
-  document.getElementById('mobile-menu').classList.toggle('open');
-});
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
 
-// Stockage local user et token
-function saveUserData(data) {
-  localStorage.setItem('aiguilog_token', data.token);
-  localStorage.setItem('aiguilog_user', JSON.stringify(data.user));
-}
-function clearUserData() {
-  localStorage.removeItem('aiguilog_token');
-  localStorage.removeItem('aiguilog_user');
-}
-function getUser() {
-  const user = localStorage.getItem('aiguilog_user');
-  return user ? JSON.parse(user) : null;
-}
-function getToken() {
-  return localStorage.getItem('aiguilog_token');
-}
+        if (!res.ok) {
+          const err = await res.json();
+          alert(err.message || 'Erreur connexion');
+          return;
+        }
 
-// Redirection si non connecté sur pages protégées
-const protectedPages = ['sorties-faites.html', 'sorties-a-faire.html', 'mon-compte.html', 'acceuil-connecte.html'];
-const currentPage = window.location.pathname.split('/').pop();
-
-if (protectedPages.includes(currentPage) && !getToken()) {
-  window.location.href = 'connexion.html';
-}
-
-// Affichage utilisateur sur accueil connecté
-if (currentPage === 'acceuil-connecte.html') {
-  const user = getUser();
-  if (user) {
-    document.getElementById('username-welcome').textContent = user.firstname || user.username;
-  }
-}
-
-// Affichage info utilisateur sur mon compte
-if (currentPage === 'mon-compte.html') {
-  const user = getUser();
-  if (user) {
-    document.getElementById('user-fullname').textContent = `${user.firstname} ${user.lastname}`;
-    document.getElementById('user-username').textContent = user.username;
-    document.getElementById('user-birthdate').textContent = new Date(user.birthdate).toLocaleDateString('fr-FR');
-  }
-}
-
-// Déconnexion (boutons)
-function logout() {
-  clearUserData();
-  window.location.href = 'index.html';
-}
-document.getElementById('logout-btn')?.addEventListener('click', logout);
-document.getElementById('logout-mobile-btn')?.addEventListener('click', logout);
-
-// Formulaire de connexion
-const loginForm = document.getElementById('login-form');
-loginForm?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const username = document.getElementById('login-username').value.trim();
-  const password = document.getElementById('login-password').value.trim();
-
-  if (!username || !password) {
-    alert('Veuillez remplir tous les champs.');
-    return;
-  }
-
-  try {
-    const response = await fetch(`${API_URL}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
-    const data = await response.json();
-
-    if (!response.ok) {
-      alert(data.message || 'Erreur lors de la connexion.');
-      return;
-    }
-
-    saveUserData(data);
-    window.location.href = 'acceuil-connecte.html';
-  } catch (error) {
-    console.error(error);
-    alert('Erreur réseau, veuillez réessayer plus tard.');
-  }
-});
-
-// Formulaire d'inscription
-const registerForm = document.getElementById('register-form');
-registerForm?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const firstname = document.getElementById('register-firstname').value.trim();
-  const lastname = document.getElementById('register-lastname').value.trim();
-  const username = document.getElementById('register-username').value.trim();
-  const password = document.getElementById('register-password').value.trim();
-  const birthdate = document.getElementById('register-birthdate').value;
-
-  if (!firstname || !lastname || !username || !password || !birthdate) {
-    alert('Veuillez remplir tous les champs.');
-    return;
-  }
-
-  try {
-    const response = await fetch(`${API_URL}/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ firstname, lastname, username, password, birthdate }),
+        const data = await res.json();
+        alert(data.message);
+        localStorage.setItem('aiguilog_user', JSON.stringify({ username: data.username }));
+        window.location.href = 'mon-compte.html';
+      } catch (err) {
+        alert('Erreur réseau, veuillez réessayer plus tard.');
+      }
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      alert(data.message || 'Erreur lors de la création du compte.');
-      return;
+    // Bouton créer un compte
+    const btnCreate = document.getElementById('btn-creer-compte');
+    if (btnCreate) {
+      btnCreate.addEventListener('click', () => {
+        window.location.href = 'creer-compte.html';
+      });
     }
-
-    alert('Compte créé avec succès, vous pouvez maintenant vous connecter.');
-    window.location.href = 'connexion.html';
-  } catch (error) {
-    console.error(error);
-    alert('Erreur réseau, veuillez réessayer plus tard.');
   }
+
+  // ---------- Création compte ----------
+  const registerForm = document.getElementById('register-form');
+  if (registerForm) {
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('register-username').value.trim();
+      const password = document.getElementById('register-password').value;
+      const confirmPassword = document.getElementById('register-password-confirm').value;
+
+      if (!username || !password || !confirmPassword) {
+        alert('Veuillez remplir tous les champs');
+        return;
+      }
+      if (password !== confirmPassword) {
+        alert('Les mots de passe ne correspondent pas');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          alert(err.message || 'Erreur inscription');
+          return;
+        }
+
+        const data = await res.json();
+        alert(data.message);
+        window.location.href = 'connexion.html'; // ou 'index.html' selon nom fichier
+      } catch (err) {
+        alert('Erreur réseau, veuillez réessayer plus tard.');
+      }
+    });
+  }
+
+  // ---------- Gestion de la session ----------
+  const userData = localStorage.getItem('aiguilog_user');
+  if (userData) {
+    const user = JSON.parse(userData);
+    // Par exemple afficher le nom sur la page mon-compte, accueil connecté, etc.
+    const elUserName = document.getElementById('user-name-display');
+    if (elUserName) elUserName.textContent = user.username;
+  } else {
+    // Si page mon-compte, rediriger vers connexion
+    if (window.location.pathname.endsWith('mon-compte.html')) {
+      alert('Veuillez vous connecter');
+      window.location.href = 'connexion.html'; // ou index.html avec login
+    }
+  }
+
+  // ---------- Gestion sorties faites (exemple) ----------
+  const formFait = document.getElementById('form-fait');
+  const tableBodyFait = document.getElementById('table-body-fait');
+
+  if (formFait && tableBodyFait) {
+    formFait.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      // Récupérer valeurs
+      const sommet = document.getElementById('sommet-fait').value.trim();
+      const altitude = document.getElementById('altitude-fait').value;
+      const denivele = document.getElementById('denivele-fait').value;
+      const methode = document.getElementById('methode-fait').value;
+      const cotation = document.getElementById('cotation-fait').value;
+      const date = document.getElementById('date').value;
+      const details = document.getElementById('details-fait').value.trim();
+
+      if (!sommet || !altitude || !denivele || !methode || !cotation || !date) {
+        alert('Veuillez remplir tous les champs obligatoires');
+        return;
+      }
+
+      // Exemple simple stockage local (à adapter si tu as backend)
+      const sortiesFaites = JSON.parse(localStorage.getItem('sortiesFaites') || '[]');
+      sortiesFaites.push({ sommet, altitude, denivele, methode, cotation, date, details });
+      localStorage.setItem('sortiesFaites', JSON.stringify(sortiesFaites));
+
+      // Ajouter ligne tableau
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><button class="btn-supprimer">Supprimer</button></td>
+        <td>${sommet}</td>
+        <td>${altitude} m</td>
+        <td>${denivele} m</td>
+        <td>${methode}</td>
+        <td>${cotation}</td>
+        <td>${date}</td>
+        <td>${details}</td>
+      `;
+      tableBodyFait.appendChild(tr);
+
+      // Reset form
+      formFait.reset();
+
+      // Gestion suppression
+      tr.querySelector('.btn-supprimer').addEventListener('click', () => {
+        const index = Array.from(tableBodyFait.children).indexOf(tr);
+        sortiesFaites.splice(index, 1);
+        localStorage.setItem('sortiesFaites', JSON.stringify(sortiesFaites));
+        tr.remove();
+      });
+    });
+
+    // Chargement des sorties déjà stockées
+    const sortiesFaites = JSON.parse(localStorage.getItem('sortiesFaites') || '[]');
+    sortiesFaites.forEach(({ sommet, altitude, denivele, methode, cotation, date, details }) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><button class="btn-supprimer">Supprimer</button></td>
+        <td>${sommet}</td>
+        <td>${altitude} m</td>
+        <td>${denivele} m</td>
+        <td>${methode}</td>
+        <td>${cotation}</td>
+        <td>${date}</td>
+        <td>${details}</td>
+      `;
+      tableBodyFait.appendChild(tr);
+      tr.querySelector('.btn-supprimer').addEventListener('click', () => {
+        const index = Array.from(tableBodyFait.children).indexOf(tr);
+        sortiesFaites.splice(index, 1);
+        localStorage.setItem('sortiesFaites', JSON.stringify(sortiesFaites));
+        tr.remove();
+      });
+    });
+  }
+
+  // ... similaires pour sorties à faire, rechercher, etc.
+
 });
