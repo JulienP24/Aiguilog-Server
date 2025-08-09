@@ -1,63 +1,64 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Aiguilog - Connexion</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Aiguilog - Accueil</title>
+<link rel="stylesheet" href="style.css" />
+<script defer src="app.js"></script>
 </head>
 <body>
+<header>
+  <nav class="navbar">
+    <div id="logo" class="logo">Aiguilog</div>
+    <div class="nav-links" id="nav-links">
+      <a href="#" id="link-fait">Sorties faites</a>
+      <a href="#" id="link-a-faire">Sorties à faire</a>
+    </div>
+    <div id="user-icon" class="user-icon"></div>
+  </nav>
+</header>
 
-  <!-- Header commun -->
-  <div id="header-container"></div>
+<main id="main-content">
+  <h1>Bienvenue sur Aiguilog</h1>
+  <div id="welcome-msg"></div>
+  <div id="auth-forms">
+    <button id="btn-show-login">Se connecter</button>
+    <button id="btn-show-register">Créer un compte</button>
+  </div>
+</main>
 
-  <main style="padding: 20px; max-width: 500px; margin: auto;">
-    <h1>Connexion</h1>
-    <form id="login-form">
-      <label for="username">Nom d’utilisateur :</label><br />
-      <input type="text" id="username" name="username" required /><br /><br />
-      <label for="password">Mot de passe :</label><br />
-      <input type="password" id="password" name="password" required /><br /><br />
-      <button type="submit">Se connecter</button>
-    </form>
+<!-- Formulaire Connexion -->
+<div id="login-form" class="modal hidden">
+  <form id="form-login">
+    <h2>Connexion</h2>
+    <label for="login-pseudo">Pseudo</label>
+    <input type="text" id="login-pseudo" required />
+    <label for="login-password">Mot de passe</label>
+    <input type="password" id="login-password" required />
+    <button type="submit">Se connecter</button>
+    <button type="button" id="close-login">Annuler</button>
+  </form>
+</div>
 
-    <p>Pas encore de compte ? <a href="register.html">Créez-en un ici</a>.</p>
+<!-- Formulaire Inscription -->
+<div id="register-form" class="modal hidden">
+  <form id="form-register">
+    <h2>Créer un compte</h2>
+    <label for="reg-nom">Nom</label>
+    <input type="text" id="reg-nom" required />
+    <label for="reg-prenom">Prénom</label>
+    <input type="text" id="reg-prenom" required />
+    <label for="reg-pseudo">Pseudo</label>
+    <input type="text" id="reg-pseudo" required />
+    <label for="reg-dateNaissance">Date de naissance</label>
+    <input type="date" id="reg-dateNaissance" required />
+    <label for="reg-password">Mot de passe</label>
+    <input type="password" id="reg-password" required />
+    <button type="submit">Créer</button>
+    <button type="button" id="close-register">Annuler</button>
+  </form>
+</div>
 
-    <div id="error-msg" style="color:red; margin-top:10px;"></div>
-  </main>
-
-  <script src="header.js"></script>
-  <script>
-    // Inject header HTML
-    fetch('header.html').then(res => res.text()).then(html => {
-      document.getElementById('header-container').innerHTML = html;
-    });
-
-    // Gestion du formulaire login
-    document.getElementById('login-form').addEventListener('submit', async e => {
-      e.preventDefault();
-      const username = e.target.username.value.trim();
-      const password = e.target.password.value;
-
-      try {
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Erreur de connexion');
-
-        // Save token + username en localStorage
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('username', data.username);
-
-        // Redirection accueil connecté
-        window.location.href = '/home.html';
-      } catch (err) {
-        document.getElementById('error-msg').textContent = err.message;
-      }
-    });
-  </script>
 </body>
 </html>
