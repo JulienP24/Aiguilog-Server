@@ -1,497 +1,247 @@
 // script.js
 
-// --- Données exemples pour cotations et années ---
-const cotations = {
-  Alpinisme: ["F", "PD", "AD", "D", "TD", "ED"],
-  Randonnée: ["F", "P", "M", "D"],
-  Escalade: ["3", "4", "5", "6a", "6b", "6c", "7a", "7b"]
-};
+document.addEventListener('DOMContentLoaded', () => {
+  const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
 
-const currentYear = new Date().getFullYear();
-const years = [];
-for (let y = currentYear; y >= 1950; y--) {
-  years.push(y);
-}
-
-// --- UTILITAIRES ---
-
-function $(id) {
-  return document.getElementById(id);
-}
-
-function saveToStorage(key, data) {
-  localStorage.setItem(key, JSON.stringify(data));
-}
-
-function loadFromStorage(key) {
-  const data = localStorage.getItem(key);
-  return data ? JSON.parse(data) : null;
-}
-
-// --- SESSION UTILISATEUR ---
-
-function getLoggedUser() {
-  return loadFromStorage('loggedUser');
-}
-
-function setLoggedUser(username) {
-  saveToStorage('loggedUser', username);
-}
-
-function clearLoggedUser() {
-  localStorage.removeItem('loggedUser');
-}
-
-function getUsers() {
-  return loadFromStorage('users') || [];
-}
-
-function saveUsers(users) {
-  saveToStorage('users', users);
-}
-
-// --- PROTECTION DES PAGES ---
-
-function checkAuth() {
-  const logged = getLoggedUser();
-  const protectedPages = ['sorties-faites.html', 'sorties-a-faire.html', 'mon-compte.html'];
-  const page = window.location.pathname.split('/').pop();
-
-  if (protectedPages.includes(page) && !logged) {
-    alert("Vous devez être connecté pour accéder à cette page.");
-    window.location.href = "utilisateur.html";
-  }
-}
-
-// --- NAVIGATION MOBILE ---
-
-function setupMobileMenu() {
-  const toggleBtn = $('mobile-menu-toggle');
-  const menu = $('mobile-menu');
-  if (!toggleBtn || !menu) return;
-
-  toggleBtn.addEventListener('click', () => {
-    menu.classList.toggle('open');
-    toggleBtn.setAttribute(
-      'aria-label',
-      menu.classList.contains('open') ? 'Fermer le menu' : 'Ouvrir le menu'
-    );
-  });
-
-  // Close menu on link click (optional)
-  menu.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', () => {
-      menu.classList.remove('open');
-      toggleBtn.setAttribute('aria-label', 'Ouvrir le menu');
+  // --- Fonction pour rediriger le clic sur le logo selon état connexion ---
+  const logoLinks = document.querySelectorAll('.logo-link, .logo-link-mobile');
+  logoLinks.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      if (loggedInUser) {
+        window.location.href = 'accueil-connecte.html';
+      } else {
+        window.location.href = 'index.html';
+      }
     });
   });
-}
 
-// --- FORMULAIRES D'AJOUT ---
+  // --- Protection des pages à accès restreint ---
+  const protectedPages = ['sorties-faites.html', 'sorties-a-faire.html', 'mon-compte.html', 'accueil-connecte.html'];
+  const currentPage = window.location.pathname.split('/').pop();
 
-// Remplit le select cotation selon la méthode choisie
-function fillCotationSelect(selectId, methodeId) {
-  const cotationSelect = $(selectId);
-  const methodeSelect = $(methodeId);
-  if (!cotationSelect || !methodeSelect) return;
+  if (protectedPages.includes(currentPage) && !loggedInUser) {
+    // Si utilisateur pas connecté et essaie d’accéder à une page protégée
+    alert("Vous devez être connecté pour accéder à cette page.");
+    window.location.href = 'connexion.html';
+  }
 
-  methodeSelect.addEventListener('change', () => {
-    const methode = methodeSelect.value;
-    cotationSelect.innerHTML = '<option value="" disabled selected>Cotation</option>';
-    if (cotations[methode]) {
-      cotations[methode].forEach(cot => {
-        const opt = document.createElement('option');
-        opt.value = cot;
-        opt.textContent = cot;
-        cotationSelect.appendChild(opt);
+  // --- Sur page accueil-connecte.html : afficher infos utilisateur ---
+  if (currentPage === 'accueil-connecte.html' && loggedInUser) {
+    const userInfo = document.getElementById('user-info');
+    if (userInfo) {
+      userInfo.textContent = `Bonjour, ${loggedInUser.firstname} ${loggedInUser.lastname} !`;
+    }
+  }
+
+  // --- Sur page connexion.html : gestion formulaire connexion ---
+  if (currentPage === 'connexion.html') {
+    const formLogin = document.getElementById('login-form');
+    if (formLogin) {
+      formLogin.addEventListener('submit', e => {
+        e.preventDefault();
+        const username = document.getElementById('login-username').value.trim();
+        const password = document.getElementById('login-password').value;
+
+        // On récupère la liste des utilisateurs en localStorage
+        const usersJSON = localStorage.getItem('users');
+        if (!usersJSON) {
+          alert("Aucun utilisateur enregistré. Veuillez créer un compte.");
+          return;
+        }
+        const users = JSON.parse(usersJSON);
+        const user = users.find(u => u.username === username && u.password === password);
+
+        if (user) {
+          // Connexion réussie : on stocke user connecté
+          localStorage.setItem('loggedInUser', JSON.stringify(user));
+          alert(`Bienvenue ${user.firstname} !`);
+          window.location.href = 'accueil-connecte.html';
+        } else {
+          alert("Identifiant ou mot de passe incorrect.");
+        }
       });
     }
-  });
-}
+  }
 
-// Remplit la liste des années dans un select
-function fillYearSelect(selectId) {
-  const yearSelect = $(selectId);
-  if (!yearSelect) return;
+  // --- Sur page creer-compte.html : gestion formulaire inscription ---
+  if (currentPage === 'creer-compte.html') {
+    const formRegister = document.getElementById('register-form');
+    if (formRegister) {
+      formRegister.addEventListener('submit', e => {
+        e.preventDefault();
 
-  years.forEach(y => {
-    const opt = document.createElement('option');
-    opt.value = y;
-    opt.textContent = y;
-    yearSelect.appendChild(opt);
-  });
-}
+        const firstname = document.getElementById('register-firstname').value.trim();
+        const lastname = document.getElementById('register-lastname').value.trim();
+        const username = document.getElementById('register-username').value.trim();
+        const password = document.getElementById('register-password').value;
+        const birthdate = document.getElementById('register-birthdate').value;
 
-// --- GESTION LISTES (À FAIRE ET FAIT) ---
+        if (!firstname || !lastname || !username || !password || !birthdate) {
+          alert("Veuillez remplir tous les champs.");
+          return;
+        }
 
-function renderTable(bodyId, dataList, isFait) {
-  const tbody = $(bodyId);
-  if (!tbody) return;
+        // Récupérer la liste des utilisateurs
+        let users = [];
+        const usersJSON = localStorage.getItem('users');
+        if (usersJSON) {
+          users = JSON.parse(usersJSON);
+          if (users.some(u => u.username === username)) {
+            alert("Cet identifiant est déjà utilisé.");
+            return;
+          }
+        }
 
-  tbody.innerHTML = '';
-  dataList.forEach((item, index) => {
-    const tr = document.createElement('tr');
-
-    // Actions: Edit / Delete buttons
-    const tdActions = document.createElement('td');
-    const btnEdit = document.createElement('button');
-    btnEdit.textContent = '✏️';
-    btnEdit.title = 'Modifier';
-    btnEdit.type = 'button';
-    btnEdit.addEventListener('click', () => editEntry(index, isFait));
-    tdActions.appendChild(btnEdit);
-
-    const btnDelete = document.createElement('button');
-    btnDelete.textContent = '🗑️';
-    btnDelete.title = 'Supprimer';
-    btnDelete.type = 'button';
-    btnDelete.addEventListener('click', () => deleteEntry(index, isFait));
-    tdActions.appendChild(btnDelete);
-
-    tr.appendChild(tdActions);
-
-    // Sommet
-    const tdSommet = document.createElement('td');
-    tdSommet.textContent = item.sommet;
-    tr.appendChild(tdSommet);
-
-    // Altitude
-    const tdAltitude = document.createElement('td');
-    tdAltitude.textContent = item.altitude;
-    tr.appendChild(tdAltitude);
-
-    // Dénivelé
-    const tdDenivele = document.createElement('td');
-    tdDenivele.textContent = item.denivele;
-    tr.appendChild(tdDenivele);
-
-    // Méthode
-    const tdMethode = document.createElement('td');
-    tdMethode.textContent = item.methode;
-    tr.appendChild(tdMethode);
-
-    // Cotation
-    const tdCotation = document.createElement('td');
-    tdCotation.textContent = item.cotation;
-    tr.appendChild(tdCotation);
-
-    // Année ou Date
-    const tdYearDate = document.createElement('td');
-    if (isFait) {
-      tdYearDate.textContent = item.date || '';
-    } else {
-      tdYearDate.textContent = item.year || '';
+        const newUser = { firstname, lastname, username, password, birthdate };
+        users.push(newUser);
+        localStorage.setItem('users', JSON.stringify(users));
+        alert("Compte créé avec succès ! Vous pouvez maintenant vous connecter.");
+        window.location.href = 'connexion.html';
+      });
     }
-    tr.appendChild(tdYearDate);
-
-    // Détails
-    const tdDetails = document.createElement('td');
-    tdDetails.textContent = item.details || '';
-    tr.appendChild(tdDetails);
-
-    tbody.appendChild(tr);
-  });
-}
-
-function getDataList(isFait) {
-  const logged = getLoggedUser();
-  if (!logged) return [];
-  const key = `user_${logged}_${isFait ? 'fait' : 'afaire'}`;
-  return loadFromStorage(key) || [];
-}
-
-function saveDataList(isFait, list) {
-  const logged = getLoggedUser();
-  if (!logged) return;
-  const key = `user_${logged}_${isFait ? 'fait' : 'afaire'}`;
-  saveToStorage(key, list);
-}
-
-function addEntry(data, isFait) {
-  const list = getDataList(isFait);
-  list.push(data);
-  saveDataList(isFait, list);
-  renderTable(isFait ? 'table-body-fait' : 'table-body-afaire', list, isFait);
-}
-
-function editEntry(index, isFait) {
-  const list = getDataList(isFait);
-  const item = list[index];
-  if (!item) return;
-
-  // Remplir le formulaire avec les données de l'élément à modifier
-  if (isFait) {
-    $('sommet-fait').value = item.sommet;
-    $('altitude-fait').value = item.altitude;
-    $('denivele-fait').value = item.denivele;
-    $('methode-fait').value = item.methode;
-    // Déclenche la mise à jour de cotation
-    const event = new Event('change');
-    $('methode-fait').dispatchEvent(event);
-    $('cotation-fait').value = item.cotation;
-    $('date').value = item.date || '';
-    $('details-fait').value = item.details || '';
-    editingIndexFait = index;
-  } else {
-    $('sommet').value = item.sommet;
-    $('altitude').value = item.altitude;
-    $('denivele').value = item.denivele;
-    $('methode').value = item.methode;
-    const event = new Event('change');
-    $('methode').dispatchEvent(event);
-    $('cotation').value = item.cotation;
-    $('year').value = item.year || '';
-    $('details').value = item.details || '';
-    editingIndexAf = index;
   }
 
-  // Change le bouton submit en mode "modifier"
-  const formId = isFait ? 'form-fait' : 'form-a-faire';
-  const form = $(formId);
-  if (form) {
-    const btn = form.querySelector('button[type=submit]');
-    if (btn) btn.textContent = 'Modifier';
-  }
-}
+  // --- Sur pages sorties-faites.html et sorties-a-faire.html ---
+  if (currentPage === 'sorties-faites.html' || currentPage === 'sorties-a-faire.html') {
+    // Chargement des sorties de l'utilisateur connecté
+    const user = loggedInUser;
+    if (!user) return;
 
-function deleteEntry(index, isFait) {
-  if (!confirm("Confirmer la suppression ?")) return;
-  const list = getDataList(isFait);
-  list.splice(index, 1);
-  saveDataList(isFait, list);
-  renderTable(isFait ? 'table-body-fait' : 'table-body-afaire', list, isFait);
-}
+    // Sélection du tbody et formulaire selon page
+    const tbodyId = currentPage === 'sorties-faites.html' ? 'table-body-fait' : 'table-body-afaire';
+    const formId = currentPage === 'sorties-faites.html' ? 'form-fait' : 'form-a-faire';
 
-// --- GESTION DES FORMULAIRES ---
+    const tbody = document.getElementById(tbodyId);
+    const form = document.getElementById(formId);
 
-let editingIndexFait = -1;
-let editingIndexAf = -1;
+    // Charge les sorties depuis localStorage sous clé avec username pour isoler par utilisateur
+    const sortiesKey = currentPage === 'sorties-faites.html' ? `sortiesFaites_${user.username}` : `sortiesAFaire_${user.username}`;
+    let sorties = JSON.parse(localStorage.getItem(sortiesKey)) || [];
 
-function setupForm(formId, isFait) {
-  const form = $(formId);
-  if (!form) return;
+    // Fonction pour afficher la table
+    function renderTable() {
+      tbody.innerHTML = '';
+      sorties.forEach((s, i) => {
+        const tr = document.createElement('tr');
 
-  form.addEventListener('submit', e => {
-    e.preventDefault();
+        // Actions : bouton supprimer + bouton déplacer (si a faire -> fait)
+        const actionsTd = document.createElement('td');
+        // bouton supprimer
+        const btnDel = document.createElement('button');
+        btnDel.textContent = 'Supprimer';
+        btnDel.addEventListener('click', () => {
+          sorties.splice(i, 1);
+          localStorage.setItem(sortiesKey, JSON.stringify(sorties));
+          renderTable();
+        });
+        actionsTd.appendChild(btnDel);
 
-    // Récupérer les valeurs
-    const sommet = $(isFait ? 'sommet-fait' : 'sommet').value.trim();
-    const altitude = $(isFait ? 'altitude-fait' : 'altitude').value.trim();
-    const denivele = $(isFait ? 'denivele-fait' : 'denivele').value.trim();
-    const methode = $(isFait ? 'methode-fait' : 'methode').value;
-    const cotation = $(isFait ? 'cotation-fait' : 'cotation').value;
-    const details = $(isFait ? 'details-fait' : 'details').value.trim();
+        // Si sur "À faire", bouton "Marquer fait"
+        if (currentPage === 'sorties-a-faire.html') {
+          const btnDone = document.createElement('button');
+          btnDone.textContent = 'Marquer fait';
+          btnDone.style.marginLeft = '0.5rem';
+          btnDone.addEventListener('click', () => {
+            // On enlève de a faire
+            sorties.splice(i, 1);
+            localStorage.setItem(sortiesKey, JSON.stringify(sorties));
+            // On ajoute dans sorties faites
+            const sortiesFaitesKey = `sortiesFaites_${user.username}`;
+            let faites = JSON.parse(localStorage.getItem(sortiesFaitesKey)) || [];
+            faites.push(s);
+            localStorage.setItem(sortiesFaitesKey, JSON.stringify(faites));
+            renderTable();
+          });
+          actionsTd.appendChild(btnDone);
+        }
 
-    // Année ou Date selon le cas
-    let year = '';
-    let date = '';
-    if (isFait) {
-      date = $('date').value;
-      if (!date) {
-        alert("Veuillez renseigner la date.");
+        tr.appendChild(actionsTd);
+
+        // Ajouter toutes les autres colonnes selon l'objet s
+        // Colonnes : Sommet, Altitude, Dénivelé, Méthode, Cotation, Année ou Date, Détails
+        function createTd(text) {
+          const td = document.createElement('td');
+          td.textContent = text;
+          return td;
+        }
+
+        tr.appendChild(createTd(s.sommet));
+        tr.appendChild(createTd(s.altitude));
+        tr.appendChild(createTd(s.denivele));
+        tr.appendChild(createTd(s.methode));
+        tr.appendChild(createTd(s.cotation));
+
+        if (currentPage === 'sorties-a-faire.html') {
+          tr.appendChild(createTd(s.year));
+        } else {
+          tr.appendChild(createTd(s.date));
+        }
+
+        tr.appendChild(createTd(s.details || ''));
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    renderTable();
+
+    // Gestion ajout sortie
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+
+      // Récupération des champs selon page
+      let sortie = {};
+      if (currentPage === 'sorties-a-faire.html') {
+        sortie = {
+          sommet: document.getElementById('sommet').value.trim(),
+          altitude: document.getElementById('altitude').value.trim(),
+          denivele: document.getElementById('denivele').value.trim(),
+          methode: document.getElementById('methode').value,
+          cotation: document.getElementById('cotation').value,
+          year: document.getElementById('year').value,
+          details: document.getElementById('details').value.trim(),
+        };
+      } else {
+        sortie = {
+          sommet: document.getElementById('sommet-fait').value.trim(),
+          altitude: document.getElementById('altitude-fait').value.trim(),
+          denivele: document.getElementById('denivele-fait').value.trim(),
+          methode: document.getElementById('methode-fait').value,
+          cotation: document.getElementById('cotation-fait').value,
+          date: document.getElementById('date').value,
+          details: document.getElementById('details-fait').value.trim(),
+        };
+      }
+
+      // Validation simple
+      if (!sortie.sommet || !sortie.altitude || !sortie.denivele || !sortie.methode || !sortie.cotation || (!sortie.year && !sortie.date)) {
+        alert('Veuillez remplir tous les champs obligatoires.');
         return;
       }
-    } else {
-      year = $('year').value;
-      if (!year) {
-        alert("Veuillez renseigner l'année.");
-        return;
-      }
-    }
 
-    // Validation simple
-    if (!sommet || !altitude || !denivele || !methode || !cotation) {
-      alert("Veuillez remplir tous les champs obligatoires.");
-      return;
-    }
+      sorties.push(sortie);
+      localStorage.setItem(sortiesKey, JSON.stringify(sorties));
+      renderTable();
 
-    const dataEntry = {
-      sommet,
-      altitude: Number(altitude),
-      denivele: Number(denivele),
-      methode,
-      cotation,
-      details
-    };
-    if (isFait) dataEntry.date = date;
-    else dataEntry.year = year;
-
-    // Ajouter ou modifier
-    if (isFait) {
-      if (editingIndexFait >= 0) {
-        const list = getDataList(true);
-        list[editingIndexFait] = dataEntry;
-        saveDataList(true, list);
-        editingIndexFait = -1;
-        form.querySelector('button[type=submit]').textContent = 'Ajouter';
-      } else {
-        addEntry(dataEntry, true);
-      }
-      renderTable('table-body-fait', getDataList(true), true);
       form.reset();
-    } else {
-      if (editingIndexAf >= 0) {
-        const list = getDataList(false);
-        list[editingIndexAf] = dataEntry;
-        saveDataList(false, list);
-        editingIndexAf = -1;
-        form.querySelector('button[type=submit]').textContent = 'Ajouter';
-      } else {
-        addEntry(dataEntry, false);
-      }
-      renderTable('table-body-afaire', getDataList(false), false);
-      form.reset();
-    }
-  });
-}
-
-// --- CONNEXION & INSCRIPTION ---
-
-function handleRegister() {
-  const form = $('register-form');
-  if (!form) return;
-
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-
-    const firstname = $('register-firstname').value.trim();
-    const lastname = $('register-lastname').value.trim();
-    const username = $('register-username').value.trim();
-    const password = $('register-password').value;
-    const birthdate = $('register-birthdate').value;
-
-    if (!firstname || !lastname || !username || !password || !birthdate) {
-      alert("Tous les champs sont obligatoires.");
-      return;
-    }
-
-    let users = getUsers();
-    if (users.find(u => u.username === username)) {
-      alert("Cet identifiant existe déjà.");
-      return;
-    }
-
-    users.push({ firstname, lastname, username, password, birthdate });
-    saveUsers(users);
-    alert("Inscription réussie ! Vous pouvez maintenant vous connecter.");
-    window.location.href = "utilisateur.html";
-  });
-}
-
-function handleLogin() {
-  const form = $('login-form');
-  if (!form) return;
-
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-
-    const username = $('login-username').value.trim();
-    const password = $('login-password').value;
-
-    if (!username || !password) {
-      alert("Veuillez remplir tous les champs.");
-      return;
-    }
-
-    const users = getUsers();
-    const user = users.find(u => u.username === username && u.password === password);
-
-    if (!user) {
-      alert("Identifiant ou mot de passe incorrect.");
-      return;
-    }
-
-    setLoggedUser(username);
-    alert(`Bienvenue ${user.firstname} !`);
-    window.location.href = "mon-compte.html";
-  });
-}
-
-// --- PAGE MON COMPTE ---
-
-function loadAccountInfo() {
-  const logged = getLoggedUser();
-  if (!logged) {
-    // Si non connecté, rediriger vers connexion
-    window.location.href = "utilisateur.html";
-    return;
-  }
-
-  const users = getUsers();
-  const user = users.find(u => u.username === logged);
-  if (!user) {
-    clearLoggedUser();
-    window.location.href = "utilisateur.html";
-    return;
-  }
-
-  const titre = $('titre-bienvenue');
-  const info = $('info-membre');
-  if (titre) titre.textContent = `Bienvenue ${user.firstname} ${user.lastname}`;
-  if (info) {
-    info.innerHTML = `
-      <strong>Identifiant:</strong> ${user.username}<br/>
-      <strong>Date de naissance:</strong> ${user.birthdate}
-    `;
-  }
-
-  const btnLogout = $('logout');
-  if (btnLogout) {
-    btnLogout.addEventListener('click', () => {
-      clearLoggedUser();
-      window.location.href = "index.html";
-    });
-  }
-}
-
-// --- PAGE ACCUEIL ---
-
-function setupAccueilButtons() {
-  const btnLogin = $('btn-go-login');
-  if (btnLogin) {
-    btnLogin.addEventListener('click', () => {
-      window.location.href = "utilisateur.html";
     });
   }
 
-  // Ajout du lien "Créer un compte" sous le bouton
-  const container = document.querySelector('.container');
-  if (container) {
-    const creerCompteLink = document.createElement('p');
-    creerCompteLink.innerHTML = `Pas encore de compte ? <a href="creer-compte.html">Créer un compte</a>`;
-    container.appendChild(creerCompteLink);
+  // --- Ajout bouton déconnexion dans menu si connecté ---
+  if (loggedInUser) {
+    const navLinks = document.querySelector('.nav-links');
+    if (navLinks && !document.getElementById('btn-deconnexion')) {
+      const logoutBtn = document.createElement('button');
+      logoutBtn.id = 'btn-deconnexion';
+      logoutBtn.textContent = 'Déconnexion';
+      logoutBtn.style.marginLeft = '1rem';
+      logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('loggedInUser');
+        alert("Vous êtes déconnecté.");
+        window.location.href = 'index.html';
+      });
+      navLinks.appendChild(logoutBtn);
+    }
   }
-}
-
-// --- INIT ---
-
-function init() {
-  checkAuth();
-  setupMobileMenu();
-
-  const page = window.location.pathname.split('/').pop();
-
-  // Cotation & Année selects (sur pages sorties)
-  if (page === 'sorties-a-faire.html') {
-    fillCotationSelect('cotation', 'methode');
-    fillYearSelect('year');
-    setupForm('form-a-faire', false);
-    renderTable('table-body-afaire', getDataList(false), false);
-  } else if (page === 'sorties-faites.html') {
-    fillCotationSelect('cotation-fait', 'methode-fait');
-    // Pour "fait", on a un champ date (input type date), pas année
-    setupForm('form-fait', true);
-    renderTable('table-body-fait', getDataList(true), true);
-  } else if (page === 'creer-compte.html') {
-    handleRegister();
-  } else if (page === 'utilisateur.html') {
-    handleLogin();
-    setupAccueilButtons();
-  } else if (page === 'mon-compte.html') {
-    loadAccountInfo();
-  } else if (page === 'index.html' || page === '') {
-    setupAccueilButtons();
-  }
-}
-
-window.addEventListener('DOMContentLoaded', init);
+});

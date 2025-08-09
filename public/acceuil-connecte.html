@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Aiguilog - Connexion</title>
+    <title>Aiguilog - Bienvenue</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <header class="main-header">
       <div class="nav-container">
         <div class="desktop-nav">
-          <a href="index.html" class="logo-link">
+          <a href="accueil-connecte.html" class="logo-link">
             <picture>
               <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
               <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
@@ -32,7 +32,7 @@
         </div>
 
         <div class="mobile-nav">
-          <a href="index.html" class="logo-link-mobile">
+          <a href="accueil-connecte.html" class="logo-link-mobile">
             <picture>
               <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
               <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
@@ -66,18 +66,27 @@
       </nav>
     </header>
 
-    <div class="container" style="max-width: 400px; margin: auto;">
-      <h2>Connexion</h2>
-      <form id="login-form" class="two-cols">
-        <input type="text" id="login-username" placeholder="Identifiant" required />
-        <input type="password" id="login-password" placeholder="Mot de passe" required />
-        <button type="submit" id="btn-connexion">Se connecter</button>
-      </form>
-      <p style="text-align:center; margin-top: 1rem;">
-        Pas encore de compte ? <a href="creer-compte.html">Créer un compte</a>
-      </p>
+    <div class="container" style="text-align:center;">
+      <h1 id="welcome-msg">Bienvenue sur Aiguilog !</h1>
+      <p id="user-info"></p>
+      <div class="buttons">
+        <a href="mon-compte.html" class="btn">Mon compte</a>
+        <a href="sorties-faites.html" class="btn">Mes sorties faites</a>
+        <a href="sorties-a-faire.html" class="btn">Mes sorties à faire</a>
+      </div>
     </div>
 
+    <script>
+      // Affichage du nom utilisateur stocké
+      document.addEventListener("DOMContentLoaded", () => {
+        const userJSON = localStorage.getItem('loggedInUser');
+        if (userJSON) {
+          const user = JSON.parse(userJSON);
+          const userInfo = document.getElementById('user-info');
+          userInfo.textContent = `Bonjour, ${user.firstname} ${user.lastname} !`;
+        }
+      });
+    </script>
     <script src="script.js"></script>
   </body>
 </html>
