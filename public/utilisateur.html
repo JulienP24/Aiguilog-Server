@@ -2,9 +2,34 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Aiguilog - Connexion</title>
     <link rel="stylesheet" href="style.css" />
+    <style>
+      /* Simple style pour formulaire centré */
+      #login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        max-width: 320px;
+        margin: 0 auto;
+      }
+      #login-form input {
+        padding: 0.5rem;
+        font-size: 1rem;
+      }
+      #login-form button {
+        padding: 0.5rem;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      #login-form button[type="button"] {
+        background: transparent;
+        border: none;
+        color: var(--color-primary, blue);
+        text-decoration: underline;
+      }
+    </style>
   </head>
   <body>
     <header class="main-header">
@@ -13,9 +38,9 @@
         <div class="desktop-nav">
           <a href="index.html" class="logo-link">
             <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png">
-              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png">
-              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img">
+              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
+              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
+              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img" />
             </picture>
           </a>
           <nav class="nav-links">
@@ -25,9 +50,9 @@
           </nav>
           <a href="mon-compte.html" class="user-icon-link">
             <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png">
-              <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png">
-              <img src="images/user-icon-black.png" alt="Compte" class="user-icon">
+              <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png" />
+              <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png" />
+              <img src="images/user-icon-black.png" alt="Compte" class="user-icon" />
             </picture>
           </a>
         </div>
@@ -36,16 +61,16 @@
         <div class="mobile-nav">
           <a href="index.html" class="logo-link-mobile">
             <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png">
-              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png">
-              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img">
+              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
+              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
+              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img" />
             </picture>
           </a>
           <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">
             <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png">
-              <source media="(prefers-color-scheme: light)" srcset="images/hamburger-black.png">
-              <img src="images/hamburger-black.png" alt="Menu" class="hamburger-icon">
+              <source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png" />
+              <source media="(prefers-color-scheme: light)" srcset="images/hamburger-black.png" />
+              <img src="images/hamburger-black.png" alt="Menu" class="hamburger-icon" />
             </picture>
           </button>
         </div>
@@ -55,9 +80,9 @@
           <li class="menu-user-icon">
             <a href="mon-compte.html">
               <picture>
-                <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png">
-                <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png">
-                <img src="images/user-icon-black.png" alt="Compte" class="user-icon-menu">
+                <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png" />
+                <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png" />
+                <img src="images/user-icon-black.png" alt="Compte" class="user-icon-menu" />
               </picture>
             </a>
           </li>
@@ -68,15 +93,31 @@
       </nav>
     </header>
 
-    <div class="container">
+    <main class="container" style="text-align:center;">
       <h2>Connexion</h2>
-      <form id="login-form" class="two-cols">
-        <input type="text" id="login-username" placeholder="Identifiant" required />
-        <input type="password" id="login-password" placeholder="Mot de passe" required />
+      <form id="login-form" aria-label="Formulaire de connexion">
+        <input
+          type="text"
+          id="login-username"
+          name="login-username"
+          placeholder="Identifiant"
+          autocomplete="username"
+          required
+          aria-required="true"
+        />
+        <input
+          type="password"
+          id="login-password"
+          name="login-password"
+          placeholder="Mot de passe"
+          autocomplete="current-password"
+          required
+          aria-required="true"
+        />
         <button type="submit" id="btn-connexion">Connexion</button>
         <button type="button" id="btn-creer-compte">Créer un compte</button>
       </form>
-    </div>
+    </main>
 
     <script src="script.js"></script>
   </body>

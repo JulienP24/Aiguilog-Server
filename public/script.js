@@ -1,581 +1,600 @@
-document.addEventListener("DOMContentLoaded", () => {
+"use strict";
 
-  /* =================== UTILITAIRES =================== */
-  function formatValue(val) {
-    return val ? `~${val}m` : "";
-  }
-  function getUser() {
-    const raw = localStorage.getItem("user");
-    try {
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) {
-      return null;
-    }
-  }
-  function getToken() {
-    return localStorage.getItem("token") || "";
-  }
+// === UTILS ===
 
-  /* =================== MOBILE MENU TOGGLE =================== */
-  const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
-  const mobileMenu = document.getElementById("mobile-menu");
-  if (mobileMenuToggle && mobileMenu) {
-    mobileMenuToggle.addEventListener("click", () => {
-      mobileMenu.classList.toggle("open");
-      if (mobileMenu.classList.contains("open")) {
-        // Bouton "close" (X)
-        mobileMenuToggle.innerHTML = `
-          <picture>
-            <source media="(prefers-color-scheme: dark)" srcset="images/close-white.png">
-            <source media="(prefers-color-scheme: light)" srcset="images/close-black.png">
-            <img src="images/close-black.png" alt="Fermer le menu" class="hamburger-icon">
-          </picture>
-        `;
-      } else {
-        // Bouton "hamburger"
-        mobileMenuToggle.innerHTML = `
-          <picture>
-            <source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png">
-            <source media="(prefers-color-scheme: light)" srcset="images/hamburger-black.png">
-            <img src="images/hamburger-black.png" alt="Menu" class="hamburger-icon">
-          </picture>
-        `;
-      }
+// Accès localStorage en JSON avec fallback
+const storageGet = (key) => {
+  const val = localStorage.getItem(key);
+  if (!val) return null;
+  try {
+    return JSON.parse(val);
+  } catch {
+    return null;
+  }
+};
+
+const storageSet = (key, val) => {
+  localStorage.setItem(key, JSON.stringify(val));
+};
+
+const storageRemove = (key) => {
+  localStorage.removeItem(key);
+};
+
+// Générer liste années récentes (2000 à aujourd'hui)
+function generateYears(start = 2000) {
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let y = currentYear; y >= start; y--) {
+    years.push(y);
+  }
+  return years;
+}
+
+// Cotations selon méthode
+const cotationsByMethod = {
+  Alpinisme: ["F", "PD", "AD", "D", "TD", "ED"],
+  Randonnée: ["Facile", "Moyen", "Difficile"],
+  Escalade: ["3", "4", "5", "6", "7", "8", "9"],
+};
+
+// === SESSION & UTILISATEUR ===
+
+let currentUser = null;
+
+function getSessionUser() {
+  return sessionStorage.getItem("currentUser");
+}
+
+function setSessionUser(username) {
+  sessionStorage.setItem("currentUser", username);
+}
+
+function clearSessionUser() {
+  sessionStorage.removeItem("currentUser");
+}
+
+// Récupérer les données utilisateur
+function getUserData(username) {
+  return storageGet(`user_${username}`) || {
+    comptes: { username },
+    sortiesAFaire: [],
+    sortiesFaites: [],
+  };
+}
+
+function saveUserData(username, data) {
+  storageSet(`user_${username}`, data);
+}
+
+// === NAVIGATION MOBILE ===
+
+const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
+const mobileMenu = document.getElementById("mobile-menu");
+
+if (mobileMenuToggle && mobileMenu) {
+  mobileMenuToggle.addEventListener("click", () => {
+    mobileMenu.classList.toggle("open");
+  });
+
+  // Fermer menu si clic sur lien
+  mobileMenu.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      mobileMenu.classList.remove("open");
+    });
+  });
+}
+
+// === FORMULAIRES & LISTES DYNAMIQUES ===
+
+// Remplit select cotation selon méthode sélectionnée
+function updateCotationOptions(methodeSelect, cotationSelect) {
+  const methode = methodeSelect.value;
+  cotationSelect.innerHTML = '<option value="" disabled selected>Cotation</option>';
+  if (cotationsByMethod[methode]) {
+    cotationsByMethod[methode].forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      cotationSelect.appendChild(opt);
     });
   }
+}
 
-  /* =================== NAVIGATION & REDIRECTION =================== */
-  const currentPath = window.location.pathname;
-  function updateUserIconLink() {
-    const links = document.querySelectorAll("a[href='mon-compte.html']");
-    links.forEach(link => {
-      link.href = getUser() ? "mon-compte.html" : "utilisateur.html";
-    });
-  }
-  updateUserIconLink();
+// Remplit select année (pour sorties à faire)
+function fillYearSelect(yearSelect) {
+  yearSelect.innerHTML = '<option value="" disabled selected>Année</option>';
+  generateYears().forEach((year) => {
+    const opt = document.createElement("option");
+    opt.value = year;
+    opt.textContent = year;
+    yearSelect.appendChild(opt);
+  });
+}
 
-  // Redirection pour pages protégées
-  const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
-  if (protectedPages.some(page => currentPath.endsWith(page))) {
-    if (!getToken() || !getUser()) {
-      window.location.href = "utilisateur.html";
-      return;
-    }
-  }
+// Remplit datalist sommets avec tous les sommets existants dans données de l’utilisateur
+function fillSummitsDatalist(summitsListId, data) {
+  const datalist = document.getElementById(summitsListId);
+  if (!datalist) return;
+  // Récupérer tous sommets uniques (faits + à faire)
+  const sommets = new Set();
+  data.sortiesAFaire.forEach((s) => sommets.add(s.sommet));
+  data.sortiesFaites.forEach((s) => sommets.add(s.sommet));
+  datalist.innerHTML = "";
+  sommets.forEach((sommet) => {
+    const option = document.createElement("option");
+    option.value = sommet;
+    datalist.appendChild(option);
+  });
+}
 
-  const btnGoLogin = document.getElementById("btn-go-login");
-  if (btnGoLogin) {
-    btnGoLogin.addEventListener("click", () => {
-      window.location.href = "utilisateur.html";
-    });
-  }
+// === AFFICHAGE TABLEAUX & ÉDITION INLINE ===
 
-  /* =================== CONNEXION (utilisateur.html) =================== */
-  const loginForm = document.getElementById("login-form");
-  if (loginForm) {
-    loginForm.addEventListener("submit", async (e) => {
+// Crée une cellule editable avec événement sauvegarde sur blur ou enter
+function createEditableCell(text, onSave) {
+  const td = document.createElement("td");
+  td.contentEditable = "true";
+  td.classList.add("editable");
+  td.textContent = text;
+
+  td.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
       e.preventDefault();
-      const username = document.getElementById("login-username").value.trim();
-      const password = document.getElementById("login-password").value.trim();
-      try {
-        const res = await fetch("/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password })
-        });
-        const data = await res.json();
-        if (res.ok && data.token) {
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("user", JSON.stringify(data.user));
-          updateUserIconLink();
-          window.location.href = "mon-compte.html";
-        } else {
-          alert("Erreur de connexion : " + (data.error || "Inconnue"));
-        }
-      } catch (err) {
-        console.error("Erreur lors de la connexion :", err);
-        alert("Erreur lors de la connexion");
-      }
-    });
-    const btnCreerCompte = document.getElementById("btn-creer-compte");
-    if (btnCreerCompte) {
-      btnCreerCompte.addEventListener("click", () => {
-        window.location.href = "creer-compte.html";
-      });
+      td.blur();
     }
-  }
+  });
+  td.addEventListener("blur", () => {
+    onSave(td.textContent.trim());
+  });
 
-  /* =================== INSCRIPTION (creer-compte.html) =================== */
-  const registerForm = document.getElementById("register-form");
-  if (registerForm) {
-    registerForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const firstName = document.getElementById("register-firstname").value.trim();
-      const lastName = document.getElementById("register-lastname").value.trim();
-      const username = document.getElementById("register-username").value.trim();
-      const password = document.getElementById("register-password").value.trim();
-      const birthdate = document.getElementById("register-birthdate").value;
-      try {
-        const res = await fetch("/api/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ firstName, lastName, username, password, birthdate })
-        });
-        const data = await res.json();
-        if (res.ok && data.token) {
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("user", JSON.stringify(data.user));
-          updateUserIconLink();
-          window.location.href = "mon-compte.html";
-        } else {
-          alert("Erreur d'inscription : " + (data.error || "Inconnue"));
-        }
-      } catch (err) {
-        console.error("Erreur lors de l'inscription :", err);
-        alert("Erreur lors de l'inscription");
-      }
-    });
-  }
+  return td;
+}
 
-  /* =================== MON COMPTE (mon-compte.html) =================== */
-  if (document.getElementById("titre-bienvenue")) {
-    const userData = getUser();
-    if (!userData) {
-      window.location.href = "utilisateur.html";
+// Génère une ligne tableau sortie
+function createRow(sortie, onChange, onDelete, isFait = false) {
+  const tr = document.createElement("tr");
+
+  // Actions
+  const tdActions = document.createElement("td");
+  const btnDelete = document.createElement("button");
+  btnDelete.textContent = "🗑️";
+  btnDelete.title = "Supprimer";
+  btnDelete.style.cursor = "pointer";
+  btnDelete.style.background = "none";
+  btnDelete.style.border = "none";
+  btnDelete.style.fontSize = "1.2rem";
+  btnDelete.addEventListener("click", () => {
+    if (confirm("Supprimer cette sortie ?")) {
+      onDelete(sortie.id);
+    }
+  });
+  tdActions.appendChild(btnDelete);
+  tr.appendChild(tdActions);
+
+  // Sommet editable
+  tr.appendChild(createEditableCell(sortie.sommet, (val) => {
+    sortie.sommet = val;
+    onChange(sortie);
+  }));
+
+  // Altitude editable (numérique)
+  tr.appendChild(createEditableCell(sortie.altitude, (val) => {
+    const num = parseInt(val);
+    if (!isNaN(num) && num >= 0) {
+      sortie.altitude = num;
+      onChange(sortie);
     } else {
-      const titreBienvenue = document.getElementById("titre-bienvenue");
-      const infoMembre = document.getElementById("info-membre");
-      titreBienvenue.textContent = `Bienvenue, ${userData.firstName} ${userData.lastName} (${userData.username})`;
-      if (userData.birthdate) {
-        const d = new Date(userData.birthdate);
-        infoMembre.textContent = `Né(e) le ${d.toLocaleDateString("fr-FR")}`;
-      }
+      alert("Altitude invalide");
+      // Reset à valeur précédente
+      tr.cells[2].textContent = sortie.altitude;
     }
+  }));
+
+  // Dénivelé editable (numérique)
+  tr.appendChild(createEditableCell(sortie.denivele, (val) => {
+    const num = parseInt(val);
+    if (!isNaN(num) && num >= 0) {
+      sortie.denivele = num;
+      onChange(sortie);
+    } else {
+      alert("Dénivelé invalide");
+      tr.cells[3].textContent = sortie.denivele;
+    }
+  }));
+
+  // Méthode editable via select in place
+  const tdMethode = document.createElement("td");
+  const selectMethode = document.createElement("select");
+  Object.keys(cotationsByMethod).forEach((m) => {
+    const option = document.createElement("option");
+    option.value = m;
+    option.textContent = m;
+    selectMethode.appendChild(option);
+  });
+  selectMethode.value = sortie.methode;
+  selectMethode.addEventListener("change", () => {
+    sortie.methode = selectMethode.value;
+    // Update cotation select options accordingly
+    tdCotation.innerHTML = "";
+    cotationsByMethod[sortie.methode].forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      tdCotation.appendChild(opt);
+    });
+    tdCotation.value = sortie.cotation;
+    onChange(sortie);
+  });
+  tdMethode.appendChild(selectMethode);
+  tr.appendChild(tdMethode);
+
+  // Cotation editable via select
+  const tdCotation = document.createElement("td");
+  const selectCotation = document.createElement("select");
+  cotationsByMethod[sortie.methode].forEach((c) => {
+    const opt = document.createElement("option");
+    opt.value = c;
+    opt.textContent = c;
+    selectCotation.appendChild(opt);
+  });
+  selectCotation.value = sortie.cotation;
+  selectCotation.addEventListener("change", () => {
+    sortie.cotation = selectCotation.value;
+    onChange(sortie);
+  });
+  tdCotation.appendChild(selectCotation);
+  tr.appendChild(tdCotation);
+
+  // Date / Année
+  const tdDate = document.createElement("td");
+  if (isFait) {
+    // Date input
+    const inputDate = document.createElement("input");
+    inputDate.type = "date";
+    inputDate.value = sortie.date || "";
+    inputDate.addEventListener("change", () => {
+      sortie.date = inputDate.value;
+      onChange(sortie);
+    });
+    tdDate.appendChild(inputDate);
+  } else {
+    // Année editable (number or select)
+    const inputYear = document.createElement("input");
+    inputYear.type = "number";
+    inputYear.min = "1900";
+    inputYear.max = new Date().getFullYear();
+    inputYear.value = sortie.annee || "";
+    inputYear.style.width = "5rem";
+    inputYear.addEventListener("change", () => {
+      const val = parseInt(inputYear.value);
+      if (!isNaN(val) && val >= 1900 && val <= new Date().getFullYear()) {
+        sortie.annee = val;
+        onChange(sortie);
+      } else {
+        alert("Année invalide");
+        inputYear.value = sortie.annee || "";
+      }
+    });
+    tdDate.appendChild(inputYear);
   }
-  const logoutBtn = document.getElementById("logout");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.location.href = "utilisateur.html";
+  tr.appendChild(tdDate);
+
+  // Détails editable
+  tr.appendChild(createEditableCell(sortie.details || "", (val) => {
+    sortie.details = val;
+    onChange(sortie);
+  }));
+
+  return tr;
+}
+
+// === GESTION SORTIES A FAIRE ===
+
+function loadSortiesAFaire() {
+  if (!currentUser) return;
+  const data = getUserData(currentUser);
+  fillSummitsDatalist("summits-list", data);
+  fillYearSelect(document.getElementById("year"));
+
+  const tbody = document.getElementById("table-body-afaire");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+  data.sortiesAFaire.forEach((sortie) => {
+    const tr = createRow(sortie, (updated) => {
+      // Update sortie in data
+      const index = data.sortiesAFaire.findIndex((s) => s.id === updated.id);
+      if (index >= 0) {
+        data.sortiesAFaire[index] = updated;
+        saveUserData(currentUser, data);
+      }
+    }, (id) => {
+      data.sortiesAFaire = data.sortiesAFaire.filter((s) => s.id !== id);
+      saveUserData(currentUser, data);
+      loadSortiesAFaire();
+    }, false);
+    tbody.appendChild(tr);
+  });
+}
+
+// Ajoute une sortie à faire
+function addSortieAFaire(event) {
+  event.preventDefault();
+  if (!currentUser) return alert("Veuillez vous connecter.");
+
+  const sommet = document.getElementById("sommet").value.trim();
+  const altitude = parseInt(document.getElementById("altitude").value);
+  const denivele = parseInt(document.getElementById("denivele").value);
+  const methode = document.getElementById("methode").value;
+  const cotation = document.getElementById("cotation").value;
+  const annee = parseInt(document.getElementById("year").value);
+  const details = document.getElementById("details").value.trim();
+
+  if (
+    !sommet ||
+    isNaN(altitude) ||
+    altitude < 0 ||
+    isNaN(denivele) ||
+    denivele < 0 ||
+    !methode ||
+    !cotation ||
+    isNaN(annee)
+  ) {
+    return alert("Veuillez remplir correctement tous les champs obligatoires.");
+  }
+
+  const data = getUserData(currentUser);
+
+  const newSortie = {
+    id: Date.now().toString(),
+    sommet,
+    altitude,
+    denivele,
+    methode,
+    cotation,
+    annee,
+    details,
+  };
+
+  data.sortiesAFaire.push(newSortie);
+  saveUserData(currentUser, data);
+
+  // Reset form
+  event.target.reset();
+  // Remise à l'état initial du select cotation
+  updateCotationOptions(document.getElementById("methode"), document.getElementById("cotation"));
+
+  loadSortiesAFaire();
+}
+
+// === GESTION SORTIES FAITES ===
+
+function loadSortiesFaites() {
+  if (!currentUser) return;
+  const data = getUserData(currentUser);
+  fillSummitsDatalist("summits-list", data);
+
+  const tbody = document.getElementById("table-body-fait");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+  data.sortiesFaites.forEach((sortie) => {
+    const tr = createRow(sortie, (updated) => {
+      const index = data.sortiesFaites.findIndex((s) => s.id === updated.id);
+      if (index >= 0) {
+        data.sortiesFaites[index] = updated;
+        saveUserData(currentUser, data);
+      }
+    }, (id) => {
+      data.sortiesFaites = data.sortiesFaites.filter((s) => s.id !== id);
+      saveUserData(currentUser, data);
+      loadSortiesFaites();
+    }, true);
+    tbody.appendChild(tr);
+  });
+}
+
+// Ajoute une sortie faite
+function addSortieFaite(event) {
+  event.preventDefault();
+  if (!currentUser) return alert("Veuillez vous connecter.");
+
+  const sommet = document.getElementById("sommet-fait").value.trim();
+  const altitude = parseInt(document.getElementById("altitude-fait").value);
+  const denivele = parseInt(document.getElementById("denivele-fait").value);
+  const methode = document.getElementById("methode-fait").value;
+  const cotation = document.getElementById("cotation-fait").value;
+  const date = document.getElementById("date").value;
+  const details = document.getElementById("details-fait").value.trim();
+
+  if (
+    !sommet ||
+    isNaN(altitude) ||
+    altitude < 0 ||
+    isNaN(denivele) ||
+    denivele < 0 ||
+    !methode ||
+    !cotation ||
+    !date
+  ) {
+    return alert("Veuillez remplir correctement tous les champs obligatoires.");
+  }
+
+  const data = getUserData(currentUser);
+
+  const newSortie = {
+    id: Date.now().toString(),
+    sommet,
+    altitude,
+    denivele,
+    methode,
+    cotation,
+    date,
+    details,
+  };
+
+  data.sortiesFaites.push(newSortie);
+  saveUserData(currentUser, data);
+
+  event.target.reset();
+  updateCotationOptions(document.getElementById("methode-fait"), document.getElementById("cotation-fait"));
+
+  loadSortiesFaites();
+}
+
+// === CONNEXION / CREATION DE COMPTE SIMPLIFIÉE ===
+
+function initLoginPage() {
+  const form = document.getElementById("login-form");
+  if (!form) return;
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const username = document.getElementById("login-username").value.trim();
+    const password = document.getElementById("login-password").value.trim();
+
+    if (!username || !password) {
+      return alert("Veuillez remplir tous les champs.");
+    }
+
+    // Simuler la connexion : chercher utilisateur dans localStorage
+    const userData = getUserData(username);
+    if (!userData || !userData.comptes) {
+      return alert("Utilisateur non trouvé. Veuillez créer un compte.");
+    }
+
+    // Pour simplifier, stocker mdp en clair (pas sécurisé en vrai !)
+    if (userData.comptes.password !== password) {
+      return alert("Mot de passe incorrect.");
+    }
+
+    setSessionUser(username);
+    alert(`Bienvenue ${username} !`);
+    window.location.href = "mon-compte.html";
+  });
+
+  // Création compte bouton
+  const btnCreate = document.getElementById("btn-creer-compte");
+  if (btnCreate) {
+    btnCreate.addEventListener("click", () => {
+      window.location.href = "creer-compte.html";
     });
   }
+}
 
-  /* =================== CHARGEMENT & AFFICHAGE DES SORTIES =================== */
-  async function loadSorties() {
-    const token = getToken();
-    if (!token) return [];
-    try {
-      const res = await fetch("/api/sorties", {
-        headers: { "Authorization": "Bearer " + token }
-      });
-      return await res.json();
-    } catch (err) {
-      console.error("Erreur lors du chargement des sorties :", err);
-      return [];
+function initCreateAccountPage() {
+  const form = document.getElementById("create-account-form");
+  if (!form) return;
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const username = document.getElementById("new-username").value.trim();
+    const password = document.getElementById("new-password").value.trim();
+    const passwordConfirm = document.getElementById("confirm-password").value.trim();
+
+    if (!username || !password || !passwordConfirm) {
+      return alert("Veuillez remplir tous les champs.");
     }
-  }
-
-  async function displaySorties() {
-    const sorties = await loadSorties();
-    const typeToDisplay = currentPath.includes("sorties-faites") ? "fait" : "a-faire";
-    const tableBody = document.getElementById(
-      currentPath.includes("sorties-faites") ? "table-body-fait" : "table-body-afaire"
-    );
-    if (tableBody) {
-      tableBody.innerHTML = "";
-      sorties
-        .filter(s => s.type === typeToDisplay)
-        .forEach(s => {
-          const tr = document.createElement("tr");
-          tr.setAttribute("data-id", s._id);
-          tr.innerHTML = `
-            <td>
-              <button class="edit-btn" onclick="editRow(this.parentElement.parentElement, '${s.type}')">✏️</button>
-              <button class="delete-btn" onclick="deleteRow(this.parentElement.parentElement)">🗑</button>
-            </td>
-            <td>${s.sommet}</td>
-            <td>${formatValue(s.altitude)}</td>
-            <td>${formatValue(s.denivele)}</td>
-            <td>${s.methode}</td>
-            <td>${s.cotation}</td>
-            <td>${s.type === "fait" ? s.date : s.annee || ""}</td>
-            <td>${s.details}</td>
-          `;
-          tableBody.appendChild(tr);
-        });
+    if (password !== passwordConfirm) {
+      return alert("Les mots de passe ne correspondent pas.");
     }
-  }
-  displaySorties();
 
-  /* =================== FORM "SORTIES À FAIRE" =================== */
-  const formAFaire = document.getElementById("form-a-faire");
-  if (formAFaire) {
-    const methodeSelect = document.getElementById("methode");
-    const cotationSelect = document.getElementById("cotation");
-    const yearSelect = document.getElementById("year");
-    const detailsInput = document.getElementById("details");
+    const userData = getUserData(username);
+    if (userData && userData.comptes) {
+      return alert("Ce nom d'utilisateur existe déjà.");
+    }
 
-    const cotationsMap = {
-      "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED", "ABO"],
-      "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
-      "Escalade": ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"]
+    const newUser = {
+      comptes: { username, password },
+      sortiesAFaire: [],
+      sortiesFaites: [],
     };
 
-    if (methodeSelect && cotationSelect) {
-      methodeSelect.addEventListener("change", () => {
-        const val = methodeSelect.value;
-        cotationSelect.innerHTML = `<option value="" disabled selected>Cotation</option>`;
-        if (cotationsMap[val]) {
-          cotationsMap[val].forEach(opt => {
-            const o = document.createElement("option");
-            o.value = opt;
-            o.textContent = opt;
-            cotationSelect.appendChild(o);
-          });
-        }
-      });
-    }
-    if (yearSelect) {
-      const currentYear = new Date().getFullYear();
-      for (let i = 0; i < 10; i++) {
-        const op = document.createElement("option");
-        op.value = currentYear + i;
-        op.textContent = currentYear + i;
-        yearSelect.appendChild(op);
-      }
-    }
+    saveUserData(username, newUser);
+    alert("Compte créé avec succès, vous pouvez maintenant vous connecter.");
+    window.location.href = "utilisateur.html"; // ou page de login
+  });
+}
 
-    formAFaire.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const token = getToken();
-      if (!token) {
-        alert("Vous n'êtes pas connecté.");
-        window.location.href = "utilisateur.html";
-        return;
-      }
-      const sommet = document.getElementById("sommet").value.trim();
-      const altitude = document.getElementById("altitude").value.trim();
-      const denivele = document.getElementById("denivele").value.trim();
-      const methode = methodeSelect.value;
-      const cotation = cotationSelect.value;
-      const annee = yearSelect.value;
-      const details = detailsInput.value.trim();
+function initMonComptePage() {
+  if (!currentUser) {
+    alert("Veuillez vous connecter.");
+    window.location.href = "utilisateur.html";
+    return;
+  }
 
-      const sortieData = {
-        type: "a-faire",
-        sommet,
-        altitude,
-        denivele,
-        methode,
-        cotation,
-        annee,
-        details
-      };
+  // Afficher nom utilisateur
+  const userNameDisplay = document.getElementById("user-name-display");
+  if (userNameDisplay) {
+    userNameDisplay.textContent = currentUser;
+  }
 
-      try {
-        const res = await fetch("/api/sorties", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + token
-          },
-          body: JSON.stringify(sortieData)
-        });
-        const data = await res.json();
-        if (res.ok) {
-          alert("Sortie à faire ajoutée !");
-          window.location.reload();
-        } else {
-          alert("Erreur lors de l'ajout de la sortie : " + (data.error || "Inconnue"));
-        }
-      } catch (err) {
-        console.error("Erreur lors de la requête :", err);
-        alert("Erreur lors de la connexion au serveur");
-      }
+  // Bouton déconnexion
+  const btnLogout = document.getElementById("btn-logout");
+  if (btnLogout) {
+    btnLogout.addEventListener("click", () => {
+      clearSessionUser();
+      window.location.href = "utilisateur.html";
+    });
+  }
+}
+
+// === INIT PAGE SELON URL ===
+
+document.addEventListener("DOMContentLoaded", () => {
+  currentUser = getSessionUser();
+
+  // Initialiser select cotation selon méthode (form Sorties à faire)
+  const methodeSelect = document.getElementById("methode");
+  const cotationSelect = document.getElementById("cotation");
+  if (methodeSelect && cotationSelect) {
+    updateCotationOptions(methodeSelect, cotationSelect);
+    methodeSelect.addEventListener("change", () => {
+      updateCotationOptions(methodeSelect, cotationSelect);
     });
   }
 
-  /* =================== FORM "SORTIES FAITES" =================== */
+  // Initialiser select cotation selon méthode (form Sorties faites)
+  const methodeFaitSelect = document.getElementById("methode-fait");
+  const cotationFaitSelect = document.getElementById("cotation-fait");
+  if (methodeFaitSelect && cotationFaitSelect) {
+    updateCotationOptions(methodeFaitSelect, cotationFaitSelect);
+    methodeFaitSelect.addEventListener("change", () => {
+      updateCotationOptions(methodeFaitSelect, cotationFaitSelect);
+    });
+  }
+
+  // Remplir année select sorties à faire
+  const yearSelect = document.getElementById("year");
+  if (yearSelect) {
+    fillYearSelect(yearSelect);
+  }
+
+  // Gestion formulaire Sorties à faire
+  const formAFaire = document.getElementById("form-afaire");
+  if (formAFaire) {
+    formAFaire.addEventListener("submit", addSortieAFaire);
+    loadSortiesAFaire();
+  }
+
+  // Gestion formulaire Sorties faites
   const formFait = document.getElementById("form-fait");
   if (formFait) {
-    const methodeFaitSelect = document.getElementById("methode-fait");
-    const cotationFaitSelect = document.getElementById("cotation-fait");
-    const dateInput = document.getElementById("date");
-    const detailsFait = document.getElementById("details-fait");
-
-    const cotationsMap = {
-      "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED", "ABO"],
-      "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
-      "Escalade": ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"]
-    };
-
-    if (methodeFaitSelect && cotationFaitSelect) {
-      methodeFaitSelect.addEventListener("change", () => {
-        const val = methodeFaitSelect.value;
-        cotationFaitSelect.innerHTML = `<option value="" disabled selected>Cotation</option>`;
-        if (cotationsMap[val]) {
-          cotationsMap[val].forEach(opt => {
-            const o = document.createElement("option");
-            o.value = opt;
-            o.textContent = opt;
-            cotationFaitSelect.appendChild(o);
-          });
-        }
-      });
-    }
-
-    formFait.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const token = getToken();
-      if (!token) {
-        alert("Vous n'êtes pas connecté.");
-        window.location.href = "utilisateur.html";
-        return;
-      }
-      const sommet = document.getElementById("sommet-fait").value.trim();
-      const altitude = document.getElementById("altitude-fait").value.trim();
-      const denivele = document.getElementById("denivele-fait").value.trim();
-      const methode = methodeFaitSelect.value;
-      const cotation = cotationFaitSelect.value;
-      const dateVal = dateInput.value;
-      const details = detailsFait.value.trim();
-
-      const sortieData = {
-        type: "fait",
-        sommet,
-        altitude,
-        denivele,
-        methode,
-        cotation,
-        date: dateVal,
-        details
-      };
-
-      try {
-        const res = await fetch("/api/sorties", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + token
-          },
-          body: JSON.stringify(sortieData)
-        });
-        const data = await res.json();
-        if (res.ok) {
-          alert("Sortie faite ajoutée !");
-          window.location.reload();
-        } else {
-          alert("Erreur lors de l'ajout de la sortie : " + (data.error || "Inconnue"));
-        }
-      } catch (err) {
-        console.error("Erreur lors de la requête :", err);
-        alert("Erreur lors de la connexion au serveur");
-      }
-    });
+    formFait.addEventListener("submit", addSortieFaite);
+    loadSortiesFaites();
   }
 
-  /* =================== ÉDITION DES SORTIES =================== */
-  const methods = ["Alpinisme", "Randonnée", "Escalade"];
-  const cotationsByMethod = {
-    "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED", "ABO"],
-    "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
-    "Escalade": ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"]
-  };
-
-  window.editRow = function(row, mode) {
-    const cells = row.querySelectorAll("td");
-    if (cells.length < 8) {
-      console.error("La ligne n'a pas le nombre de cellules attendu.", row);
-      return;
-    }
-    const sommetVal = cells[1].textContent;
-    const altitudeVal = cells[2].textContent.replace(/^~/, "").replace(/m$/, "").trim();
-    const deniveleVal = cells[3].textContent.replace(/^~/, "").replace(/m$/, "").trim();
-    const methodeVal = cells[4].textContent;
-    const cotationVal = cells[5].textContent;
-    const dateOrYearVal = cells[6].textContent;
-    const detailsVal = cells[7].textContent;
-
-    // Transforme la ligne en champ éditable
-    cells[1].innerHTML = `<input type="text" value="${sommetVal}" style="width:100%;">`;
-    cells[2].innerHTML = `<input type="number" value="${altitudeVal}" style="width:100%;">`;
-    cells[3].innerHTML = `<input type="number" value="${deniveleVal}" style="width:100%;">`;
-
-    // Méthode
-    let methodSelectHTML = `<select style="width:100%;">`;
-    methods.forEach(opt => {
-      methodSelectHTML += `<option value="${opt}" ${opt === methodeVal ? "selected" : ""}>${opt}</option>`;
-    });
-    methodSelectHTML += `</select>`;
-    cells[4].innerHTML = methodSelectHTML;
-
-    // Cotation
-    let currentMethod = cells[4].querySelector("select").value;
-    let cotSelectHTML = `<select style="width:100%;">`;
-    (cotationsByMethod[currentMethod] || []).forEach(opt => {
-      cotSelectHTML += `<option value="${opt}" ${opt === cotationVal ? "selected" : ""}>${opt}</option>`;
-    });
-    cotSelectHTML += `</select>`;
-    cells[5].innerHTML = cotSelectHTML;
-
-    // Changer la cotation si la méthode change
-    cells[4].querySelector("select").addEventListener("change", function() {
-      const newMethod = this.value;
-      const newCotSelect = document.createElement("select");
-      newCotSelect.style.width = "100%";
-      (cotationsByMethod[newMethod] || []).forEach(o => {
-        const option = document.createElement("option");
-        option.value = o;
-        option.textContent = o;
-        newCotSelect.appendChild(option);
-      });
-      cells[5].innerHTML = "";
-      cells[5].appendChild(newCotSelect);
-    });
-
-    // Date ou Année
-    cells[6].innerHTML = "";
-    if (mode === "fait") {
-      cells[6].innerHTML = `<input type="date" value="${dateOrYearVal}" style="width:100%;">`;
-    } else {
-      let selectYearHTML = `<select style="width:100%;">`;
-      const currentYear = new Date().getFullYear();
-      for (let i = 0; i < 10; i++) {
-        const yr = currentYear + i;
-        selectYearHTML += `<option value="${yr}" ${String(yr) === dateOrYearVal ? "selected" : ""}>${yr}</option>`;
-      }
-      selectYearHTML += `</select>`;
-      cells[6].innerHTML = selectYearHTML;
-    }
-
-    // Détails
-    cells[7].innerHTML = `<textarea style="width:100%;">${detailsVal}</textarea>`;
-
-    // Boutons Save / Cancel
-    cells[0].innerHTML = "";
-    const saveBtn = document.createElement("button");
-    saveBtn.textContent = "✔️";
-    const cancelBtn = document.createElement("button");
-    cancelBtn.textContent = "↩";
-    cells[0].appendChild(saveBtn);
-    cells[0].appendChild(cancelBtn);
-
-    saveBtn.addEventListener("click", () => { saveRow(row, mode); });
-    cancelBtn.addEventListener("click", () => { window.location.reload(); });
-  };
-
-  async function saveRow(row, mode) {
-    const sortieId = row.getAttribute("data-id");
-    const cells = row.querySelectorAll("td");
-    const updatedData = {
-      sommet: cells[1].querySelector("input").value.trim(),
-      altitude: cells[2].querySelector("input").value.trim(),
-      denivele: cells[3].querySelector("input").value.trim(),
-      methode: cells[4].querySelector("select").value,
-      details: cells[7].querySelector("textarea").value.trim()
-    };
-
-    const cotationSel = cells[5].querySelector("select");
-    if (cotationSel) {
-      updatedData.cotation = cotationSel.value;
-    }
-    if (mode === "fait") {
-      const dateField = cells[6].querySelector("input[type=date]");
-      updatedData.date = dateField ? dateField.value : "";
-    } else {
-      const yearSel = cells[6].querySelector("select");
-      updatedData.annee = yearSel ? yearSel.value : "";
-    }
-
-    const token = getToken();
-    try {
-      const res = await fetch(`/api/sorties/${sortieId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + token
-        },
-        body: JSON.stringify(updatedData)
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert("Sortie mise à jour !");
-        window.location.reload();
-      } else {
-        alert("Erreur de sauvegarde : " + (data.error || "Inconnue"));
-      }
-    } catch (err) {
-      console.error("Erreur lors de la mise à jour :", err);
-      alert("Erreur lors de la connexion au serveur");
-    }
+  // Initialiser page connexion
+  if (document.getElementById("login-form")) {
+    initLoginPage();
   }
 
-  window.deleteRow = async function(row) {
-    const sortieId = row.getAttribute("data-id");
-    if (!sortieId) return;
-    const token = getToken();
-    try {
-      const res = await fetch(`/api/sorties/${sortieId}`, {
-        method: "DELETE",
-        headers: { "Authorization": "Bearer " + token }
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert("Sortie supprimée !");
-        row.remove();
-      } else {
-        alert("Erreur lors de la suppression : " + (data.error || "Inconnue"));
-      }
-    } catch (err) {
-      console.error("Erreur lors de la suppression :", err);
-      alert("Erreur lors de la connexion au serveur");
-    }
-  };
-
-  /* =================== AUTO-COMPLÉTION "SOMMET" =================== */
-  let sommetInput = document.getElementById("sommet");
-  if (!sommetInput) { 
-    sommetInput = document.getElementById("sommet-fait");
-  }
-  if (sommetInput) {
-    sommetInput.addEventListener("input", updateSummitsDatalist);
-    sommetInput.addEventListener("change", () => {
-      const datalist = document.getElementById("summits-list");
-      if (!datalist) return;
-      const options = datalist.options;
-      for (let i = 0; i < options.length; i++) {
-        if (options[i].value.toLowerCase() === sommetInput.value.trim().toLowerCase()) {
-          let altitudeInput = document.getElementById("altitude");
-          if (!altitudeInput) { 
-            altitudeInput = document.getElementById("altitude-fait");
-          }
-          if (altitudeInput) {
-            altitudeInput.value = options[i].getAttribute("data-altitude") || "";
-          }
-          break;
-        }
-      }
-    });
+  // Initialiser page création compte
+  if (document.getElementById("create-account-form")) {
+    initCreateAccountPage();
   }
 
-  async function updateSummitsDatalist() {
-    const query = sommetInput.value.trim();
-    const datalist = document.getElementById("summits-list");
-    if (!datalist) return;
-    if (query.length < 2) {
-      datalist.innerHTML = "";
-      return;
-    }
-    try {
-      const res = await fetch(`/api/summits?q=${encodeURIComponent(query)}`);
-      const suggestions = await res.json();
-      datalist.innerHTML = suggestions.map(s =>
-        `<option data-altitude="${s.altitude}" value="${s.nom}">`
-      ).join('');
-    } catch (err) {
-      console.error("Erreur lors de l'auto-complétion des sommets :", err);
-    }
+  // Initialiser page mon compte
+  if (document.body.classList.contains("page-mon-compte")) {
+    initMonComptePage();
   }
-
 });

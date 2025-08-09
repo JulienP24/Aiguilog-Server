@@ -23,6 +23,18 @@
         margin-top: 1rem;
       }
       .editable { background-color: #eef; }
+
+      .sr-only {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0,0,0,0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+      }
     </style>
   </head>
   <body>
@@ -32,9 +44,9 @@
         <div class="desktop-nav">
           <a href="index.html" class="logo-link">
             <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png">
-              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png">
-              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img">
+              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
+              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
+              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img" />
             </picture>
           </a>
           <nav class="nav-links">
@@ -44,9 +56,9 @@
           </nav>
           <a href="mon-compte.html" class="user-icon-link">
             <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png">
-              <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png">
-              <img src="images/user-icon-black.png" alt="Compte" class="user-icon">
+              <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png" />
+              <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png" />
+              <img src="images/user-icon-black.png" alt="Compte" class="user-icon" />
             </picture>
           </a>
         </div>
@@ -55,16 +67,16 @@
         <div class="mobile-nav">
           <a href="index.html" class="logo-link-mobile">
             <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png">
-              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png">
-              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img">
+              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
+              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
+              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img" />
             </picture>
           </a>
           <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">
             <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png">
-              <source media="(prefers-color-scheme: light)" srcset="images/hamburger-black.png">
-              <img src="images/hamburger-black.png" alt="Menu" class="hamburger-icon">
+              <source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png" />
+              <source media="(prefers-color-scheme: light)" srcset="images/hamburger-black.png" />
+              <img src="images/hamburger-black.png" alt="Menu" class="hamburger-icon" />
             </picture>
           </button>
         </div>
@@ -74,9 +86,9 @@
           <li class="menu-user-icon">
             <a href="mon-compte.html">
               <picture>
-                <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png">
-                <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png">
-                <img src="images/user-icon-black.png" alt="Compte" class="user-icon-menu">
+                <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png" />
+                <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png" />
+                <img src="images/user-icon-black.png" alt="Compte" class="user-icon-menu" />
               </picture>
             </a>
           </li>
@@ -89,30 +101,42 @@
 
     <div class="container">
       <h2>Sorties faites</h2>
-      <form id="form-fait" class="two-cols">
+      <form id="form-fait" class="two-cols" aria-label="Ajouter une sortie faite">
         <div class="col-left">
-          <input type="text" id="sommet-fait" placeholder="Sommet" list="summits-list" required />
+          <label for="sommet-fait" class="sr-only">Sommet</label>
+          <input type="text" id="sommet-fait" name="sommet-fait" placeholder="Sommet" list="summits-list" required autocomplete="off" />
           <datalist id="summits-list"></datalist>
-          <input type="number" id="altitude-fait" placeholder="Altitude (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
-          <input type="number" id="denivele-fait" placeholder="Dénivelé (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
+
+          <label for="altitude-fait" class="sr-only">Altitude (m)</label>
+          <input type="number" id="altitude-fait" name="altitude-fait" placeholder="Altitude (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
+
+          <label for="denivele-fait" class="sr-only">Dénivelé (m)</label>
+          <input type="number" id="denivele-fait" name="denivele-fait" placeholder="Dénivelé (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
         </div>
         <div class="col-right">
-          <select id="methode-fait" required>
+          <label for="methode-fait" class="sr-only">Méthode</label>
+          <select id="methode-fait" name="methode-fait" required aria-required="true" aria-label="Méthode">
             <option value="" disabled selected>Méthode</option>
             <option value="Alpinisme">Alpinisme</option>
             <option value="Randonnée">Randonnée</option>
             <option value="Escalade">Escalade</option>
           </select>
-          <select id="cotation-fait" required>
+
+          <label for="cotation-fait" class="sr-only">Cotation</label>
+          <select id="cotation-fait" name="cotation-fait" required aria-required="true" aria-label="Cotation" disabled>
             <option value="" disabled selected>Cotation</option>
           </select>
-          <input type="date" id="date" required />
+
+          <label for="date" class="sr-only">Date</label>
+          <input type="date" id="date" name="date" required />
         </div>
         <div class="full-width">
-          <input type="text" id="details-fait" placeholder="Détails" />
+          <label for="details-fait" class="sr-only">Détails</label>
+          <input type="text" id="details-fait" name="details-fait" placeholder="Détails" autocomplete="off" />
         </div>
-        <div class="full-width">
+        <div class="full-width" style="display:flex; justify-content:center; gap:1rem;">
           <button type="submit">Ajouter</button>
+          <button id="reset-fait" type="reset">Réinitialiser</button>
         </div>
       </form>
       <div class="table-container">
