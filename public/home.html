@@ -3,17 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Mon Compte - Aiguilog</title>
+  <title>Aiguilog - Accueil</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div id="header-container"></div>
 
   <main style="padding: 20px; max-width: 600px; margin: auto;">
-    <h1>Mon Compte</h1>
-    <p>Modifier vos informations ici.</p>
-    <p><strong>Nom d’utilisateur :</strong> <span id="username-display"></span></p>
-
+    <h1>Bienvenue sur Aiguilog !</h1>
+    <p id="welcome-msg">Chargement du message...</p>
     <button id="logout-btn" style="padding: 10px 15px; background: #f44336; color: white; border:none; border-radius: 5px; cursor: pointer;">Déconnexion</button>
   </main>
 
@@ -26,10 +24,12 @@
     document.addEventListener('DOMContentLoaded', () => {
       const username = localStorage.getItem('username');
       if (!username) {
+        // Si pas connecté, rediriger vers login
         window.location.href = '/index.html';
         return;
       }
-      document.getElementById('username-display').textContent = username;
+
+      document.getElementById('welcome-msg').textContent = `Bonjour ${username} ! Content de te revoir sur Aiguilog.`;
 
       document.getElementById('logout-btn').addEventListener('click', () => {
         localStorage.removeItem('token');

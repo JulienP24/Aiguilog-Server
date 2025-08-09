@@ -1,69 +1,56 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Aiguilog - Inscription</title>
-<link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aiguilog - Créer un compte</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="container">
-    <h2>Créer un compte</h2>
+  <div id="header-container"></div>
 
-    <form id="register-form" autocomplete="off">
-      <input type="text" id="username" placeholder="Nom d'utilisateur" required />
-      <input type="password" id="password" placeholder="Mot de passe" required />
-      <input type="password" id="confirm-password" placeholder="Confirmer mot de passe" required />
-      <button type="submit">S'inscrire</button>
+  <main style="padding: 20px; max-width: 500px; margin: auto;">
+    <h1>Créer un compte</h1>
+    <form id="register-form">
+      <label for="username">Nom d’utilisateur :</label><br />
+      <input type="text" id="username" name="username" required /><br /><br />
+      <label for="password">Mot de passe :</label><br />
+      <input type="password" id="password" name="password" required /><br /><br />
+      <button type="submit">Créer mon compte</button>
     </form>
 
-    <div id="message" style="margin-top:1rem; color:red; font-weight:600;"></div>
+    <p>Déjà un compte ? <a href="index.html">Connectez-vous ici</a>.</p>
 
-    <p style="text-align:center; margin-top:1rem;">
-      Déjà un compte ? <a href="index.html">Se connecter</a>
-    </p>
+    <div id="error-msg" style="color:red; margin-top:10px;"></div>
+    <div id="success-msg" style="color:green; margin-top:10px;"></div>
   </main>
 
+  <script src="header.js"></script>
   <script>
-    const form = document.getElementById('register-form');
-    const msg = document.getElementById('message');
+    fetch('header.html').then(res => res.text()).then(html => {
+      document.getElementById('header-container').innerHTML = html;
+    });
 
-    form.addEventListener('submit', async e => {
+    document.getElementById('register-form').addEventListener('submit', async e => {
       e.preventDefault();
-      msg.textContent = '';
-
-      const username = form.username.value.trim();
-      const password = form.password.value;
-      const confirmPassword = form['confirm-password'].value;
-
-      if (!username || !password || !confirmPassword) {
-        msg.textContent = 'Tous les champs sont obligatoires.';
-        return;
-      }
-      if (password !== confirmPassword) {
-        msg.textContent = 'Les mots de passe ne correspondent pas.';
-        return;
-      }
+      const username = e.target.username.value.trim();
+      const password = e.target.password.value;
 
       try {
         const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ username, password })
         });
         const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Erreur lors de la création du compte');
 
-        if (!res.ok) {
-          msg.textContent = data.message || 'Erreur inconnue';
-          return;
-        }
-
-        alert('Compte créé ! Connectez-vous maintenant.');
-        window.location.href = 'index.html';
-
+        document.getElementById('success-msg').textContent = data.message;
+        document.getElementById('error-msg').textContent = '';
+        e.target.reset();
       } catch (err) {
-        msg.textContent = 'Erreur réseau ou serveur.';
-        console.error(err);
+        document.getElementById('error-msg').textContent = err.message;
+        document.getElementById('success-msg').textContent = '';
       }
     });
   </script>
