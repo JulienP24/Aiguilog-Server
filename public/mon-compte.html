@@ -5,12 +5,76 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Aiguilog - Mon compte</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Styles spécifiques mon-compte */
+    .account-container {
+      max-width: 480px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background: rgba(255 255 255 / 0.25);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      text-align: center;
+      user-select: none;
+    }
+    .account-container h2 {
+      color: #102a43;
+      margin-bottom: 1.5rem;
+      font-weight: 700;
+      font-size: 2rem;
+    }
+    .username-display {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #1c3d7a;
+      margin-bottom: 2rem;
+      user-select: text;
+    }
+    button.logout-btn {
+      background: linear-gradient(135deg, #2a61d5, #376fe2);
+      color: white;
+      font-weight: 700;
+      border: none;
+      border-radius: 20px;
+      padding: 0.8rem 3rem;
+      font-size: 1.1rem;
+      cursor: pointer;
+      box-shadow: 0 6px 10px rgba(58, 96, 208, 0.5);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      user-select: none;
+    }
+    button.logout-btn:hover {
+      background: linear-gradient(135deg, #1e4ecf, #2a61d5);
+      box-shadow: 0 8px 15px rgba(42, 97, 213, 0.7);
+    }
+
+    /* Dark mode */
+    @media (prefers-color-scheme: dark) {
+      .account-container {
+        background: rgba(30 30 50 / 0.45);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+        color: #aad1ff;
+      }
+      .username-display {
+        color: #d0e4ff;
+      }
+      button.logout-btn {
+        background: linear-gradient(135deg, #5a8dee, #376fe2);
+        box-shadow: 0 6px 15px rgba(58, 96, 208, 0.7);
+      }
+      button.logout-btn:hover {
+        background: linear-gradient(135deg, #376fe2, #5a8dee);
+      }
+    }
+  </style>
 </head>
 <body>
   <header class="main-header">
     <div class="nav-container">
       <div class="desktop-nav">
-        <a href="acceuil-connecte.html" class="logo-link">
+        <a href="index.html" class="logo-link">
           <picture>
             <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
             <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
@@ -32,7 +96,7 @@
       </div>
 
       <div class="mobile-nav">
-        <a href="acceuil-connecte.html" class="logo-link-mobile">
+        <a href="index.html" class="logo-link-mobile">
           <picture>
             <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
             <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
@@ -48,26 +112,75 @@
         </button>
       </div>
     </div>
-
     <nav id="mobile-menu">
       <ul>
-        <li><a href="mon-compte.html" class="active">Mon compte</a></li>
+        <li class="menu-user-icon">
+          <a href="mon-compte.html">
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png" />
+              <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png" />
+              <img src="images/user-icon-black.png" alt="Compte" class="user-icon-menu" />
+            </picture>
+          </a>
+        </li>
         <li><a href="sorties-faites.html">Fait</a></li>
         <li><a href="sorties-a-faire.html">À Faire</a></li>
         <li><a href="rechercher.html">Rechercher</a></li>
-        <li><button id="logout-mobile-btn" class="btn-logout-menu">Se déconnecter</button></li>
       </ul>
     </nav>
   </header>
 
-  <main class="container" style="max-width:600px; margin:auto; text-align:center;">
-    <h2>Mon compte</h2>
-    <p>Bienvenue <span id="user-fullname"></span> (<span id="user-username"></span>)</p>
-    <p>Date de naissance : <span id="user-birthdate"></span></p>
-
-    <button id="logout-btn" class="btn-logout">Se déconnecter</button>
+  <main>
+    <section class="account-container" aria-label="Informations du compte">
+      <h2>Mon compte</h2>
+      <p class="username-display" aria-live="polite"></p>
+      <button class="logout-btn" aria-label="Se déconnecter">Se déconnecter</button>
+    </section>
   </main>
 
-  <script src="script.js"></script>
+  <script>
+    // Gestion menu mobile
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuToggle.addEventListener('click', () => {
+      mobileMenu.classList.toggle('open');
+    });
+
+    // Vérifier si utilisateur connecté (token JWT dans localStorage)
+    const usernameDisplay = document.querySelector('.username-display');
+    const logoutBtn = document.querySelector('.logout-btn');
+
+    function getUsernameFromToken() {
+      const token = localStorage.getItem('jwtToken');
+      if (!token) return null;
+      try {
+        // Décoder payload JWT (base64url)
+        const payloadBase64 = token.split('.')[1];
+        const payloadJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+        const payload = JSON.parse(payloadJson);
+        return payload.username || null;
+      } catch {
+        return null;
+      }
+    }
+
+    function redirectToLogin() {
+      window.location.href = 'index.html';
+    }
+
+    // Afficher nom utilisateur ou rediriger
+    const username = getUsernameFromToken();
+    if (!username) {
+      redirectToLogin();
+    } else {
+      usernameDisplay.textContent = `Connecté en tant que : ${username}`;
+    }
+
+    // Déconnexion
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('jwtToken');
+      redirectToLogin();
+    });
+  </script>
 </body>
 </html>

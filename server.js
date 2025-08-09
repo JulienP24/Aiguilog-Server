@@ -3,106 +3,63 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+import authRoutes from './routes/auth.js';
+import sortieRoutes from './routes/sorties.js';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI;
+const CLIENT_URL = process.env.CLIENT_URL;
 
-if (!MONGO_URI) {
-  console.error('❌ MONGO_URI non défini dans .env');
+if (!MONGO_URI || !process.env.JWT_SECRET) {
+  console.error('❌ MONGO_URI ou JWT_SECRET non définis dans .env');
   process.exit(1);
 }
 
-// Middlewares
+// CORS whitelist
+const whitelist = [CLIENT_URL, 'http://localhost:5500'];
 app.use(cors({
-  origin: '*', // adapter en prod
-  credentials: true,
+  origin: function(origin, callback){
+    // allow requests with no origin like mobile apps or curl requests
+    if(!origin) return callback(null, true);
+    if(whitelist.indexOf(origin) !== -1){
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
 }));
+
 app.use(express.json());
 
-// Connexion à MongoDB Atlas
+// Connexion à MongoDB
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('✅ Connecté à MongoDB Atlas'))
-  .catch((err) => {
-    console.error('❌ Erreur connexion MongoDB :', err);
+  .then(() => console.log('✅ Connecté à MongoDB'))
+  .catch(err => {
+    console.error('❌ Erreur connexion MongoDB:', err);
     process.exit(1);
   });
 
-// Schéma utilisateur
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-});
-
-const User = mongoose.model('User', userSchema);
-
 // Routes API
+app.use('/api/auth', authRoutes);
+app.use('/api/sorties', sortieRoutes);
 
-// Enregistrement utilisateur
-app.post('/api/register', async (req, res) => {
-  try {
-    const { username, password } = req.body;
+// Serveur fichiers statiques frontend
+app.use(express.static(path.join(__dirname, 'public')));
 
-    if (!username || !password) {
-      return res.status(400).json({ message: 'Champs manquants' });
-    }
-
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(409).json({ message: 'Utilisateur déjà existant' });
-    }
-
-    // Ici, on pourrait hasher le mot de passe (bcrypt), mais tu n’as pas demandé ça explicitement
-
-    const newUser = new User({ username, password });
-    await newUser.save();
-
-    return res.status(201).json({ message: 'Utilisateur créé' });
-  } catch (error) {
-    console.error('Erreur /api/register:', error);
-    return res.status(500).json({ message: 'Erreur serveur' });
-  }
-});
-
-// Connexion utilisateur
-app.post('/api/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ message: 'Champs manquants' });
-    }
-
-    const user = await User.findOne({ username });
-
-    if (!user) {
-      return res.status(401).json({ message: 'Identifiant ou mot de passe incorrect' });
-    }
-
-    // Comparaison simple, pas sécurisée (à remplacer par bcrypt.compare)
-    if (user.password !== password) {
-      return res.status(401).json({ message: 'Identifiant ou mot de passe incorrect' });
-    }
-
-    // Retour simple, tu peux ajouter JWT si tu veux
-    return res.json({ message: 'Connexion réussie', username: user.username });
-  } catch (error) {
-    console.error('Erreur /api/login:', error);
-    return res.status(500).json({ message: 'Erreur serveur' });
-  }
-});
-
-// Servir fichiers statiques frontend depuis /public
-app.use(express.static(path.join(process.cwd(), 'public')));
-
-// Toutes les autres routes redirigent vers index.html (SPA)
+// SPA fallback
 app.get('*', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Démarrage serveur
 app.listen(PORT, () => {
-  console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+  console.log(`🚀 Serveur lancé sur le port ${PORT}`);
 });

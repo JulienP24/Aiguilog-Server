@@ -1,166 +1,153 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Aiguilog - Sorties à faire</title>
-    <link rel="stylesheet" href="style.css" />
-    <style>
-      .two-cols {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-      }
-      .col-left, .col-right {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      }
-      .full-width {
-        grid-column: 1 / span 2;
-        display: flex;
-        justify-content: center;
-        margin-top: 1rem;
-      }
-      .editable { background-color: #eef; }
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Aiguilog - Sorties à faire</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="container">
+    <h2>Sorties à faire</h2>
 
-      /* style pour cacher les labels mais accessibles aux lecteurs d’écran */
-      .sr-only {
-        position: absolute !important;
-        width: 1px !important;
-        height: 1px !important;
-        padding: 0 !important;
-        margin: -1px !important;
-        overflow: hidden !important;
-        clip: rect(0,0,0,0) !important;
-        white-space: nowrap !important;
-        border: 0 !important;
-      }
-    </style>
-  </head>
-  <body>
-    <header class="main-header">
-      <div class="nav-container">
-        <!-- Desktop Navigation -->
-        <div class="desktop-nav">
-          <a href="index.html" class="logo-link">
-            <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png">
-              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png">
-              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img" />
-            </picture>
-          </a>
-          <nav class="nav-links">
-            <a href="sorties-faites.html" class="nav-btn">Fait</a>
-            <a href="sorties-a-faire.html" class="nav-btn active">À Faire</a>
-            <a href="rechercher.html" class="nav-btn">Rechercher</a>
-          </nav>
-          <a href="mon-compte.html" class="user-icon-link">
-            <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png" />
-              <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png" />
-              <img src="images/user-icon-black.png" alt="Compte" class="user-icon" />
-            </picture>
-          </a>
-        </div>
+    <button id="logout-btn" style="float:right; margin-bottom:1rem;">Se déconnecter</button>
 
-        <!-- Mobile Navigation -->
-        <div class="mobile-nav">
-          <a href="index.html" class="logo-link-mobile">
-            <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
-              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
-              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img" />
-            </picture>
-          </a>
-          <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">
-            <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png" />
-              <source media="(prefers-color-scheme: light)" srcset="images/hamburger-black.png" />
-              <img src="images/hamburger-black.png" alt="Menu" class="hamburger-icon" />
-            </picture>
-          </button>
-        </div>
-      </div>
-      <nav id="mobile-menu">
-        <ul>
-          <li class="menu-user-icon">
-            <a href="mon-compte.html">
-              <picture>
-                <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png" />
-                <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png" />
-                <img src="images/user-icon-black.png" alt="Compte" class="user-icon-menu" />
-              </picture>
-            </a>
-          </li>
-          <li><a href="sorties-faites.html">Fait</a></li>
-          <li><a href="sorties-a-faire.html" class="active">À Faire</a></li>
-          <li><a href="rechercher.html">Rechercher</a></li>
-        </ul>
-      </nav>
-    </header>
+    <form id="add-sortie-form" autocomplete="off">
+      <input type="text" name="sommet" placeholder="Sommet" required />
+      <input type="number" name="altitude" placeholder="Altitude (m)" required />
+      <input type="number" name="denivele" placeholder="Dénivelé (m)" required />
+      <select name="methode" required>
+        <option value="" disabled selected>Méthode</option>
+        <option value="Alpinisme">Alpinisme</option>
+        <option value="Randonnée">Randonnée</option>
+        <option value="Escalade">Escalade</option>
+      </select>
+      <input type="text" name="cotation" placeholder="Cotation (facultatif)" />
+      <textarea name="details" placeholder="Détails (facultatif)" rows="2"></textarea>
+      <button type="submit">Ajouter</button>
+    </form>
 
-    <div class="container">
-      <h2>Sorties à faire</h2>
-      <form id="form-a-faire" class="two-cols" aria-label="Ajouter une sortie à faire">
-        <div class="col-left">
-          <label for="sommet" class="sr-only">Sommet</label>
-          <input type="text" id="sommet" name="sommet" placeholder="Sommet" list="summits-list" required autocomplete="off" />
-          <datalist id="summits-list"></datalist>
-
-          <label for="altitude" class="sr-only">Altitude (m)</label>
-          <input type="number" id="altitude" name="altitude" placeholder="Altitude (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
-
-          <label for="denivele" class="sr-only">Dénivelé (m)</label>
-          <input type="number" id="denivele" name="denivele" placeholder="Dénivelé (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
-        </div>
-        <div class="col-right">
-          <label for="methode" class="sr-only">Méthode</label>
-          <select id="methode" name="methode" required aria-required="true" aria-label="Méthode">
-            <option value="" disabled selected>Méthode</option>
-            <option value="Alpinisme">Alpinisme</option>
-            <option value="Randonnée">Randonnée</option>
-            <option value="Escalade">Escalade</option>
-          </select>
-
-          <label for="cotation" class="sr-only">Cotation</label>
-          <select id="cotation" name="cotation" required aria-required="true" aria-label="Cotation" disabled>
-            <option value="" disabled selected>Cotation</option>
-          </select>
-
-          <label for="year" class="sr-only">Année</label>
-          <select id="year" name="year" required aria-required="true" aria-label="Année">
-            <option value="" disabled selected>Année</option>
-          </select>
-        </div>
-        <div class="full-width">
-          <label for="details" class="sr-only">Détails</label>
-          <input type="text" id="details" name="details" placeholder="Détails" autocomplete="off" />
-        </div>
-        <div class="full-width" style="display:flex; justify-content:center; gap:1rem;">
-          <button type="submit">Ajouter</button>
-          <button id="reset-btn" type="reset">Réinitialiser</button>
-        </div>
-      </form>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Actions</th>
-              <th>Sommet</th>
-              <th>Altitude</th>
-              <th>Dénivelé</th>
-              <th>Méthode</th>
-              <th>Cotation</th>
-              <th>Année</th>
-              <th>Détails</th>
-            </tr>
-          </thead>
-          <tbody id="table-body-afaire"></tbody>
-        </table>
-      </div>
+    <div class="table-container">
+      <table id="sorties-table">
+        <thead>
+          <tr>
+            <th>Sommet</th>
+            <th>Altitude (m)</th>
+            <th>Dénivelé (m)</th>
+            <th>Méthode</th>
+            <th>Cotation</th>
+            <th>Détails</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
+  </main>
 
-    <script src="script.js"></script>
-  </body>
+<script>
+  const token = localStorage.getItem('token');
+  if (!token) {
+    window.location.href = 'index.html';
+  }
+
+  const tableBody = document.querySelector('#sorties-table tbody');
+  const form = document.getElementById('add-sortie-form');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  logoutBtn.addEventListener('click', () => {
+    localStorage.clear();
+    window.location.href = 'index.html';
+  });
+
+  async function fetchSorties() {
+    const res = await fetch('/api/sorties?done=false', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) {
+      alert('Erreur récupération sorties');
+      return;
+    }
+    const sorties = await res.json();
+    tableBody.innerHTML = '';
+
+    sorties.forEach(s => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${s.sommet}</td>
+        <td>${s.altitude}</td>
+        <td>${s.denivele}</td>
+        <td>${s.methode}</td>
+        <td>${s.cotation || ''}</td>
+        <td>${s.details || ''}</td>
+        <td>
+          <button data-id="${s._id}" class="delete-btn">🗑️</button>
+          <button data-id="${s._id}" class="done-btn">✔️</button>
+        </td>
+      `;
+      tableBody.appendChild(tr);
+    });
+  }
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+    const sortieData = {
+      sommet: formData.get('sommet').trim(),
+      altitude: Number(formData.get('altitude')),
+      denivele: Number(formData.get('denivele')),
+      methode: formData.get('methode'),
+      cotation: formData.get('cotation').trim() || '',
+      details: formData.get('details').trim() || '',
+      done: false
+    };
+
+    const res = await fetch('/api/sorties', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(sortieData),
+    });
+    if (!res.ok) {
+      alert('Erreur ajout sortie');
+      return;
+    }
+    form.reset();
+    fetchSorties();
+  });
+
+  tableBody.addEventListener('click', async e => {
+    if (e.target.classList.contains('delete-btn')) {
+      const id = e.target.dataset.id;
+      if (!confirm('Supprimer cette sortie ?')) return;
+
+      const res = await fetch(`/api/sorties/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        alert('Erreur suppression');
+        return;
+      }
+      fetchSorties();
+    } else if (e.target.classList.contains('done-btn')) {
+      const id = e.target.dataset.id;
+
+      // Mettre à jour sortie : done = true + date = aujourd'hui
+      const res = await fetch(`/api/sorties/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ done: true, date: new Date().toISOString() }),
+      });
+      if (!res.ok) {
+        alert('Erreur mise à jour');
+        return;
+      }
+      fetchSorties();
+    }
+  });
+
+  fetchSorties();
+</script>
+</body>
 </html>

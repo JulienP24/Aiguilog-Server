@@ -3,24 +3,29 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Aiguilog - Accueil</title>
+<title>Aiguilog - Inscription</title>
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <main class="container">
-    <h2>Aiguilog - Connexion</h2>
+    <h2>Créer un compte</h2>
 
-    <form id="login-form" autocomplete="off">
+    <form id="register-form" autocomplete="off">
       <input type="text" id="username" placeholder="Nom d'utilisateur" required />
       <input type="password" id="password" placeholder="Mot de passe" required />
-      <button type="submit">Se connecter</button>
+      <input type="password" id="confirm-password" placeholder="Confirmer mot de passe" required />
+      <button type="submit">S'inscrire</button>
     </form>
 
     <div id="message" style="margin-top:1rem; color:red; font-weight:600;"></div>
+
+    <p style="text-align:center; margin-top:1rem;">
+      Déjà un compte ? <a href="index.html">Se connecter</a>
+    </p>
   </main>
 
   <script>
-    const form = document.getElementById('login-form');
+    const form = document.getElementById('register-form');
     const msg = document.getElementById('message');
 
     form.addEventListener('submit', async e => {
@@ -29,14 +34,19 @@
 
       const username = form.username.value.trim();
       const password = form.password.value;
+      const confirmPassword = form['confirm-password'].value;
 
-      if (!username || !password) {
+      if (!username || !password || !confirmPassword) {
         msg.textContent = 'Tous les champs sont obligatoires.';
+        return;
+      }
+      if (password !== confirmPassword) {
+        msg.textContent = 'Les mots de passe ne correspondent pas.';
         return;
       }
 
       try {
-        const res = await fetch('/api/auth/login', {
+        const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password }),
@@ -48,12 +58,8 @@
           return;
         }
 
-        // Stocker token et username en localStorage
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('username', data.username);
-
-        // Rediriger vers la page sorties à faire
-        window.location.href = 'sorties-a-faire.html';
+        alert('Compte créé ! Connectez-vous maintenant.');
+        window.location.href = 'index.html';
 
       } catch (err) {
         msg.textContent = 'Erreur réseau ou serveur.';

@@ -1,162 +1,161 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Aiguilog - Sorties faites</title>
-    <link rel="stylesheet" href="style.css" />
-    <style>
-      .two-cols {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-      }
-      .col-left, .col-right {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      }
-      .full-width {
-        grid-column: 1 / span 2;
-        display: flex;
-        justify-content: center;
-        margin-top: 1rem;
-      }
-      .editable { background-color: #eef; }
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Aiguilog - Sorties faites</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="container">
+    <h2>Sorties faites</h2>
 
-      .sr-only {
-        position: absolute !important;
-        width: 1px !important;
-        height: 1px !important;
-        padding: 0 !important;
-        margin: -1px !important;
-        overflow: hidden !important;
-        clip: rect(0,0,0,0) !important;
-        white-space: nowrap !important;
-        border: 0 !important;
-      }
-    </style>
-  </head>
-  <body>
-    <header class="main-header">
-      <div class="nav-container">
-        <!-- Desktop Navigation -->
-        <div class="desktop-nav">
-          <a href="index.html" class="logo-link">
-            <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
-              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
-              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img" />
-            </picture>
-          </a>
-          <nav class="nav-links">
-            <a href="sorties-faites.html" class="nav-btn active">Fait</a>
-            <a href="sorties-a-faire.html" class="nav-btn">À Faire</a>
-            <a href="rechercher.html" class="nav-btn">Rechercher</a>
-          </nav>
-          <a href="mon-compte.html" class="user-icon-link">
-            <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png" />
-              <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png" />
-              <img src="images/user-icon-black.png" alt="Compte" class="user-icon" />
-            </picture>
-          </a>
-        </div>
+    <button id="logout-btn" style="float:right; margin-bottom:1rem;">Se déconnecter</button>
 
-        <!-- Mobile Navigation -->
-        <div class="mobile-nav">
-          <a href="index.html" class="logo-link-mobile">
-            <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
-              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
-              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img" />
-            </picture>
-          </a>
-          <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">
-            <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png" />
-              <source media="(prefers-color-scheme: light)" srcset="images/hamburger-black.png" />
-              <img src="images/hamburger-black.png" alt="Menu" class="hamburger-icon" />
-            </picture>
-          </button>
-        </div>
-      </div>
-      <nav id="mobile-menu">
-        <ul>
-          <li class="menu-user-icon">
-            <a href="mon-compte.html">
-              <picture>
-                <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png" />
-                <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png" />
-                <img src="images/user-icon-black.png" alt="Compte" class="user-icon-menu" />
-              </picture>
-            </a>
-          </li>
-          <li><a href="sorties-faites.html" class="active">Fait</a></li>
-          <li><a href="sorties-a-faire.html">À Faire</a></li>
-          <li><a href="rechercher.html">Rechercher</a></li>
-        </ul>
-      </nav>
-    </header>
-
-    <div class="container">
-      <h2>Sorties faites</h2>
-      <form id="form-fait" class="two-cols" aria-label="Ajouter une sortie faite">
-        <div class="col-left">
-          <label for="sommet-fait" class="sr-only">Sommet</label>
-          <input type="text" id="sommet-fait" name="sommet-fait" placeholder="Sommet" list="summits-list" required autocomplete="off" />
-          <datalist id="summits-list"></datalist>
-
-          <label for="altitude-fait" class="sr-only">Altitude (m)</label>
-          <input type="number" id="altitude-fait" name="altitude-fait" placeholder="Altitude (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
-
-          <label for="denivele-fait" class="sr-only">Dénivelé (m)</label>
-          <input type="number" id="denivele-fait" name="denivele-fait" placeholder="Dénivelé (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
-        </div>
-        <div class="col-right">
-          <label for="methode-fait" class="sr-only">Méthode</label>
-          <select id="methode-fait" name="methode-fait" required aria-required="true" aria-label="Méthode">
-            <option value="" disabled selected>Méthode</option>
-            <option value="Alpinisme">Alpinisme</option>
-            <option value="Randonnée">Randonnée</option>
-            <option value="Escalade">Escalade</option>
-          </select>
-
-          <label for="cotation-fait" class="sr-only">Cotation</label>
-          <select id="cotation-fait" name="cotation-fait" required aria-required="true" aria-label="Cotation" disabled>
-            <option value="" disabled selected>Cotation</option>
-          </select>
-
-          <label for="date" class="sr-only">Date</label>
-          <input type="date" id="date" name="date" required />
-        </div>
-        <div class="full-width">
-          <label for="details-fait" class="sr-only">Détails</label>
-          <input type="text" id="details-fait" name="details-fait" placeholder="Détails" autocomplete="off" />
-        </div>
-        <div class="full-width" style="display:flex; justify-content:center; gap:1rem;">
-          <button type="submit">Ajouter</button>
-          <button id="reset-fait" type="reset">Réinitialiser</button>
-        </div>
-      </form>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Actions</th>
-              <th>Sommet</th>
-              <th>Altitude</th>
-              <th>Dénivelé</th>
-              <th>Méthode</th>
-              <th>Cotation</th>
-              <th>Date</th>
-              <th>Détails</th>
-            </tr>
-          </thead>
-          <tbody id="table-body-fait"></tbody>
-        </table>
-      </div>
+    <div class="table-container">
+      <table id="sorties-faites-table">
+        <thead>
+          <tr>
+            <th>Sommet</th>
+            <th>Altitude (m)</th>
+            <th>Dénivelé (m)</th>
+            <th>Méthode</th>
+            <th>Cotation</th>
+            <th>Date</th>
+            <th>Détails</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
-    <script src="script.js"></script>
-  </body>
+  </main>
+
+<script>
+  const token = localStorage.getItem('token');
+  if (!token) {
+    window.location.href = 'index.html';
+  }
+
+  const tableBody = document.querySelector('#sorties-faites-table tbody');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  logoutBtn.addEventListener('click', () => {
+    localStorage.clear();
+    window.location.href = 'index.html';
+  });
+
+  async function fetchSorties() {
+    const res = await fetch('/api/sorties?done=true', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) {
+      alert('Erreur récupération sorties');
+      return;
+    }
+    const sorties = await res.json();
+    tableBody.innerHTML = '';
+
+    sorties.forEach(s => {
+      const dateFormatted = s.date ? new Date(s.date).toLocaleDateString('fr-FR') : '';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${s.sommet}</td>
+        <td>${s.altitude}</td>
+        <td>${s.denivele}</td>
+        <td>${s.methode}</td>
+        <td>${s.cotation || ''}</td>
+        <td>${dateFormatted}</td>
+        <td>${s.details || ''}</td>
+        <td>
+          <button data-id="${s._id}" class="delete-btn">🗑️</button>
+          <button data-id="${s._id}" class="edit-btn">✏️</button>
+        </td>
+      `;
+      tableBody.appendChild(tr);
+    });
+  }
+
+  // Suppression sortie
+  tableBody.addEventListener('click', async e => {
+    if (e.target.classList.contains('delete-btn')) {
+      const id = e.target.dataset.id;
+      if (!confirm('Supprimer cette sortie ?')) return;
+
+      const res = await fetch(`/api/sorties/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        alert('Erreur suppression');
+        return;
+      }
+      fetchSorties();
+    } else if (e.target.classList.contains('edit-btn')) {
+      const id = e.target.dataset.id;
+      const row = e.target.closest('tr');
+
+      // On crée un formulaire inline pour éditer
+      if (row.querySelector('input')) return; // déjà en édition
+
+      const cells = row.querySelectorAll('td');
+      const sommet = cells[0].textContent;
+      const altitude = cells[1].textContent;
+      const denivele = cells[2].textContent;
+      const methode = cells[3].textContent;
+      const cotation = cells[4].textContent;
+      const date = cells[5].textContent;
+      const details = cells[6].textContent;
+
+      cells[0].innerHTML = `<input type="text" value="${sommet}" />`;
+      cells[1].innerHTML = `<input type="number" value="${altitude}" />`;
+      cells[2].innerHTML = `<input type="number" value="${denivele}" />`;
+      cells[3].innerHTML = `
+        <select>
+          <option value="Alpinisme" ${methode === 'Alpinisme' ? 'selected' : ''}>Alpinisme</option>
+          <option value="Randonnée" ${methode === 'Randonnée' ? 'selected' : ''}>Randonnée</option>
+          <option value="Escalade" ${methode === 'Escalade' ? 'selected' : ''}>Escalade</option>
+        </select>
+      `;
+      cells[4].innerHTML = `<input type="text" value="${cotation}" />`;
+      cells[5].innerHTML = `<input type="date" value="${date ? new Date(date.split('/').reverse().join('-')).toISOString().slice(0,10) : ''}" />`;
+      cells[6].innerHTML = `<input type="text" value="${details}" />`;
+      cells[7].innerHTML = `
+        <button class="save-btn" data-id="${id}">💾</button>
+        <button class="cancel-btn">❌</button>
+      `;
+    } else if (e.target.classList.contains('cancel-btn')) {
+      fetchSorties(); // Reload pour annuler édition
+    } else if (e.target.classList.contains('save-btn')) {
+      const id = e.target.dataset.id;
+      const row = e.target.closest('tr');
+      const inputs = row.querySelectorAll('input, select');
+
+      const updatedSortie = {
+        sommet: inputs[0].value.trim(),
+        altitude: Number(inputs[1].value),
+        denivele: Number(inputs[2].value),
+        methode: inputs[3].value,
+        cotation: inputs[4].value.trim(),
+        date: inputs[5].value ? new Date(inputs[5].value).toISOString() : null,
+        details: inputs[6].value.trim(),
+      };
+
+      try {
+        const res = await fetch(`/api/sorties/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(updatedSortie),
+        });
+        if (!res.ok) throw new Error('Erreur mise à jour');
+        fetchSorties();
+      } catch {
+        alert('Erreur mise à jour');
+      }
+    }
+  });
+
+  fetchSorties();
+</script>
+</body>
 </html>
