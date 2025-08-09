@@ -1,125 +1,208 @@
-// serveur.js
+require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-const PORT = 3000;
-const JWT_SECRET = 'ton_secret_ici_change_le_absolument'; // à sécuriser via variable d'env
+const PORT = process.env.PORT || 3000;
+const mongoUri = process.env.MONGODB_URI;
+const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 
+// Vérification des variables d'environnement
+if (!mongoUri) {
+  console.error("ERREUR: La variable d'environnement MONGODB_URI n'est pas définie !");
+  process.exit(1);
+}
+
+// Connexion MongoDB Atlas
+mongoose.connect(mongoUri)
+  .then(() => console.log('✅ Connecté à MongoDB Atlas'))
+  .catch((err) => {
+    console.error('❌ Erreur connexion MongoDB:', err);
+    process.exit(1);
+  });
+
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Connexion MongoDB
-mongoose.connect('mongodb://localhost:27017/aiguilog', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => {
-  console.log('MongoDB connecté');
-}).catch((err) => {
-  console.error('Erreur connexion MongoDB:', err);
-});
+// Schemas Mongoose
 
-// Schéma utilisateur
 const userSchema = new mongoose.Schema({
   username: { type: String, unique: true, required: true },
   passwordHash: { type: String, required: true },
-  firstname: { type: String, required: true },
-  lastname: { type: String, required: true },
-  birthdate: { type: Date, required: true },
+});
+
+const sortieSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  sommet: String,
+  altitude: Number,
+  denivele: Number,
+  methode: String,
+  cotation: String,
+  annee: Number,
+  date: Date,          // Pour sorties faites
+  details: String,
+  status: { type: String, enum: ['a-faire', 'fait'], required: true },
+  createdAt: { type: Date, default: Date.now },
 });
 
 const User = mongoose.model('User', userSchema);
+const Sortie = mongoose.model('Sortie', sortieSchema);
 
-// Route inscription
-app.post('/api/register', async (req, res) => {
-  const { username, password, firstname, lastname, birthdate } = req.body;
-  if (!username || !password || !firstname || !lastname || !birthdate) {
-    return res.status(400).json({ message: 'Tous les champs sont requis.' });
+// Middleware auth
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Token manquant ou invalide' });
   }
-  try {
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(400).json({ message: "L'identifiant est déjà utilisé." });
-    }
-    const passwordHash = await bcrypt.hash(password, 10);
-    const user = new User({
-      username,
-      passwordHash,
-      firstname,
-      lastname,
-      birthdate,
-    });
-    await user.save();
-    return res.status(201).json({ message: 'Utilisateur créé avec succès.' });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: 'Erreur serveur.' });
-  }
-});
-
-// Route connexion
-app.post('/api/login', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).json({ message: 'Identifiant et mot de passe requis.' });
-  }
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(401).json({ message: 'Identifiant ou mot de passe incorrect.' });
-    }
-    const validPassword = await bcrypt.compare(password, user.passwordHash);
-    if (!validPassword) {
-      return res.status(401).json({ message: 'Identifiant ou mot de passe incorrect.' });
-    }
-    const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
-    return res.json({
-      token,
-      user: {
-        username: user.username,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        birthdate: user.birthdate,
-      },
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: 'Erreur serveur.' });
-  }
-});
-
-// Middleware d’authentification
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  if (!authHeader) return res.status(401).json({ message: 'Token manquant' });
-
   const token = authHeader.split(' ')[1];
-  if (!token) return res.status(401).json({ message: 'Token manquant' });
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: 'Token invalide' });
-    req.user = user;
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    req.userId = payload.id;
     next();
-  });
+  } catch (err) {
+    return res.status(401).json({ error: 'Token invalide' });
+  }
 }
 
-// Route protégée pour info utilisateur
-app.get('/api/userinfo', authenticateToken, async (req, res) => {
+// Routes
+
+// Inscription
+app.post('/api/register', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password)
+    return res.status(400).json({ error: 'Identifiant et mot de passe requis' });
+
   try {
-    const user = await User.findById(req.user.id).select('-passwordHash');
-    if (!user) {
-      return res.status(404).json({ message: 'Utilisateur non trouvé.' });
-    }
-    res.json(user);
+    const existingUser = await User.findOne({ username });
+    if (existingUser)
+      return res.status(400).json({ error: 'Identifiant déjà utilisé' });
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = new User({ username, passwordHash });
+    await user.save();
+    res.status(201).json({ message: 'Compte créé avec succès' });
   } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur.' });
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-// Lancement serveur
+// Connexion
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password)
+    return res.status(400).json({ error: 'Identifiant et mot de passe requis' });
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user)
+      return res.status(401).json({ error: 'Identifiant ou mot de passe incorrect' });
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid)
+      return res.status(401).json({ error: 'Identifiant ou mot de passe incorrect' });
+
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ token, username: user.username });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Récupérer infos utilisateur connecté
+app.get('/api/me', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select('username');
+    if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    res.json({ username: user.username });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// CRUD sorties
+
+// Créer sortie (a-faire ou fait)
+app.post('/api/sorties', authMiddleware, async (req, res) => {
+  const { sommet, altitude, denivele, methode, cotation, annee, date, details, status } = req.body;
+  if (!['a-faire', 'fait'].includes(status)) {
+    return res.status(400).json({ error: 'Status invalide (doit être "a-faire" ou "fait")' });
+  }
+  try {
+    const sortie = new Sortie({
+      userId: req.userId,
+      sommet,
+      altitude,
+      denivele,
+      methode,
+      cotation,
+      annee,
+      date: status === 'fait' && date ? new Date(date) : null,
+      details,
+      status,
+    });
+    await sortie.save();
+    res.status(201).json(sortie);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Récupérer toutes sorties user, avec option status
+app.get('/api/sorties', authMiddleware, async (req, res) => {
+  const { status } = req.query; // 'a-faire' ou 'fait'
+  const filter = { userId: req.userId };
+  if (status) filter.status = status;
+
+  try {
+    const sorties = await Sortie.find(filter).sort({ createdAt: -1 });
+    res.json(sorties);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Modifier sortie (id dans params)
+app.put('/api/sorties/:id', authMiddleware, async (req, res) => {
+  const sortieId = req.params.id;
+  const updates = req.body;
+
+  try {
+    const sortie = await Sortie.findOne({ _id: sortieId, userId: req.userId });
+    if (!sortie) return res.status(404).json({ error: 'Sortie non trouvée' });
+
+    Object.assign(sortie, updates);
+    await sortie.save();
+    res.json(sortie);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Supprimer sortie
+app.delete('/api/sorties/:id', authMiddleware, async (req, res) => {
+  const sortieId = req.params.id;
+
+  try {
+    const sortie = await Sortie.findOneAndDelete({ _id: sortieId, userId: req.userId });
+    if (!sortie) return res.status(404).json({ error: 'Sortie non trouvée' });
+    res.json({ message: 'Sortie supprimée' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Démarrage serveur
 app.listen(PORT, () => {
-  console.log(`Serveur démarré sur http://localhost:${PORT}`);
+  console.log(`🚀 Serveur démarré sur le port ${PORT}`);
 });
