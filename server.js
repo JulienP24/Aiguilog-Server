@@ -28,11 +28,16 @@ if (!MONGO_URI || !process.env.JWT_SECRET) {
 }
 
 // CORS whitelist
-const whitelist = [CLIENT_URL, 'http://localhost:5500'];
+const whitelist = [
+  CLIENT_URL, // peut venir de process.env
+  'http://localhost:5500',
+  'https://aiguilog-server.onrender.com' // URL de ton front sur Render
+];
+
 app.use(cors({
-  origin: function(origin, callback){
-    if(!origin) return callback(null, true);
-    if(whitelist.indexOf(origin) !== -1){
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (whitelist.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -40,6 +45,7 @@ app.use(cors({
   },
   credentials: true
 }));
+
 
 app.use(express.json());
 
