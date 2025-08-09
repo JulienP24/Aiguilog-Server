@@ -10,6 +10,10 @@ import sortieRoutes from './routes/sorties.js';
 
 dotenv.config();
 
+console.log('Variables d\'environnement:');
+console.log('MONGO_URI:', process.env.MONGO_URI ? '[OK]' : '[NON TROUVÉ]');
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? '[OK]' : '[NON TROUVÉ]');
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
