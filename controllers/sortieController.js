@@ -1,7 +1,6 @@
 import Sortie from '../models/Sortie.js';
-
-// Middleware pour vérifier le token et récupérer userId (middleware auth)
 import jwt from 'jsonwebtoken';
+
 const JWT_SECRET = process.env.JWT_SECRET;
 
 export const verifyToken = (req, res, next) => {
@@ -20,9 +19,6 @@ export const verifyToken = (req, res, next) => {
   }
 };
 
-// CRUD sorties
-
-// Ajouter une sortie
 export const addSortie = async (req, res) => {
   try {
     const { sommet, altitude, denivele, methode, cotation, date, details, done } = req.body;
@@ -50,7 +46,6 @@ export const addSortie = async (req, res) => {
   }
 };
 
-// Récupérer toutes les sorties d’un user, filtrage possible par done (true/false)
 export const getSorties = async (req, res) => {
   try {
     const doneFilter = req.query.done === 'true' ? true : (req.query.done === 'false' ? false : null);
@@ -65,7 +60,6 @@ export const getSorties = async (req, res) => {
   }
 };
 
-// Supprimer une sortie
 export const deleteSortie = async (req, res) => {
   try {
     const { id } = req.params;
@@ -78,7 +72,6 @@ export const deleteSortie = async (req, res) => {
   }
 };
 
-// Modifier une sortie
 export const updateSortie = async (req, res) => {
   try {
     const { id } = req.params;

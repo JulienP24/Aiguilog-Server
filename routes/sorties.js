@@ -3,10 +3,11 @@ import { addSortie, getSorties, deleteSortie, updateSortie, verifyToken } from '
 
 const router = express.Router();
 
+// Middleware d'authentification sur toutes les routes sorties
 router.use(verifyToken);
 
-router.get('/', getSorties);
 router.post('/', addSortie);
+router.get('/', getSorties);
 router.delete('/:id', deleteSortie);
 router.put('/:id', updateSortie);
 
