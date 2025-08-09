@@ -1,79 +1,79 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Aiguilog - Mon compte</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <header class="main-header">
-    <div class="nav-container">
-      <!-- Desktop Navigation -->
-      <div class="desktop-nav">
-        <a href="index.html" class="logo-link" aria-label="Accueil">
-          <picture>
-            <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
-            <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
-            <img src="images/logo-black.png" alt="Aiguilog" class="logo-img" />
-          </picture>
-        </a>
-        <nav class="nav-links" aria-label="Menu principal">
-          <a href="sorties-faites.html" class="nav-btn">Fait</a>
-          <a href="sorties-a-faire.html" class="nav-btn">À Faire</a>
-          <a href="rechercher.html" class="nav-btn">Rechercher</a>
-        </nav>
-        <a href="mon-compte.html" class="user-icon-link" aria-label="Mon compte">
-          <picture>
-            <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png" />
-            <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png" />
-            <img src="images/user-icon-black.png" alt="Compte" class="user-icon" />
-          </picture>
-        </a>
-      </div>
-
-      <!-- Mobile Navigation -->
-      <div class="mobile-nav">
-        <a href="index.html" class="logo-link-mobile" aria-label="Accueil">
-          <picture>
-            <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
-            <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
-            <img src="images/logo-black.png" alt="Aiguilog" class="logo-img" />
-          </picture>
-        </a>
-        <button id="mobile-menu-toggle" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobile-menu" type="button">
-          <picture>
-            <source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png" />
-            <source media="(prefers-color-scheme: light)" srcset="images/hamburger-black.png" />
-            <img src="images/hamburger-black.png" alt="Menu" class="hamburger-icon" />
-          </picture>
-        </button>
-      </div>
-    </div>
-    <nav id="mobile-menu" aria-label="Menu mobile" hidden>
-      <ul>
-        <li class="menu-user-icon">
-          <a href="mon-compte.html" aria-label="Mon compte">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aiguilog - Mon compte</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="main-header">
+      <div class="nav-container">
+        <!-- Desktop Navigation -->
+        <div class="desktop-nav">
+          <a href="index.html" class="logo-link">
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
+              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
+              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img" />
+            </picture>
+          </a>
+          <nav class="nav-links">
+            <a href="sorties-faites.html" class="nav-btn">Fait</a>
+            <a href="sorties-a-faire.html" class="nav-btn">À Faire</a>
+            <a href="rechercher.html" class="nav-btn">Rechercher</a>
+          </nav>
+          <a href="mon-compte.html" class="user-icon-link">
             <picture>
               <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png" />
               <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png" />
-              <img src="images/user-icon-black.png" alt="Compte" class="user-icon-menu" />
+              <img src="images/user-icon-black.png" alt="Compte" class="user-icon" />
             </picture>
           </a>
-        </li>
-        <li><a href="sorties-faites.html">Fait</a></li>
-        <li><a href="sorties-a-faire.html">À Faire</a></li>
-        <li><a href="rechercher.html">Rechercher</a></li>
-      </ul>
-    </nav>
-  </header>
+        </div>
 
-  <main class="container" role="main">
-    <h2 id="titre-bienvenue">Mon compte</h2>
-    <p id="info-membre">Chargement des informations...</p>
-    <button id="logout" aria-label="Se déconnecter" type="button">Se déconnecter</button>
-  </main>
+        <!-- Mobile Navigation -->
+        <div class="mobile-nav">
+          <a href="index.html" class="logo-link-mobile">
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png" />
+              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png" />
+              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img" />
+            </picture>
+          </a>
+          <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png" />
+              <source media="(prefers-color-scheme: light)" srcset="images/hamburger-black.png" />
+              <img src="images/hamburger-black.png" alt="Menu" class="hamburger-icon" />
+            </picture>
+          </button>
+        </div>
+      </div>
+      <nav id="mobile-menu">
+        <ul>
+          <li class="menu-user-icon">
+            <a href="mon-compte.html">
+              <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png" />
+                <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png" />
+                <img src="images/user-icon-black.png" alt="Compte" class="user-icon-menu" />
+              </picture>
+            </a>
+          </li>
+          <li><a href="sorties-faites.html">Fait</a></li>
+          <li><a href="sorties-a-faire.html">À Faire</a></li>
+          <li><a href="rechercher.html">Rechercher</a></li>
+        </ul>
+      </nav>
+    </header>
 
-  <script src="script.js"></script>
-</body>
+    <div class="container">
+      <h2 id="titre-bienvenue">Mon compte</h2>
+      <p id="info-membre">Chargement des informations...</p>
+      <button id="logout">Se déconnecter</button>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
 </html>
