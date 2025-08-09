@@ -1,208 +1,348 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+// script.js
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-const mongoUri = process.env.MONGODB_URI;
-const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
+// URL API backend (adapter si besoin)
+const API_BASE_URL = 'https://aiguilog-server.onrender.com/api';
 
-// Vérification des variables d'environnement
-if (!mongoUri) {
-  console.error("ERREUR: La variable d'environnement MONGODB_URI n'est pas définie !");
-  process.exit(1);
+// ------------------------------------
+// Utilisateur (connexion / création)
+// ------------------------------------
+
+const userKey = 'aiguilog_user'; // clé localStorage
+
+// Elements communs
+const elLoginForm = document.getElementById('login-form');
+const elBtnCreerCompte = document.getElementById('btn-creer-compte');
+const elLogoutBtn = document.getElementById('logout');
+const elInfoMembre = document.getElementById('info-membre');
+const elTitreBienvenue = document.getElementById('titre-bienvenue');
+
+// Vérifier si connecté (localStorage)
+function getUserFromStorage() {
+  const raw = localStorage.getItem(userKey);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    localStorage.removeItem(userKey);
+    return null;
+  }
 }
 
-// Connexion MongoDB Atlas
-mongoose.connect(mongoUri)
-  .then(() => console.log('✅ Connecté à MongoDB Atlas'))
-  .catch((err) => {
-    console.error('❌ Erreur connexion MongoDB:', err);
-    process.exit(1);
+function saveUserToStorage(user) {
+  localStorage.setItem(userKey, JSON.stringify(user));
+}
+
+function clearUserStorage() {
+  localStorage.removeItem(userKey);
+}
+
+function isLoggedIn() {
+  return !!getUserFromStorage();
+}
+
+// Rediriger si pas connecté
+function redirectIfNotLoggedIn() {
+  if (!isLoggedIn()) {
+    window.location.href = 'utilisateur.html';
+  }
+}
+
+// Afficher info utilisateur sur page mon-compte.html
+function displayUserInfo() {
+  const user = getUserFromStorage();
+  if (!user) {
+    elInfoMembre.textContent = "Vous n'êtes pas connecté.";
+    return;
+  }
+  elTitreBienvenue.textContent = `Bienvenue, ${user.username} !`;
+  elInfoMembre.textContent = `Identifiant : ${user.username}`;
+}
+
+// Gérer déconnexion
+if (elLogoutBtn) {
+  elLogoutBtn.addEventListener('click', () => {
+    clearUserStorage();
+    window.location.href = 'utilisateur.html';
+  });
+}
+
+// ------------------------------------
+// Gestion formulaire connexion / création
+// ------------------------------------
+
+if (elLoginForm) {
+  elLoginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value.trim();
+    if (!username || !password) return alert("Veuillez remplir tous les champs.");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/users/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || 'Erreur lors de la connexion');
+        return;
+      }
+      saveUserToStorage({ username, token: data.token });
+      window.location.href = 'acceuil-connecte.html';
+    } catch (err) {
+      alert("Erreur serveur. Réessayez plus tard.");
+      console.error(err);
+    }
+  });
+}
+
+// Bouton créer compte sur page connexion
+if (elBtnCreerCompte) {
+  elBtnCreerCompte.addEventListener('click', () => {
+    window.location.href = 'creer-compte.html';
+  });
+}
+
+// ------------------------------------
+// Gestion création compte (page creer-compte.html)
+// ------------------------------------
+
+const elCreateForm = document.getElementById('create-account-form');
+if (elCreateForm) {
+  elCreateForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('create-username').value.trim();
+    const password = document.getElementById('create-password').value.trim();
+    const confirmPassword = document.getElementById('confirm-password').value.trim();
+
+    if (!username || !password || !confirmPassword) return alert("Veuillez remplir tous les champs.");
+    if (password !== confirmPassword) return alert("Les mots de passe ne correspondent pas.");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/users/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || 'Erreur lors de la création du compte');
+        return;
+      }
+      alert('Compte créé avec succès. Vous pouvez maintenant vous connecter.');
+      window.location.href = 'utilisateur.html';
+    } catch (err) {
+      alert("Erreur serveur. Réessayez plus tard.");
+      console.error(err);
+    }
+  });
+}
+
+// ------------------------------------
+// Gestion sorties (à faire et faites)
+// ------------------------------------
+
+// Vérifie que la page est bien protégée (redirige si pas connecté)
+if (document.body.classList.contains('page-protegee')) {
+  redirectIfNotLoggedIn();
+}
+
+// Fonction pour récupérer le token (pour appel API)
+function getToken() {
+  const user = getUserFromStorage();
+  return user ? user.token : null;
+}
+
+// Gérer les cotations selon méthode (exemple)
+const cotationsMap = {
+  Alpinisme: ['F', 'PD', 'AD', 'D', 'TD', 'ED'],
+  Randonnée: ['Facile', 'Moyen', 'Difficile'],
+  Escalade: ['3', '4', '5', '6', '7', '8', '9'],
+};
+
+function updateCotationOptions(selectEl, methode) {
+  selectEl.innerHTML = '<option value="" disabled selected>Cotation</option>';
+  if (!methode || !cotationsMap[methode]) return;
+  cotationsMap[methode].forEach(cot => {
+    const option = document.createElement('option');
+    option.value = cot;
+    option.textContent = cot;
+    selectEl.appendChild(option);
+  });
+}
+
+// Remplir select année (dernières 30 années)
+function fillYearSelect(selectEl) {
+  const currentYear = new Date().getFullYear();
+  selectEl.innerHTML = '<option value="" disabled selected>Année</option>';
+  for (let y = currentYear; y >= currentYear - 30; y--) {
+    const option = document.createElement('option');
+    option.value = y;
+    option.textContent = y;
+    selectEl.appendChild(option);
+  }
+}
+
+// Gestion formulaire sorties à faire
+const formAFaire = document.getElementById('form-a-faire');
+const tbodyAFaire = document.getElementById('table-body-afaire');
+if (formAFaire) {
+  const selectCotation = formAFaire.querySelector('#cotation');
+  const selectMethode = formAFaire.querySelector('#methode');
+  const selectYear = formAFaire.querySelector('#year');
+  fillYearSelect(selectYear);
+
+  selectMethode.addEventListener('change', () => {
+    updateCotationOptions(selectCotation, selectMethode.value);
   });
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
+  formAFaire.addEventListener('submit', e => {
+    e.preventDefault();
 
-// Schemas Mongoose
+    const data = {
+      sommet: formAFaire.sommet.value.trim(),
+      altitude: parseInt(formAFaire.altitude.value),
+      denivele: parseInt(formAFaire.denivele.value),
+      methode: formAFaire.methode.value,
+      cotation: formAFaire.cotation.value,
+      annee: formAFaire.year.value,
+      details: formAFaire.details.value.trim(),
+    };
 
-const userSchema = new mongoose.Schema({
-  username: { type: String, unique: true, required: true },
-  passwordHash: { type: String, required: true },
-});
+    if (!data.sommet || !data.altitude || !data.denivele || !data.methode || !data.cotation || !data.annee) {
+      alert('Veuillez remplir tous les champs obligatoires.');
+      return;
+    }
 
-const sortieSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  sommet: String,
-  altitude: Number,
-  denivele: Number,
-  methode: String,
-  cotation: String,
-  annee: Number,
-  date: Date,          // Pour sorties faites
-  details: String,
-  status: { type: String, enum: ['a-faire', 'fait'], required: true },
-  createdAt: { type: Date, default: Date.now },
-});
+    // TODO: Envoi vers API backend ici (exemple)
+    // fetch(`${API_BASE_URL}/sorties/a-faire`, { ... })
 
-const User = mongoose.model('User', userSchema);
-const Sortie = mongoose.model('Sortie', sortieSchema);
+    // Pour l'instant, stockage local (remplacer par API)
+    let sorties = JSON.parse(localStorage.getItem('sortiesAFaire')) || [];
+    sorties.push(data);
+    localStorage.setItem('sortiesAFaire', JSON.stringify(sorties));
 
-// Middleware auth
-function authMiddleware(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Token manquant ou invalide' });
+    formAFaire.reset();
+    updateTableAFaire();
+  });
+
+  function updateTableAFaire() {
+    let sorties = JSON.parse(localStorage.getItem('sortiesAFaire')) || [];
+    tbodyAFaire.innerHTML = '';
+    sorties.forEach((sortie, i) => {
+      const tr = document.createElement('tr');
+
+      // Col action (ex: supprimer)
+      const tdAction = document.createElement('td');
+      const btnSuppr = document.createElement('button');
+      btnSuppr.textContent = 'Supprimer';
+      btnSuppr.addEventListener('click', () => {
+        sorties.splice(i, 1);
+        localStorage.setItem('sortiesAFaire', JSON.stringify(sorties));
+        updateTableAFaire();
+      });
+      tdAction.appendChild(btnSuppr);
+      tr.appendChild(tdAction);
+
+      // Autres colonnes
+      ['sommet', 'altitude', 'denivele', 'methode', 'cotation', 'annee', 'details'].forEach(field => {
+        const td = document.createElement('td');
+        td.textContent = sortie[field] || '';
+        tr.appendChild(td);
+      });
+
+      tbodyAFaire.appendChild(tr);
+    });
   }
-  const token = authHeader.split(' ')[1];
-  try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    req.userId = payload.id;
-    next();
-  } catch (err) {
-    return res.status(401).json({ error: 'Token invalide' });
+
+  updateTableAFaire();
+}
+
+// Gestion formulaire sorties faites
+const formFait = document.getElementById('form-fait');
+const tbodyFait = document.getElementById('table-body-fait');
+if (formFait) {
+  const selectCotation = formFait.querySelector('#cotation-fait');
+  const selectMethode = formFait.querySelector('#methode-fait');
+  const inputDate = formFait.querySelector('#date');
+
+  selectMethode.addEventListener('change', () => {
+    updateCotationOptions(selectCotation, selectMethode.value);
+  });
+
+  formFait.addEventListener('submit', e => {
+    e.preventDefault();
+
+    const data = {
+      sommet: formFait['sommet-fait'].value.trim(),
+      altitude: parseInt(formFait['altitude-fait'].value),
+      denivele: parseInt(formFait['denivele-fait'].value),
+      methode: formFait['methode-fait'].value,
+      cotation: formFait['cotation-fait'].value,
+      date: inputDate.value,
+      details: formFait['details-fait'].value.trim(),
+    };
+
+    if (!data.sommet || !data.altitude || !data.denivele || !data.methode || !data.cotation || !data.date) {
+      alert('Veuillez remplir tous les champs obligatoires.');
+      return;
+    }
+
+    // TODO: Envoi vers API backend ici
+
+    let sorties = JSON.parse(localStorage.getItem('sortiesFaites')) || [];
+    sorties.push(data);
+    localStorage.setItem('sortiesFaites', JSON.stringify(sorties));
+
+    formFait.reset();
+    updateTableFait();
+  });
+
+  function updateTableFait() {
+    let sorties = JSON.parse(localStorage.getItem('sortiesFaites')) || [];
+    tbodyFait.innerHTML = '';
+    sorties.forEach((sortie, i) => {
+      const tr = document.createElement('tr');
+
+      // Col action
+      const tdAction = document.createElement('td');
+      const btnSuppr = document.createElement('button');
+      btnSuppr.textContent = 'Supprimer';
+      btnSuppr.addEventListener('click', () => {
+        sorties.splice(i, 1);
+        localStorage.setItem('sortiesFaites', JSON.stringify(sorties));
+        updateTableFait();
+      });
+      tdAction.appendChild(btnSuppr);
+      tr.appendChild(tdAction);
+
+      // Autres colonnes
+      ['sommet', 'altitude', 'denivele', 'methode', 'cotation', 'date', 'details'].forEach(field => {
+        const td = document.createElement('td');
+        td.textContent = sortie[field] || '';
+        tr.appendChild(td);
+      });
+
+      tbodyFait.appendChild(tr);
+    });
+  }
+
+  updateTableFait();
+}
+
+// ------------------------------------
+// Page accueil connectée : message personnalisé
+// ------------------------------------
+
+const elAccueilConnecte = document.getElementById('accueil-connecte-message');
+if (elAccueilConnecte) {
+  const user = getUserFromStorage();
+  if (user) {
+    elAccueilConnecte.textContent = `Bienvenue sur Aiguilog, ${user.username} ! Votre carnet de sorties en montagne, tout simplement.`;
   }
 }
 
-// Routes
-
-// Inscription
-app.post('/api/register', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password)
-    return res.status(400).json({ error: 'Identifiant et mot de passe requis' });
-
-  try {
-    const existingUser = await User.findOne({ username });
-    if (existingUser)
-      return res.status(400).json({ error: 'Identifiant déjà utilisé' });
-
-    const passwordHash = await bcrypt.hash(password, 10);
-    const user = new User({ username, passwordHash });
-    await user.save();
-    res.status(201).json({ message: 'Compte créé avec succès' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-// Connexion
-app.post('/api/login', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password)
-    return res.status(400).json({ error: 'Identifiant et mot de passe requis' });
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user)
-      return res.status(401).json({ error: 'Identifiant ou mot de passe incorrect' });
-
-    const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid)
-      return res.status(401).json({ error: 'Identifiant ou mot de passe incorrect' });
-
-    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ token, username: user.username });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-// Récupérer infos utilisateur connecté
-app.get('/api/me', authMiddleware, async (req, res) => {
-  try {
-    const user = await User.findById(req.userId).select('username');
-    if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
-    res.json({ username: user.username });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-// CRUD sorties
-
-// Créer sortie (a-faire ou fait)
-app.post('/api/sorties', authMiddleware, async (req, res) => {
-  const { sommet, altitude, denivele, methode, cotation, annee, date, details, status } = req.body;
-  if (!['a-faire', 'fait'].includes(status)) {
-    return res.status(400).json({ error: 'Status invalide (doit être "a-faire" ou "fait")' });
-  }
-  try {
-    const sortie = new Sortie({
-      userId: req.userId,
-      sommet,
-      altitude,
-      denivele,
-      methode,
-      cotation,
-      annee,
-      date: status === 'fait' && date ? new Date(date) : null,
-      details,
-      status,
-    });
-    await sortie.save();
-    res.status(201).json(sortie);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-// Récupérer toutes sorties user, avec option status
-app.get('/api/sorties', authMiddleware, async (req, res) => {
-  const { status } = req.query; // 'a-faire' ou 'fait'
-  const filter = { userId: req.userId };
-  if (status) filter.status = status;
-
-  try {
-    const sorties = await Sortie.find(filter).sort({ createdAt: -1 });
-    res.json(sorties);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-// Modifier sortie (id dans params)
-app.put('/api/sorties/:id', authMiddleware, async (req, res) => {
-  const sortieId = req.params.id;
-  const updates = req.body;
-
-  try {
-    const sortie = await Sortie.findOne({ _id: sortieId, userId: req.userId });
-    if (!sortie) return res.status(404).json({ error: 'Sortie non trouvée' });
-
-    Object.assign(sortie, updates);
-    await sortie.save();
-    res.json(sortie);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-// Supprimer sortie
-app.delete('/api/sorties/:id', authMiddleware, async (req, res) => {
-  const sortieId = req.params.id;
-
-  try {
-    const sortie = await Sortie.findOneAndDelete({ _id: sortieId, userId: req.userId });
-    if (!sortie) return res.status(404).json({ error: 'Sortie non trouvée' });
-    res.json({ message: 'Sortie supprimée' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-// Démarrage serveur
-app.listen(PORT, () => {
-  console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-});
+// ------------------------------------
+// Autres fonctions utilitaires si besoin
+// ------------------------------------
