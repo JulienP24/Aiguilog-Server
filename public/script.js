@@ -1,38 +1,27 @@
 "use strict";
 
-console.log("[Aiguilog] JS chargé");
-
-/* ========= Utils ========= */
 const getUser = () => { const raw = localStorage.getItem("user"); try { return raw ? JSON.parse(raw) : null; } catch { return null; } };
 const getToken = () => localStorage.getItem("token") || "";
 const isAuthed = () => !!(getToken() && getUser());
 const formatValue = v => v ? `~${v}m` : "";
-const handleAuthError = () => {
-  alert("Session expirée, veuillez vous reconnecter.");
-  localStorage.removeItem("token"); localStorage.removeItem("user");
-  location.href = "utilisateur.html";
-};
-const jsonOrError = async (res) => {
-  const ct = (res.headers.get("content-type")||"").toLowerCase();
-  if (ct.includes("application/json")) { try { return await res.json(); } catch { return {error:"JSON invalide"}; } }
-  return {error:`Réponse ${res.status}`};
-};
+const handleAuthError = () => { alert("Session expirée, veuillez vous reconnecter."); localStorage.removeItem("token"); localStorage.removeItem("user"); location.href="utilisateur.html"; };
+const jsonOrError = async (res) => { const ct = (res.headers.get("content-type")||"").toLowerCase(); if (ct.includes("application/json")) { try { return await res.json(); } catch { return {error:"JSON invalide"}; } } return {error:`Réponse ${res.status}`}; };
 
 document.addEventListener("DOMContentLoaded", () => {
   const file = (location.pathname.split("/").pop() || "index.html");
 
-  /* liens dynamiques */
+  /* Liens dynamiques */
   const updateLinksForAuth = () => {
     document.querySelectorAll('a.logo-link, a.logo-link-mobile').forEach(a => a.href = isAuthed() ? "accueil.html" : "index.html");
     document.querySelectorAll('a[href="mon-compte.html"]').forEach(a => a.href = isAuthed() ? "mon-compte.html" : "utilisateur.html");
   };
   updateLinksForAuth();
 
-  /* garde de route */
+  /* Routes protégées */
   const protectedFiles = new Set(["mon-compte.html","sorties-a-faire.html","sorties-faites.html","accueil.html"]);
   if (protectedFiles.has(file) && !isAuthed()) { location.replace("utilisateur.html"); return; }
 
-  /* menu mobile */
+  /* Menu mobile */
   const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
   const mobileMenu = document.getElementById("mobile-menu");
   if (mobileMenuToggle && mobileMenu){
@@ -46,11 +35,10 @@ document.addEventListener("DOMContentLoaded", () => {
     mobileMenuToggle.addEventListener("click", () => { const open = !mobileMenu.classList.contains("open"); mobileMenu.classList.toggle("open", open); setIcon(open); });
   }
 
-  /* ===== Index : bouton Se connecter ===== */
-  const btnGoLogin = document.getElementById("btn-go-login");
-  if (btnGoLogin) btnGoLogin.addEventListener("click", () => location.href = "utilisateur.html");
+  /* Index : Se connecter */
+  document.getElementById("btn-go-login")?.addEventListener("click", ()=>location.href="utilisateur.html");
 
-  /* ===== Connexion ===== */
+  /* Connexion */
   const loginForm = document.getElementById("login-form");
   if (loginForm){
     loginForm.addEventListener("submit", async (e) => {
@@ -65,14 +53,18 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user||{}));
           updateLinksForAuth();
-          location.replace("accueil.html");       // <-- orthographe unique
+          // Essaye accueil.html, sinon retombe sur index.html
+          try{
+            const head = await fetch("accueil.html", {method:"HEAD"});
+            location.replace(head.ok ? "accueil.html" : "index.html");
+          }catch{ location.replace("index.html"); }
         } else alert("Erreur de connexion : " + (data?.error || `Statut ${res.status}`));
       }catch(err){ console.error(err); alert("Erreur lors de la connexion au serveur"); }
     });
     document.getElementById("btn-creer-compte")?.addEventListener("click",()=>location.assign("creer-compte.html"));
   }
 
-  /* ===== Inscription ===== */
+  /* Inscription */
   const registerForm = document.getElementById("register-form");
   if (registerForm){
     registerForm.addEventListener("submit", async (e)=>{
@@ -90,29 +82,32 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user||{}));
           updateLinksForAuth();
-          location.replace("accueil.html");
+          try{
+            const head = await fetch("accueil.html", {method:"HEAD"});
+            location.replace(head.ok ? "accueil.html" : "index.html");
+          }catch{ location.replace("index.html"); }
         } else alert("Erreur d'inscription : " + (data?.error || `Statut ${res.status}`));
       }catch(err){ console.error(err); alert("Erreur lors de la connexion au serveur"); }
     });
   }
 
-  /* ===== Mon compte logout ===== */
+  /* Logout */
   document.getElementById("logout")?.addEventListener("click",(e)=>{e.preventDefault();localStorage.removeItem("token");localStorage.removeItem("user");updateLinksForAuth();location.replace("index.html")});
 
-  /* ===== Layout des colonnes ===== */
+  /* Layout colonnes (on garde au cas où, mais table-layout:auto fait déjà le job) */
   function applyTableLayout(){
     const tables = document.querySelectorAll("table.table--sorties, .table-container table");
     tables.forEach(table=>{
       table.classList.add("table--sorties");
       table.querySelectorAll("colgroup").forEach(cg=>cg.remove());
       const cg = document.createElement("colgroup");
-      const widths = ["112px","", "12ch","12ch","16ch","10ch","12ch",""];
-      widths.forEach((w,i)=>{ const c=document.createElement("col"); if(w) c.style.width=w; cg.appendChild(c); });
+      const widths = ["140px","","12ch","12ch","18ch","12ch","14ch",""]; // + larges
+      widths.forEach(w=>{ const c=document.createElement("col"); if(w) c.style.width=w; cg.appendChild(c); });
       table.insertBefore(cg, table.firstChild);
     });
   }
 
-  /* ===== Chargement des sorties ===== */
+  /* Chargement sorties */
   async function loadSorties(){
     const token = getToken(); if(!token) return [];
     try{
@@ -121,6 +116,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await jsonOrError(res);
       return Array.isArray(data) ? data : [];
     }catch(err){ console.error("loadSorties:",err); return []; }
+  }
+
+  function formatFRDate(iso){
+    if(!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d)) return iso; // si on reçoit déjà une chaîne lisible
+    return d.toLocaleDateString("fr-FR"); // dd/mm/yyyy
   }
 
   async function displaySorties(){
@@ -133,6 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
     sorties.filter(s=>s.type===type).forEach(s=>{
       const tr=document.createElement("tr");
       tr.setAttribute("data-id", s._id);
+      if (s.type==="fait") tr.dataset.dateIso = s.date || "";
       tr.innerHTML = `
         <td class="cell-actions">
           <button class="edit-btn" type="button" onclick="editRow(this.closest('tr'), '${s.type}')">✏️</button>
@@ -143,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${formatValue(s.denivele)}</td>
         <td>${s.methode||""}</td>
         <td>${s.cotation||""}</td>
-        <td>${s.type==="fait" ? (s.date||"") : (s.annee||"")}</td>
+        <td>${s.type==="fait" ? formatFRDate(s.date) : (s.annee||"")}</td>
         <td>${s.details||""}</td>
       `;
       body.appendChild(tr);
@@ -152,19 +155,18 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   displaySorties();
 
-  /* ===== FAB + modales ===== */
+  /* FAB + modales */
   function wireModal(fabId, dialogId){
     const fab = document.getElementById(fabId);
     const dlg = document.getElementById(dialogId);
     if(!fab || !dlg) return;
     fab.addEventListener("click", ()=>dlg.showModal());
-    dlg.querySelectorAll("[data-close]")
-      .forEach(btn=>btn.addEventListener("click", ()=>dlg.close()));
+    dlg.querySelectorAll("[data-close]").forEach(btn=>btn.addEventListener("click", ()=>dlg.close()));
   }
   wireModal("fab-add-fait", "modal-fait");
   wireModal("fab-add-afaire", "modal-afaire");
 
-  /* ===== Form “À faire” (dans la modale) ===== */
+  /* Ajout À faire */
   const formAFaire = document.getElementById("form-a-faire");
   if(formAFaire){
     const methodeSelect=document.getElementById("methode");
@@ -172,16 +174,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const yearSelect=document.getElementById("year");
     const detailsInput=document.getElementById("details");
     const dlg = document.getElementById("modal-afaire");
-    const cotationsMap={
-      Alpinisme:["F","PD","AD","D","TD","ED","ABO"],
-      Randonnée:["Facile","Moyen","Difficile","Expert"],
-      Escalade:["3","4a","4b","4c","5a","5b","5c","6a","6b","6c","7a","7b","7c"],
-    };
+    const cotationsMap={Alpinisme:["F","PD","AD","D","TD","ED","ABO"], Randonnée:["Facile","Moyen","Difficile","Expert"], Escalade:["3","4a","4b","4c","5a","5b","5c","6a","6b","6c","7a","7b","7c"]};
     methodeSelect?.addEventListener("change",()=>{
       cotationSelect.innerHTML=`<option value="" disabled selected>Cotation</option>`;
-      (cotationsMap[methodeSelect.value]||[]).forEach(opt=>{
-        const o=document.createElement("option"); o.value=opt; o.textContent=opt; cotationSelect.appendChild(o);
-      });
+      (cotationsMap[methodeSelect.value]||[]).forEach(opt=>{ const o=document.createElement("option"); o.value=opt; o.textContent=opt; cotationSelect.appendChild(o); });
     });
     if(yearSelect){
       const y0=new Date().getFullYear();
@@ -207,7 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* ===== Form “Faites” (dans la modale) ===== */
+  /* Ajout Fait */
   const formFait = document.getElementById("form-fait");
   if(formFait){
     const methodeFaitSelect=document.getElementById("methode-fait");
@@ -215,16 +211,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const dateInput=document.getElementById("date");
     const detailsFait=document.getElementById("details-fait");
     const dlg = document.getElementById("modal-fait");
-    const cotationsMap={
-      Alpinisme:["F","PD","AD","D","TD","ED","ABO"],
-      Randonnée:["Facile","Moyen","Difficile","Expert"],
-      Escalade:["3","4a","4b","4c","5a","5b","5c","6a","6b","6c","7a","7b","7c"],
-    };
+    const cotationsMap={Alpinisme:["F","PD","AD","D","TD","ED","ABO"], Randonnée:["Facile","Moyen","Difficile","Expert"], Escalade:["3","4a","4b","4c","5a","5b","5c","6a","6b","6c","7a","7b","7c"]};
     methodeFaitSelect?.addEventListener("change",()=>{
       cotationFaitSelect.innerHTML=`<option value="" disabled selected>Cotation</option>`;
-      (cotationsMap[methodeFaitSelect.value]||[]).forEach(opt=>{
-        const o=document.createElement("option"); o.value=opt; o.textContent=opt; cotationFaitSelect.appendChild(o);
-      });
+      (cotationsMap[methodeFaitSelect.value]||[]).forEach(opt=>{ const o=document.createElement("option"); o.value=opt; o.textContent=opt; cotationFaitSelect.appendChild(o); });
     });
     formFait.addEventListener("submit", async (e)=>{
       e.preventDefault();
@@ -245,7 +235,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* ===== Edition ===== */
+  /* Edition */
   const methods=["Alpinisme","Randonnée","Escalade"];
   const cotationsByMethod={
     Alpinisme:["F","PD","AD","D","TD","ED","ABO"],
@@ -262,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const deniveleVal=cells[3].textContent.replace(/^~/,"").replace(/m$/,"").trim();
     const methodeVal=cells[4].textContent;
     const cotationVal=cells[5].textContent;
-    const dateOrYearVal=cells[6].textContent;
+    const dateOrYearIso=row.dataset.dateIso || ""; // on garde l'ISO original
     const detailsVal=cells[7].textContent;
 
     cells[1].innerHTML=`<input type="text" value="${sommetVal}" class="tbl-input">`;
@@ -280,15 +270,17 @@ document.addEventListener("DOMContentLoaded", () => {
     met.addEventListener("change",()=>refill(met.value, cot.value));
 
     cells[6].innerHTML = mode==="fait"
-      ? `<input type="date" value="${dateOrYearVal}" class="tbl-input tbl-input--date">`
-      : `<input type="number" value="${dateOrYearVal}" class="tbl-input tbl-input--year">`;
+      ? `<input type="date" value="${dateOrYearIso || ""}" class="tbl-input tbl-input--date">`
+      : `<input type="number" value="${cells[6].textContent.trim()}" class="tbl-input tbl-input--year">`;
 
     const ta=document.createElement("textarea"); ta.className="tbl-input tbl-input--details"; ta.rows=2; ta.value=detailsVal;
     cells[7].innerHTML=""; cells[7].appendChild(ta); autoResize(ta); ta.addEventListener("input",()=>autoResize(ta));
 
     cells[0].innerHTML=`
-      <button class="edit-btn save-btn" type="button" title="Sauvegarder">💾</button>
-      <button class="delete-btn cancel-btn" type="button" title="Annuler">❌</button>
+      <div class="cell-actions">
+        <button class="edit-btn save-btn" type="button" title="Sauvegarder">💾</button>
+        <button class="delete-btn cancel-btn" type="button" title="Annuler">❌</button>
+      </div>
     `;
     cells[0].querySelector(".cancel-btn").addEventListener("click", ()=>displaySorties());
     cells[0].querySelector(".save-btn").addEventListener("click", async ()=>{
@@ -317,7 +309,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  /* ===== Autocomplétion sommets ===== */
+  /* Autocomplétion sommets */
   let debounce=null;
   async function updateSummitsDatalist(){
     clearTimeout(debounce);
