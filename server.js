@@ -7,10 +7,50 @@ import jwt from 'jsonwebtoken';
 import { MongoClient, ObjectId } from 'mongodb';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "change-moi-en-prod";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
+
+// charge data/european_summits.json (peu importe où tourne le serveur)
+const DATA_FILE_CANDIDATES = [
+  path.join(process.cwd(), 'data', 'european_summits.json'),
+  path.join(__dirname, 'data', 'european_summits.json'),
+  path.join(__dirname, '..', 'data', 'european_summits.json'),
+];
+
+let SUMMITS = [];
+(function loadDataset(){
+  for (const p of DATA_FILE_CANDIDATES){
+    if (fs.existsSync(p)){
+      try {
+        SUMMITS = JSON.parse(fs.readFileSync(p, 'utf8'));
+        console.log(`✓ Dataset sommets chargé (${SUMMITS.length}) depuis`, p);
+      } catch(e){ console.error('Dataset sommets invalide', e); }
+      break;
+    }
+  }
+  if (!SUMMITS.length) console.warn('⚠️ Aucune base de sommets trouvée (data/european_summits.json)');
+})();
+
+const norm = s => (s||'').normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase();
+function searchLocalSummits(q, limit=10){
+  const nq = norm(q);
+  const arr = SUMMITS.map(s => ({
+    nom: s.name,
+    altitude: s.altitude_m ?? null,
+    latitude: s.latitude,
+    longitude: s.longitude,
+    wikidata_id: s.wikidata_id,
+  }));
+  const pref = arr.filter(x => norm(x.nom).startsWith(nq));
+  const incl = arr.filter(x => !norm(x.nom).startsWith(nq) && norm(x.nom).includes(nq));
+  return [...pref, ...incl].slice(0, limit);
+}
 
 // Dossier statique (tes .html/.css/.js)
 const PUBLIC_DIR = path.resolve('public');
@@ -110,19 +150,39 @@ async function start() {
     }
 
     // ---------- Sommets (alias EN/FR pour matcher le front) ----------
-    app.get(['/api/summits', '/api/sommets'], async (req, res) => {
-      const q = req.query.q;
+    app.get(['/api/summits','/api/sommets'], async (req, res) => {
+      const q = (req.query.q || '').trim();
       if (!q) return res.json([]);
+
       try {
-        const results = await db.collection("summits")
-          .find({ nom: { $regex: q, $options: "i" } })
-          .toArray();
-        res.json(results);
+        // Mongo (si tu as une collection "summits", sinon ça renverra vide)
+        let mongo = [];
+        try {
+          mongo = await client.db("aiguilog").collection("summits")
+            .find({ nom: { $regex: q, $options: 'i' } })
+            .limit(10).toArray();
+          mongo = mongo.map(s => ({ nom: s.nom || s.name, altitude: s.altitude ?? s.altitude_m ?? null }));
+        } catch { mongo = []; }
+
+        // Local JSON
+        const local = searchLocalSummits(q, 10);
+
+        // Merge + dedupe par nom
+        const seen = new Set();
+        const merged = [...mongo, ...local].filter(it => {
+          const k = norm(it.nom);
+          if (seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        }).slice(0, 12);
+
+        res.json(merged);
       } catch (err) {
-        console.error("Erreur dans /api/summits :", err);
-        res.status(500).json({ error: "Erreur serveur lors de la recherche" });
+        console.error('Erreur /api/sommets:', err);
+        res.status(500).json({ error: 'Erreur serveur lors de la recherche' });
       }
     });
+
 
     // ---------- Sorties ----------
     app.post('/api/sorties', authMiddleware, async (req, res) => {

@@ -294,34 +294,67 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  /* Autocomplétion sommets */
-  let debounce=null;
-  async function updateSummitsDatalist(){
-    clearTimeout(debounce);
-    debounce=setTimeout(async ()=>{
-      const input=document.getElementById("sommet"); if(!input) return;
-      const q=input.value.trim(); const datalist=document.getElementById("summits-list"); if(!datalist) return;
-      if(!q || q.length<2){ datalist.innerHTML=""; return; }
-      try{
-        const res=await fetch("/api/sommets?q="+encodeURIComponent(q)); if(!res.ok) return;
-        const list=await res.json(); datalist.innerHTML="";
-        list.forEach(s=>{ const o=document.createElement("option"); o.value=s.nom; datalist.appendChild(o); });
-      }catch(err){ console.error("autocomplete:",err); }
-    },300);
+/* =================== AUTOCOMPLÉTION SOMMETS + ALTITUDE (local + mongo) =================== */
+function wireSummitAutocomplete(inputId, altitudeId){
+  const inputEl = document.getElementById(inputId);
+  const altEl   = document.getElementById(altitudeId);
+  const datalist = document.getElementById("summits-list");
+  if (!inputEl || !datalist) return;
+
+  let timer = null;
+
+  async function fetchAndRender(){
+    const q = inputEl.value.trim();
+    if (!q || q.length < 2){ datalist.innerHTML = ""; return; }
+    try{
+      const res = await fetch("/api/sommets?q=" + encodeURIComponent(q));
+      if (!res.ok) return;
+      const items = await res.json();
+      datalist.innerHTML = "";
+      items.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s.nom;
+        opt.dataset.altitude = s.altitude ?? "";
+        datalist.appendChild(opt);
+      });
+    }catch(e){ console.error("autocomplete sommets:", e); }
   }
-  const sommetInput=document.getElementById("sommet");
-  if(sommetInput){
-    sommetInput.addEventListener("input",updateSummitsDatalist);
-    sommetInput.addEventListener("change", async ()=>{
-      const val=sommetInput.value.trim(); if(!val) return;
-      try{
-        const res=await fetch("/api/sommets?q="+encodeURIComponent(val)); if(!res.ok) return;
-        const list=await res.json(); const found=list.find(s=>(s.nom||"").toLowerCase()===val.toLowerCase());
-        if(found){ const alt=document.getElementById("altitude"); if(alt) alt.value=found.altitude||""; }
-      }catch(err){ console.error("altitude:",err); }
-    });
-  }
-});
+
+  inputEl.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(fetchAndRender, 200);
+  });
+
+  // TAB -> accepte la 1ère suggestion
+  inputEl.addEventListener("keydown", (e) => {
+    if (e.key === "Tab" && datalist.options.length){
+      const first = datalist.options[0];
+      inputEl.value = first.value;
+      if (altEl && first.dataset.altitude) altEl.value = first.dataset.altitude;
+      e.preventDefault(); // reste dans le champ
+      inputEl.dispatchEvent(new Event("change", { bubbles:true }));
+    }
+  });
+
+  // Quand le champ change, tente de remplir l'altitude
+  inputEl.addEventListener("change", async () => {
+    const val = inputEl.value.trim(); if (!val) return;
+    const match = Array.from(datalist.options).find(o => o.value.toLowerCase() === val.toLowerCase());
+    if (match){ if (altEl && match.dataset.altitude) altEl.value = match.dataset.altitude; return; }
+    try{
+      const res = await fetch("/api/sommets?q="+encodeURIComponent(val));
+      if (!res.ok) return;
+      const items = await res.json();
+      const found = items.find(s => (s.nom||"").toLowerCase() === val.toLowerCase());
+      if (found && altEl && found.altitude != null) altEl.value = found.altitude;
+    }catch(e){ console.error("alt lookup:", e); }
+  });
+}
+
+// Branche sur les deux pages
+wireSummitAutocomplete("sommet", "altitude");         // À faire
+wireSummitAutocomplete("sommet-fait", "altitude-fait"); // Fait
+
 
 /* Suppression (inchangé) */
 window.deleteRow = async function(row){
