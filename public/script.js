@@ -385,3 +385,176 @@ document.addEventListener("DOMContentLoaded", () => {
     }catch(err){ console.error("Erreur suppression :",err); alert("Erreur lors de la connexion au serveur"); }
   };
 });
+
+/* ======================== PAGE RECHERCHER ======================== */
+(function initSearchPage(){
+  const file = (location.pathname.split("/").pop() || "index.html");
+  if (file !== "rechercher.html") return;
+
+  const input    = document.getElementById("search-input");
+  const list     = document.getElementById("search-summits");
+  const block    = document.getElementById("result");
+
+  // Résumé
+  const elName   = document.getElementById("res-name");
+  const elAlt    = document.getElementById("res-alt");
+  const elCoords = document.getElementById("res-coords");
+  const elProm   = document.getElementById("res-prom");
+  const elSrc    = document.getElementById("res-source");
+  const lnkOSM   = document.getElementById("lnk-osm");
+  const lnkGM    = document.getElementById("lnk-gmaps");
+
+  // Wikidata
+  const wdEmpty  = document.getElementById("wikidata-empty");
+  const wdWrap   = document.getElementById("wikidata");
+  const wdTitle  = document.getElementById("wd-title");
+  const wdDesc   = document.getElementById("wd-desc");
+  const wdImg    = document.getElementById("wd-image");
+  const wdLink   = document.getElementById("wd-link");
+
+  let map, marker;
+
+  // -------- Autocomplétion
+  let timer = null;
+  async function fetchSuggestions(q){
+    try{
+      const res = await fetch("/api/sommets?q="+encodeURIComponent(q));
+      if(!res.ok) return [];
+      return await res.json();
+    }catch{ return []; }
+  }
+  function fillDatalist(items){
+    list.innerHTML = "";
+    items.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s.nom || s.name || "";
+      if (s.altitude != null)      opt.dataset.altitude = s.altitude;
+      if (s.latitude != null)      opt.dataset.lat = s.latitude;
+      if (s.longitude != null)     opt.dataset.lon = s.longitude;
+      if (s.wikidata_id)           opt.dataset.wd = s.wikidata_id;
+      if (s.prominence_m != null)  opt.dataset.prom = s.prominence_m;
+      if (s.source)                opt.dataset.src = s.source;
+      list.appendChild(opt);
+    });
+  }
+  input.addEventListener("input", () => {
+    clearTimeout(timer);
+    const q = input.value.trim();
+    if (q.length < 2){ list.innerHTML=""; return; }
+    timer = setTimeout(async () => fillDatalist(await fetchSuggestions(q)), 180);
+  });
+
+  // Tab ou Enter -> 1ère suggestion
+  input.addEventListener("keydown", (e) => {
+    if ((e.key === "Tab" || e.key === "Enter") && list.options.length){
+      const first = list.options[0];
+      input.value = first.value;
+      e.preventDefault();
+      applyFromOption(first);
+    }
+  });
+
+  // Sélection manuelle par click/clavier
+  input.addEventListener("change", async () => {
+    const v = input.value.trim();
+    if (!v) return;
+    // Essaie de retrouver l'option par son libellé
+    let opt = Array.from(list.options).find(o => (o.value||"").toLowerCase() === v.toLowerCase());
+    if (!opt){
+      const items = await fetchSuggestions(v);
+      if (items.length){
+        fillDatalist(items);
+        opt = Array.from(list.options).find(o => (o.value||"").toLowerCase() === v.toLowerCase());
+      }
+    }
+    if (opt) applyFromOption(opt);
+  });
+
+  function applyFromOption(opt){
+    const data = {
+      nom: opt.value,
+      altitude: +(opt.dataset.altitude || 0) || null,
+      latitude: +(opt.dataset.lat || 0) || null,
+      longitude: +(opt.dataset.lon || 0) || null,
+      wikidata_id: opt.dataset.wd || null,
+      prominence_m: opt.dataset.prom != null ? +opt.dataset.prom : null,
+      source: opt.dataset.src || "OpenStreetMap / Wikidata"
+    };
+    renderResult(data);
+  }
+
+  // -------- Affichage résultat + carte
+  function renderResult(s){
+    block.style.display = "grid";
+    elName.textContent   = s.nom || "—";
+    elAlt.textContent    = s.altitude != null ? `${Math.round(s.altitude)} m` : "—";
+    elCoords.textContent = (s.latitude != null && s.longitude != null) ? `${s.latitude.toFixed(5)}, ${s.longitude.toFixed(5)}` : "—";
+    elProm.textContent   = s.prominence_m != null ? `${Math.round(s.prominence_m)} m` : "—";
+    elSrc.textContent    = s.source || "—";
+
+    if (s.latitude != null && s.longitude != null){
+      const latlng = [s.latitude, s.longitude];
+      if (!map){
+        map = L.map('map', { scrollWheelZoom: true });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 18,
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+      }
+      map.setView(latlng, 12);
+      if (marker) marker.remove();
+      marker = L.marker(latlng).addTo(map).bindPopup(s.nom || "Sommet").openPopup();
+
+      lnkOSM.href = `https://www.openstreetmap.org/?mlat=${s.latitude}&mlon=${s.longitude}#map=13/${s.latitude}/${s.longitude}`;
+      lnkGM.href  = `https://maps.google.com/?q=${s.latitude},${s.longitude}`;
+    } else {
+      lnkOSM.removeAttribute("href");
+      lnkGM.removeAttribute("href");
+    }
+
+    // Wikidata
+    if (s.wikidata_id) {
+      wdEmpty.style.display = "none";
+      wdWrap.style.display  = "grid";
+      fillWikidata(s.wikidata_id);
+    } else {
+      wdWrap.style.display  = "none";
+      wdEmpty.style.display = "block";
+    }
+  }
+
+  // --------- Wikidata
+  async function fillWikidata(id){
+    try{
+      const res = await fetch(`https://www.wikidata.org/wiki/Special:EntityData/${encodeURIComponent(id)}.json`);
+      if(!res.ok){ showWDNone(); return; }
+      const j = await res.json();
+      const ent = j.entities?.[id];
+      if(!ent){ showWDNone(); return; }
+
+      const label = ent.labels?.fr?.value || ent.labels?.en?.value || id;
+      const desc  = ent.descriptions?.fr?.value || ent.descriptions?.en?.value || "Description indisponible.";
+      wdTitle.textContent = label;
+      wdDesc.textContent  = desc;
+      wdLink.href = `https://www.wikidata.org/wiki/${id}`;
+
+      // Image (P18)
+      const p18 = ent.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+      if (p18){
+        const url = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(p18)}?width=800`;
+        wdImg.src = url; wdImg.alt = label;
+        wdImg.style.display = "block";
+      } else {
+        wdImg.src = ""; wdImg.alt = ""; wdImg.style.display = "none";
+      }
+    }catch{
+      showWDNone();
+    }
+  }
+  function showWDNone(){
+    wdTitle.textContent = "—";
+    wdDesc.textContent  = "Impossible de charger les informations Wikidata.";
+    wdImg.src = ""; wdImg.style.display = "none";
+    wdLink.removeAttribute("href");
+  }
+})();
