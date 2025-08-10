@@ -1,13 +1,13 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-console.log("MONGODB_URI:", process.env.MONGODB_URI);
+import express from 'express';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { MongoClient, ObjectId } from 'mongodb';
+import cors from 'cors';
 
-const express = import('express');
-const bcrypt = import('bcrypt');
-const jwt = import('jsonwebtoken');
-const { MongoClient, ObjectId } = import('mongodb');
-const cors = import('cors');
+console.log("MONGODB_URI:", process.env.MONGODB_URI);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -54,12 +54,11 @@ client.connect()
       }
     });
 
-    // ---------- Recherche de sommets (mise à jour : champ "nom") ----------
+    // ---------- Recherche de sommets ----------
     app.get('/api/summits', async (req, res) => {
       const q = req.query.q;
       if (!q) return res.json([]);
       try {
-        // Recherche insensible à la casse sur le champ "nom"
         const results = await db.collection("summits").find({
           nom: { $regex: q, $options: "i" }
         }).toArray();
