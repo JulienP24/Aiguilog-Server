@@ -5,23 +5,29 @@ const getToken = () => localStorage.getItem("token") || "";
 const isAuthed = () => !!(getToken() && getUser());
 const formatValue = v => v ? `~${v}m` : "";
 const handleAuthError = () => { alert("Session expirée, veuillez vous reconnecter."); localStorage.removeItem("token"); localStorage.removeItem("user"); location.href="utilisateur.html"; };
-const jsonOrError = async (res) => { const ct = (res.headers.get("content-type")||"").toLowerCase(); if (ct.includes("application/json")) { try { return await res.json(); } catch { return {error:"JSON invalide"}; } } return {error:`Réponse ${res.status}`}; };
+const jsonOrError = async (res) => {
+  try {
+    const ct = (res.headers.get("content-type")||"").toLowerCase();
+    if (ct.includes("application/json")) return await res.json();
+  } catch {}
+  return { error: `Réponse ${res.status}` };
+};
 
 document.addEventListener("DOMContentLoaded", () => {
   const file = (location.pathname.split("/").pop() || "index.html");
 
-  /* Liens dynamiques (logo -> accueil si connecté) */
+  // Liens dynamiques
   const updateLinksForAuth = () => {
     document.querySelectorAll('a.logo-link, a.logo-link-mobile').forEach(a => a.href = isAuthed() ? "accueil.html" : "index.html");
     document.querySelectorAll('a[href="mon-compte.html"]').forEach(a => a.href = isAuthed() ? "mon-compte.html" : "utilisateur.html");
   };
   updateLinksForAuth();
 
-  /* Routes protégées */
+  // Routes protégées
   const protectedFiles = new Set(["mon-compte.html","sorties-a-faire.html","sorties-faites.html","accueil.html"]);
   if (protectedFiles.has(file) && !isAuthed()) { location.replace("utilisateur.html"); return; }
 
-  /* Menu mobile */
+  // Menu mobile
   const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
   const mobileMenu = document.getElementById("mobile-menu");
   if (mobileMenuToggle && mobileMenu){
@@ -35,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
     mobileMenuToggle.addEventListener("click", () => { const open = !mobileMenu.classList.contains("open"); mobileMenu.classList.toggle("open", open); setIcon(open); });
   }
 
-  /* Index : Se connecter */
+  // Index : Se connecter
   document.getElementById("btn-go-login")?.addEventListener("click", ()=>location.href="utilisateur.html");
 
   /* Connexion */
@@ -53,8 +59,11 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user||{}));
           updateLinksForAuth();
-          location.replace("accueil.html");              // -> plus de fallback
-        } else alert("Erreur de connexion : " + (data?.error || `Statut ${res.status}`));
+          location.replace("accueil.html");
+        } else {
+          const msg = data?.error || (res.status === 503 ? "Serveur indisponible (DB), réessaie dans 1 minute." : `Statut ${res.status}`);
+          alert("Erreur de connexion : " + msg);
+        }
       }catch(err){ console.error(err); alert("Erreur lors de la connexion au serveur"); }
     });
     document.getElementById("btn-creer-compte")?.addEventListener("click",()=>location.assign("creer-compte.html"));
@@ -78,16 +87,25 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user||{}));
           updateLinksForAuth();
-          location.replace("accueil.html");              // -> plus de fallback
-        } else alert("Erreur d'inscription : " + (data?.error || `Statut ${res.status}`));
+          location.replace("accueil.html");
+        } else {
+          const msg = data?.error || (res.status === 503 ? "Serveur indisponible (DB), réessaie dans 1 minute." : `Statut ${res.status}`);
+          alert("Erreur d'inscription : " + msg);
+        }
       }catch(err){ console.error(err); alert("Erreur lors de la connexion au serveur"); }
     });
   }
 
   /* Logout */
-  document.getElementById("logout")?.addEventListener("click",(e)=>{e.preventDefault();localStorage.removeItem("token");localStorage.removeItem("user");updateLinksForAuth();location.replace("index.html")});
+  document.getElementById("logout")?.addEventListener("click",(e)=>{
+    e.preventDefault();
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    updateLinksForAuth();
+    location.replace("index.html");
+  });
 
-  /* Helpers */
+  /* Helpers loadSorties + date */
   async function loadSorties(){
     const token = getToken(); if(!token) return [];
     try{
@@ -103,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return isNaN(d) ? iso : d.toLocaleDateString("fr-FR"); // JJ/MM/AAAA
   };
 
-  /* Affichage des sorties (sans colgroup JS) */
+  /* Affichage des sorties */
   async function displaySorties(){
     const sorties = await loadSorties();
     const isFaites = file.includes("sorties-faites");
@@ -294,80 +312,76 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-/* =================== AUTOCOMPLÉTION SOMMETS + ALTITUDE (local + mongo) =================== */
-function wireSummitAutocomplete(inputId, altitudeId){
-  const inputEl = document.getElementById(inputId);
-  const altEl   = document.getElementById(altitudeId);
-  const datalist = document.getElementById("summits-list");
-  if (!inputEl || !datalist) return;
+  /* Autocomplétion sommets */
+  function wireSummitAutocomplete(inputId, altitudeId){
+    const inputEl = document.getElementById(inputId);
+    const altEl   = document.getElementById(altitudeId);
+    const datalist = document.getElementById("summits-list");
+    if (!inputEl || !datalist) return;
 
-  let timer = null;
+    let timer = null;
 
-  async function fetchAndRender(){
-    const q = inputEl.value.trim();
-    if (!q || q.length < 2){ datalist.innerHTML = ""; return; }
-    try{
-      const res = await fetch("/api/sommets?q=" + encodeURIComponent(q));
-      if (!res.ok) return;
-      const items = await res.json();
-      datalist.innerHTML = "";
-      items.forEach(s => {
-        const opt = document.createElement("option");
-        opt.value = s.nom;
-        opt.dataset.altitude = s.altitude ?? "";
-        datalist.appendChild(opt);
-      });
-    }catch(e){ console.error("autocomplete sommets:", e); }
+    async function fetchAndRender(){
+      const q = inputEl.value.trim();
+      if (!q || q.length < 2){ datalist.innerHTML = ""; return; }
+      try{
+        const res = await fetch("/api/sommets?q=" + encodeURIComponent(q));
+        if (!res.ok) return;
+        const items = await res.json();
+        datalist.innerHTML = "";
+        items.forEach(s => {
+          const opt = document.createElement("option");
+          opt.value = s.nom;
+          opt.dataset.altitude = s.altitude ?? "";
+          datalist.appendChild(opt);
+        });
+      }catch(e){ console.error("autocomplete sommets:", e); }
+    }
+
+    inputEl.addEventListener("input", () => {
+      clearTimeout(timer);
+      timer = setTimeout(fetchAndRender, 200);
+    });
+
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Tab" && datalist.options.length){
+        const first = datalist.options[0];
+        inputEl.value = first.value;
+        if (altEl && first.dataset.altitude) altEl.value = first.dataset.altitude;
+        e.preventDefault();
+        inputEl.dispatchEvent(new Event("change", { bubbles:true }));
+      }
+    });
+
+    inputEl.addEventListener("change", async () => {
+      const val = inputEl.value.trim(); if (!val) return;
+      const match = Array.from(datalist.options).find(o => o.value.toLowerCase() === val.toLowerCase());
+      if (match){ if (altEl && match.dataset.altitude) altEl.value = match.dataset.altitude; return; }
+      try{
+        const res = await fetch("/api/sommets?q="+encodeURIComponent(val));
+        if (!res.ok) return;
+        const items = await res.json();
+        const found = items.find(s => (s.nom||"").toLowerCase() === val.toLowerCase());
+        if (found && altEl && found.altitude != null) altEl.value = found.altitude;
+      }catch(e){ console.error("alt lookup:", e); }
+    });
   }
+  wireSummitAutocomplete("sommet", "altitude");
+  wireSummitAutocomplete("sommet-fait", "altitude-fait");
 
-  inputEl.addEventListener("input", () => {
-    clearTimeout(timer);
-    timer = setTimeout(fetchAndRender, 200);
-  });
-
-  // TAB -> accepte la 1ère suggestion
-  inputEl.addEventListener("keydown", (e) => {
-    if (e.key === "Tab" && datalist.options.length){
-      const first = datalist.options[0];
-      inputEl.value = first.value;
-      if (altEl && first.dataset.altitude) altEl.value = first.dataset.altitude;
-      e.preventDefault(); // reste dans le champ
-      inputEl.dispatchEvent(new Event("change", { bubbles:true }));
-    }
-  });
-
-  // Quand le champ change, tente de remplir l'altitude
-  inputEl.addEventListener("change", async () => {
-    const val = inputEl.value.trim(); if (!val) return;
-    const match = Array.from(datalist.options).find(o => o.value.toLowerCase() === val.toLowerCase());
-    if (match){ if (altEl && match.dataset.altitude) altEl.value = match.dataset.altitude; return; }
+  /* Suppression */
+  window.deleteRow = async function(row){
+    if(!confirm("Confirmez-vous la suppression de cette sortie ?")) return;
+    const token=getToken(); if(!token) return handleAuthError();
+    const sortieId=row.getAttribute("data-id");
     try{
-      const res = await fetch("/api/sommets?q="+encodeURIComponent(val));
-      if (!res.ok) return;
-      const items = await res.json();
-      const found = items.find(s => (s.nom||"").toLowerCase() === val.toLowerCase());
-      if (found && altEl && found.altitude != null) altEl.value = found.altitude;
-    }catch(e){ console.error("alt lookup:", e); }
-  });
-}
-
-// Branche sur les deux pages
-wireSummitAutocomplete("sommet", "altitude");         // À faire
-wireSummitAutocomplete("sommet-fait", "altitude-fait"); // Fait
-
-
-/* Suppression (inchangé) */
-window.deleteRow = async function(row){
-  if(!confirm("Confirmez-vous la suppression de cette sortie ?")) return;
-  const token=getToken(); if(!token) return handleAuthError();
-  const sortieId=row.getAttribute("data-id");
-  try{
-    const res=await fetch("/api/sorties/"+sortieId,{method:"DELETE",headers:{Authorization:"Bearer "+token}});
-    if(res.status===401) return handleAuthError();
-    if(res.ok){ alert("Sortie supprimée !"); row.remove(); }
-    else{
-      const errData=await res.json().catch(()=>({}));
-      alert("Erreur lors de la suppression : "+(errData.error||"Inconnue"));
-    }
-  }catch(err){ console.error("Erreur suppression :",err); alert("Erreur lors de la connexion au serveur"); }
-};
+      const res=await fetch("/api/sorties/"+sortieId,{method:"DELETE",headers:{Authorization:"Bearer "+token}});
+      if(res.status===401) return handleAuthError();
+      if(res.ok){ alert("Sortie supprimée !"); row.remove(); }
+      else{
+        const errData=await res.json().catch(()=>({}));
+        alert("Erreur lors de la suppression : "+(errData.error||"Inconnue"));
+      }
+    }catch(err){ console.error("Erreur suppression :",err); alert("Erreur lors de la connexion au serveur"); }
+  };
+});
