@@ -1,11 +1,13 @@
-require('dotenv').config();
+import dotenv from 'dotenv';
+dotenv.config();
+
 console.log("MONGODB_URI:", process.env.MONGODB_URI);
 
-const express = require('express');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const { MongoClient, ObjectId } = require('mongodb');
-const cors = require('cors');
+const express = import('express');
+const bcrypt = import('bcrypt');
+const jwt = import('jsonwebtoken');
+const { MongoClient, ObjectId } = import('mongodb');
+const cors = import('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
