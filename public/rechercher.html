@@ -3,13 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Aiguilog - Créer un compte</title>
+    <title>Aiguilog - Rechercher</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <header class="main-header">
       <div class="nav-container">
-        <!-- Desktop Navigation -->
         <div class="desktop-nav">
           <a href="index.html" class="logo-link">
             <picture>
@@ -21,7 +20,7 @@
           <nav class="nav-links">
             <a href="sorties-faites.html" class="nav-btn">Fait</a>
             <a href="sorties-a-faire.html" class="nav-btn">À Faire</a>
-            <a href="rechercher.html" class="nav-btn">Rechercher</a>
+            <a href="rechercher.html" class="nav-btn active">Rechercher</a>
           </nav>
           <a href="mon-compte.html" class="user-icon-link">
             <picture>
@@ -32,7 +31,6 @@
           </a>
         </div>
 
-        <!-- Mobile Navigation -->
         <div class="mobile-nav">
           <a href="index.html" class="logo-link-mobile">
             <picture>
@@ -50,7 +48,6 @@
           </button>
         </div>
       </div>
-
       <nav id="mobile-menu">
         <ul>
           <li class="menu-user-icon">
@@ -64,30 +61,24 @@
           </li>
           <li><a href="sorties-faites.html">Fait</a></li>
           <li><a href="sorties-a-faire.html">À Faire</a></li>
-          <li><a href="rechercher.html">Rechercher</a></li>
+          <li><a href="rechercher.html" class="active">Rechercher</a></li>
         </ul>
       </nav>
     </header>
 
     <div class="container">
-      <h2>Créer un compte</h2>
-
-      <form id="register-form" class="two-cols">
-        <div class="col-left">
-          <input type="text" id="register-firstname" placeholder="Prénom" required />
-          <input type="text" id="register-lastname" placeholder="Nom" required />
-          <input type="text" id="register-username" placeholder="Identifiant" required />
+      <h2>Rechercher</h2>
+      <div class="is-glass" style="padding:1.25rem;border-radius:20px;margin-top:1rem">
+        <h3 style="margin-bottom:.5rem">🚧 En travaux</h3>
+        <p>
+          La recherche arrive bientôt : auto-complétion des sommets, filtres par méthode, cotation, altitude…
+          Reste branché, ça va être propre !
+        </p>
+        <div style="margin-top:1rem;display:flex;gap:.5rem;flex-wrap:wrap">
+          <a class="nav-btn" href="sorties-faites.html">Voir les sorties faites</a>
+          <a class="nav-btn" href="sorties-a-faire.html">Voir les sorties à faire</a>
         </div>
-        <div class="col-right">
-          <input type="password" id="register-password" placeholder="Mot de passe" required />
-          <input type="date" id="register-birthdate" required />
-        </div>
-
-        <div class="full-width" style="gap:.5rem">
-          <button type="button" class="btn-ghost" onclick="location.href='utilisateur.html'">← Retour à la connexion</button>
-          <button type="submit">Créer le compte</button>
-        </div>
-      </form>
+      </div>
     </div>
 
     <script src="script.js" defer></script>
