@@ -117,37 +117,46 @@ input::placeholder,textarea::placeholder{color:#6b7c91}
 .page-intro{margin-bottom:1rem}
 .page-intro p{opacity:.8}
 
-/* Tables */
+/* Tables (plus de colonnes rognées) */
 .table-container{padding:1rem;border-radius:var(--radius-xl);background:linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.35)), var(--surface);border:var(--glass-stroke);box-shadow:var(--glass-shadow)}
-table{width:100%;border-collapse:collapse;table-layout:auto;background:transparent} /* auto = plus de … */
+table{width:100%;border-collapse:collapse;table-layout:auto;background:transparent}
 th,td{padding:1rem;border-bottom:1px solid rgba(0,0,0,.08);vertical-align:middle}
 th{position:sticky;top:0;z-index:1;background:linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.5));text-align:left}
 
-/* Pas d’ellipses par défaut */
-.table--sorties td{white-space:nowrap; overflow:visible; text-overflow:clip}
-/* Sommet et Détails peuvent aller à la ligne */
-.table--sorties td:nth-child(2),
-.table--sorties td:nth-child(8){white-space:normal}
+/* Sommet & Détails peuvent passer à la ligne */
+.table--sorties td{white-space:nowrap}
+.table--sorties td:nth-child(2){white-space:normal}
 
-/* Actions toujours visibles + assez large */
-td.cell-actions{white-space:nowrap; overflow:visible}
-.cell-actions{width:140px; display:flex; gap:8px; align-items:center}
+/* Détails : 3 lignes visibles (clamp) */
+.clamp-3{
+  display:-webkit-box;
+  -webkit-line-clamp:3;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  white-space:normal;
+}
+
+/* Colonne Actions large + boutons visibles */
+td.cell-actions{white-space:nowrap}
+.table--sorties th:first-child,.table--sorties td:first-child{width:140px}
+.cell-actions{display:flex;gap:8px;align-items:center}
 .cell-actions .edit-btn,.cell-actions .delete-btn{width:48px;height:44px;border-radius:12px;border:var(--btn-border)}
 .cell-actions .delete-btn{background-image:var(--btn-grad), linear-gradient(180deg, rgba(255,59,48,.45), rgba(255,59,48,.28));box-shadow:0 10px 22px rgba(255,59,48,.18)}
 
-/* Inputs compacts en édition */
+/* Inputs d’édition */
 .tbl-input{width:100%}
 .tbl-input--num{width:12ch;text-align:right}
 .tbl-input--year{width:12ch;text-align:center}
 .tbl-input--date{width:14ch;text-align:center}
 .tbl-input--method{min-width:18ch}
 .tbl-input--cot{width:12ch}
-.tbl-input--details{width:100%;min-height:2.75rem;max-height:12rem;resize:vertical;line-height:1.4}
+.tbl-input--details{width:100%;min-height:5.2rem;max-height:12rem;resize:vertical;line-height:1.4} /* ≈ 3 lignes */
 
-/* FAB + modal */
+/* FAB + modal (centrée) */
 .fab{width:56px;height:56px;border-radius:50%;font-size:28px;line-height:1;align-items:center;justify-content:center;position:fixed;right:24px;bottom:24px;z-index:1200}
-dialog.modal{border:none;padding:0;border-radius:22px;max-width:min(680px, calc(100% - 2rem));width:100%;margin:auto} /* centré */
-dialog.modal::backdrop{background:rgba(0,0,0,.3);backdrop-filter:blur(4px)}
+dialog.modal{border:none;padding:0;border-radius:22px;max-width:min(680px, calc(100% - 2rem));width:100%}
+dialog.modal[open]{inset:50% auto auto 50%;transform:translate(-50%,-50%);margin:0}
+dialog.modal::backdrop{background:rgba(0,0,0,.35);backdrop-filter:blur(4px)}
 .modal-body{padding:1rem}
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1rem .25rem 1rem}
 .modal-title{font-size:1.2rem;font-weight:800}
@@ -166,7 +175,7 @@ dialog.modal::backdrop{background:rgba(0,0,0,.3);backdrop-filter:blur(4px)}
   .full-width{grid-column:auto}
 }
 
-/* Dark auto */
+/* Dark mode auto */
 @media (prefers-color-scheme: dark){
   :root{
     --background:#0b0b0c; --ink:#f2f2f7; --surface:rgba(255,255,255,.08); --glass-tint:rgba(255,255,255,.12);

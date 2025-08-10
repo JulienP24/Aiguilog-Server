@@ -10,7 +10,7 @@ const jsonOrError = async (res) => { const ct = (res.headers.get("content-type")
 document.addEventListener("DOMContentLoaded", () => {
   const file = (location.pathname.split("/").pop() || "index.html");
 
-  /* Liens dynamiques */
+  /* Liens dynamiques (logo -> accueil si connecté) */
   const updateLinksForAuth = () => {
     document.querySelectorAll('a.logo-link, a.logo-link-mobile').forEach(a => a.href = isAuthed() ? "accueil.html" : "index.html");
     document.querySelectorAll('a[href="mon-compte.html"]').forEach(a => a.href = isAuthed() ? "mon-compte.html" : "utilisateur.html");
@@ -53,11 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user||{}));
           updateLinksForAuth();
-          // Essaye accueil.html, sinon retombe sur index.html
-          try{
-            const head = await fetch("accueil.html", {method:"HEAD"});
-            location.replace(head.ok ? "accueil.html" : "index.html");
-          }catch{ location.replace("index.html"); }
+          location.replace("accueil.html");              // -> plus de fallback
         } else alert("Erreur de connexion : " + (data?.error || `Statut ${res.status}`));
       }catch(err){ console.error(err); alert("Erreur lors de la connexion au serveur"); }
     });
@@ -82,10 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user||{}));
           updateLinksForAuth();
-          try{
-            const head = await fetch("accueil.html", {method:"HEAD"});
-            location.replace(head.ok ? "accueil.html" : "index.html");
-          }catch{ location.replace("index.html"); }
+          location.replace("accueil.html");              // -> plus de fallback
         } else alert("Erreur d'inscription : " + (data?.error || `Statut ${res.status}`));
       }catch(err){ console.error(err); alert("Erreur lors de la connexion au serveur"); }
     });
@@ -94,20 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /* Logout */
   document.getElementById("logout")?.addEventListener("click",(e)=>{e.preventDefault();localStorage.removeItem("token");localStorage.removeItem("user");updateLinksForAuth();location.replace("index.html")});
 
-  /* Layout colonnes (on garde au cas où, mais table-layout:auto fait déjà le job) */
-  function applyTableLayout(){
-    const tables = document.querySelectorAll("table.table--sorties, .table-container table");
-    tables.forEach(table=>{
-      table.classList.add("table--sorties");
-      table.querySelectorAll("colgroup").forEach(cg=>cg.remove());
-      const cg = document.createElement("colgroup");
-      const widths = ["140px","","12ch","12ch","18ch","12ch","14ch",""]; // + larges
-      widths.forEach(w=>{ const c=document.createElement("col"); if(w) c.style.width=w; cg.appendChild(c); });
-      table.insertBefore(cg, table.firstChild);
-    });
-  }
-
-  /* Chargement sorties */
+  /* Helpers */
   async function loadSorties(){
     const token = getToken(); if(!token) return [];
     try{
@@ -117,14 +97,13 @@ document.addEventListener("DOMContentLoaded", () => {
       return Array.isArray(data) ? data : [];
     }catch(err){ console.error("loadSorties:",err); return []; }
   }
-
-  function formatFRDate(iso){
+  const formatFRDate = (iso) => {
     if(!iso) return "";
     const d = new Date(iso);
-    if (isNaN(d)) return iso; // si on reçoit déjà une chaîne lisible
-    return d.toLocaleDateString("fr-FR"); // dd/mm/yyyy
-  }
+    return isNaN(d) ? iso : d.toLocaleDateString("fr-FR"); // JJ/MM/AAAA
+  };
 
+  /* Affichage des sorties (sans colgroup JS) */
   async function displaySorties(){
     const sorties = await loadSorties();
     const isFaites = file.includes("sorties-faites");
@@ -132,6 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const body = document.getElementById(isFaites ? "table-body-fait" : "table-body-afaire");
     if(!body) return;
     body.innerHTML = "";
+
     sorties.filter(s=>s.type===type).forEach(s=>{
       const tr=document.createElement("tr");
       tr.setAttribute("data-id", s._id);
@@ -147,11 +127,16 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${s.methode||""}</td>
         <td>${s.cotation||""}</td>
         <td>${s.type==="fait" ? formatFRDate(s.date) : (s.annee||"")}</td>
-        <td>${s.details||""}</td>
+        <td></td>
       `;
+      const detailsTd = tr.children[7];
+      const clamp = document.createElement("div");
+      clamp.className = "clamp-3";
+      clamp.textContent = s.details || "";
+      detailsTd.appendChild(clamp);
+
       body.appendChild(tr);
     });
-    applyTableLayout();
   }
   displaySorties();
 
@@ -252,7 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const deniveleVal=cells[3].textContent.replace(/^~/,"").replace(/m$/,"").trim();
     const methodeVal=cells[4].textContent;
     const cotationVal=cells[5].textContent;
-    const dateOrYearIso=row.dataset.dateIso || ""; // on garde l'ISO original
+    const dateOrYearIso=row.dataset.dateIso || "";
     const detailsVal=cells[7].textContent;
 
     cells[1].innerHTML=`<input type="text" value="${sommetVal}" class="tbl-input">`;
@@ -273,7 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ? `<input type="date" value="${dateOrYearIso || ""}" class="tbl-input tbl-input--date">`
       : `<input type="number" value="${cells[6].textContent.trim()}" class="tbl-input tbl-input--year">`;
 
-    const ta=document.createElement("textarea"); ta.className="tbl-input tbl-input--details"; ta.rows=2; ta.value=detailsVal;
+    const ta=document.createElement("textarea"); ta.className="tbl-input tbl-input--details"; ta.rows=3; ta.value=detailsVal;
     cells[7].innerHTML=""; cells[7].appendChild(ta); autoResize(ta); ta.addEventListener("input",()=>autoResize(ta));
 
     cells[0].innerHTML=`
@@ -337,3 +322,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+/* Suppression (inchangé) */
+window.deleteRow = async function(row){
+  if(!confirm("Confirmez-vous la suppression de cette sortie ?")) return;
+  const token=getToken(); if(!token) return handleAuthError();
+  const sortieId=row.getAttribute("data-id");
+  try{
+    const res=await fetch("/api/sorties/"+sortieId,{method:"DELETE",headers:{Authorization:"Bearer "+token}});
+    if(res.status===401) return handleAuthError();
+    if(res.ok){ alert("Sortie supprimée !"); row.remove(); }
+    else{
+      const errData=await res.json().catch(()=>({}));
+      alert("Erreur lors de la suppression : "+(errData.error||"Inconnue"));
+    }
+  }catch(err){ console.error("Erreur suppression :",err); alert("Erreur lors de la connexion au serveur"); }
+};

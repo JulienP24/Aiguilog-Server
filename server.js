@@ -6,23 +6,29 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { MongoClient, ObjectId } from 'mongodb';
 import cors from 'cors';
+import path from 'path';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "change-moi-en-prod";
 
+// Dossier statique (tes .html/.css/.js)
+const PUBLIC_DIR = path.resolve('public');
+
 if (!process.env.MONGODB_URI) {
-  console.error("⚠️ Erreur : MONGODB_URI non défini dans les variables d'environnement !");
+  console.error("⚠️ Erreur : MONGODB_URI non défini !");
   process.exit(1);
 }
 
 app.use(cors({
-  origin: true,      // autorise toutes origines, à limiter en prod
-  credentials: true, // pour que les cookies passent, si utilisés
+  origin: true,
+  credentials: true,
 }));
 
 app.use(express.json());
-app.use(express.static('public'));
+
+// Sert /index.html, /accueil.html, style.css, script.js, etc.
+app.use(express.static(PUBLIC_DIR));
 
 const client = new MongoClient(process.env.MONGODB_URI);
 
@@ -30,17 +36,15 @@ async function start() {
   try {
     await client.connect();
     console.log("Connecté à MongoDB Atlas");
-
     const db = client.db("aiguilog");
 
-    // -- Inscription
+    // ---------- Auth ----------
     app.post('/api/register', async (req, res) => {
       try {
         const { firstName, lastName, username, password, birthdate } = req.body;
         if (!firstName || !lastName || !username || !password || !birthdate) {
           return res.status(400).json({ error: "Tous les champs sont requis" });
         }
-
         const existingUser = await db.collection("users").findOne({ username });
         if (existingUser) return res.status(400).json({ error: "Identifiant déjà utilisé" });
 
@@ -48,9 +52,12 @@ async function start() {
         const userDoc = { firstName, lastName, username, passwordHash, birthdate, createdAt: new Date() };
         const result = await db.collection("users").insertOne(userDoc);
 
-        const token = jwt.sign({ userId: result.insertedId.toString(), username }, JWT_SECRET, { expiresIn: "1h" });
+        const token = jwt.sign(
+          { userId: result.insertedId.toString(), username },
+          JWT_SECRET,
+          { expiresIn: "1h" }
+        );
         const userResponse = { firstName, lastName, username, birthdate, createdAt: userDoc.createdAt };
-
         res.json({ message: "Inscription réussie", token, user: userResponse });
       } catch (err) {
         console.error("Erreur /api/register :", err);
@@ -58,22 +65,6 @@ async function start() {
       }
     });
 
-    // -- Recherche sommets
-    app.get('/api/summits', async (req, res) => {
-      const q = req.query.q;
-      if (!q) return res.json([]);
-      try {
-        const results = await db.collection("summits").find({
-          nom: { $regex: q, $options: "i" }
-        }).toArray();
-        res.json(results);
-      } catch (err) {
-        console.error("Erreur dans /api/summits :", err);
-        res.status(500).json({ error: "Erreur serveur lors de la recherche" });
-      }
-    });
-
-    // -- Connexion
     app.post('/api/login', async (req, res) => {
       try {
         const { username, password } = req.body;
@@ -85,7 +76,11 @@ async function start() {
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return res.status(400).json({ error: "Mot de passe incorrect" });
 
-        const token = jwt.sign({ userId: user._id.toString(), username: user.username }, JWT_SECRET, { expiresIn: "1h" });
+        const token = jwt.sign(
+          { userId: user._id.toString(), username: user.username },
+          JWT_SECRET,
+          { expiresIn: "1h" }
+        );
         const userResponse = {
           firstName: user.firstName,
           lastName: user.lastName,
@@ -100,7 +95,7 @@ async function start() {
       }
     });
 
-    // Middleware auth
+    // ---------- Middleware auth ----------
     function authMiddleware(req, res, next) {
       const authHeader = req.headers.authorization;
       if (!authHeader) return res.status(401).json({ error: "Non autorisé" });
@@ -114,7 +109,22 @@ async function start() {
       }
     }
 
-    // -- Ajout sortie
+    // ---------- Sommets (alias EN/FR pour matcher le front) ----------
+    app.get(['/api/summits', '/api/sommets'], async (req, res) => {
+      const q = req.query.q;
+      if (!q) return res.json([]);
+      try {
+        const results = await db.collection("summits")
+          .find({ nom: { $regex: q, $options: "i" } })
+          .toArray();
+        res.json(results);
+      } catch (err) {
+        console.error("Erreur dans /api/summits :", err);
+        res.status(500).json({ error: "Erreur serveur lors de la recherche" });
+      }
+    });
+
+    // ---------- Sorties ----------
     app.post('/api/sorties', authMiddleware, async (req, res) => {
       try {
         const sortieData = req.body;
@@ -135,12 +145,11 @@ async function start() {
       }
     });
 
-    // -- Récupérer sorties
     app.get('/api/sorties', authMiddleware, async (req, res) => {
       try {
-        const sorties = await db.collection("sorties").find({
-          userId: new ObjectId(req.user.userId)
-        }).toArray();
+        const sorties = await db.collection("sorties")
+          .find({ userId: new ObjectId(req.user.userId) })
+          .toArray();
         res.json(sorties);
       } catch (err) {
         console.error("Erreur /api/sorties (GET):", err);
@@ -148,28 +157,22 @@ async function start() {
       }
     });
 
-    // -- Mise à jour sortie
     app.put('/api/sorties/:id', authMiddleware, async (req, res) => {
       try {
         const sortieId = req.params.id;
         const updateData = req.body;
-
         const result = await db.collection("sorties").updateOne(
           { _id: new ObjectId(sortieId), userId: new ObjectId(req.user.userId) },
           { $set: updateData }
         );
-        if (result.modifiedCount === 1) {
-          res.json({ message: "Sortie mise à jour" });
-        } else {
-          res.status(400).json({ error: "Aucune mise à jour effectuée" });
-        }
+        if (result.modifiedCount === 1) return res.json({ message: "Sortie mise à jour" });
+        res.status(400).json({ error: "Aucune mise à jour effectuée" });
       } catch (err) {
         console.error("Erreur /api/sorties (PUT):", err);
         res.status(500).json({ error: "Erreur serveur lors de la mise à jour" });
       }
     });
 
-    // -- Suppression sortie
     app.delete('/api/sorties/:id', authMiddleware, async (req, res) => {
       try {
         const sortieId = req.params.id;
@@ -177,16 +180,24 @@ async function start() {
           _id: new ObjectId(sortieId),
           userId: new ObjectId(req.user.userId)
         });
-        if (result.deletedCount === 1) {
-          res.json({ message: "Sortie supprimée" });
-        } else {
-          res.status(400).json({ error: "Sortie non trouvée ou non supprimée" });
-        }
+        if (result.deletedCount === 1) return res.json({ message: "Sortie supprimée" });
+        res.status(400).json({ error: "Sortie non trouvée ou non supprimée" });
       } catch (err) {
         console.error("Erreur /api/sorties (DELETE):", err);
         res.status(500).json({ error: "Erreur serveur lors de la suppression" });
       }
     });
+
+    // ---------- Routes de pages ----------
+    // Sert explicitement /accueil.html (évite le Cannot GET si déploiement capricieux)
+    app.get('/accueil.html', (req, res) => {
+      res.sendFile('accueil.html', { root: PUBLIC_DIR });
+    });
+
+    // (Optionnel) fallback SPA : renvoyer index.html pour les routes inconnues non-API
+    // app.get(/^\/(?!api\/).*/, (req, res) => {
+    //   res.sendFile('index.html', { root: PUBLIC_DIR });
+    // });
 
     app.listen(PORT, () => {
       console.log(`Serveur démarré sur http://localhost:${PORT}`);

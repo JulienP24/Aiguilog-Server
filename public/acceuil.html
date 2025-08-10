@@ -5,13 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Aiguilog - Accueil</title>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1rem}
-    .card{padding:1.2rem;border-radius:20px}
-    .card h3{margin-bottom:.4rem}
-    .cta-row{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.8rem}
-    @media (max-width:900px){ .cards{grid-template-columns:1fr} }
-  </style>
 </head>
 <body>
   <header class="main-header">
@@ -37,6 +30,7 @@
           </picture>
         </a>
       </div>
+
       <div class="mobile-nav">
         <a href="index.html" class="logo-link-mobile">
           <picture>
@@ -73,25 +67,28 @@
   </header>
 
   <div class="container">
-    <h1 style="margin-bottom:.5rem;">Bienvenue sur Aiguilog</h1>
-    <p>Ton carnet de montagne moderne : journal des sorties, liste d’objectifs, et bientôt des stats.</p>
+    <h1>Bienvenue 👋</h1>
+    <p style="opacity:.85;margin:.5rem 0 1.25rem">
+      Tu es connecté. Ici, un aperçu rapide de ce que tu peux faire :
+    </p>
 
-    <div class="cards">
-      <section class="card is-glass">
-        <h3>Journal des sorties</h3>
-        <p>Ajoute, modifie, annule — tout se fait en ligne dans ton tableau.</p>
-        <div class="cta-row"><a class="nav-btn" href="sorties-faites.html">Voir mes sorties</a></div>
-      </section>
-      <section class="card is-glass">
-        <h3>Objectifs à venir</h3>
-        <p>Prépare tes ascensions de l’année avec la page “À faire”.</p>
-        <div class="cta-row"><a class="nav-btn" href="sorties-a-faire.html">Planifier</a></div>
-      </section>
-      <section class="card is-glass">
-        <h3>Recherche & stats</h3>
-        <p>Bientôt : filtres, graphiques d’altitudes et export CSV.</p>
-        <div class="cta-row"><a class="nav-btn" href="rechercher.html">Rechercher</a></div>
-      </section>
+    <div class="is-glass" style="border-radius:20px;padding:1.2rem;margin-bottom:1rem">
+      <h3>• Consigner tes <strong>sorties faites</strong></h3>
+      <p>Ajoute tes ascensions passées, modifie des détails, garde une trace propre.</p>
+    </div>
+    <div class="is-glass" style="border-radius:20px;padding:1.2rem;margin-bottom:1rem">
+      <h3>• Préparer tes <strong>sorties à faire</strong></h3>
+      <p>Ta to-do des sommets à venir, avec méthode, cotation et objectifs d’année.</p>
+    </div>
+    <div class="is-glass" style="border-radius:20px;padding:1.2rem">
+      <h3>• Rechercher</h3>
+      <p>Autocomplétion des sommets (base interne). Tape et choisis.</p>
+    </div>
+
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.25rem">
+      <a class="nav-btn" href="sorties-faites.html">Aller aux sorties faites</a>
+      <a class="nav-btn" href="sorties-a-faire.html">Aller aux sorties à faire</a>
+      <a class="nav-btn" href="rechercher.html">Rechercher</a>
     </div>
   </div>
 
