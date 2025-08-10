@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const formatValue = v => v ? `~${v}m` : "";
   const getUser = () => { const raw = localStorage.getItem("user"); try { return raw ? JSON.parse(raw) : null; } catch { return null; } };
   const getToken = () => localStorage.getItem("token") || "";
+  const isAuthed = () => !!(getToken() && getUser());
   const handleAuthError = () => { alert("Session expirée, veuillez vous reconnecter."); localStorage.removeItem("token"); localStorage.removeItem("user"); window.location.href="utilisateur.html"; };
   const jsonOrError = async (res) => {
     const ct = (res.headers.get("content-type")||"").toLowerCase();
@@ -17,12 +18,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ===== Routes / guards ===== */
   const file = (window.location.pathname.split("/").pop() || "index.html");
-  const protectedFiles = new Set(["mon-compte.html","sorties-a-faire.html","sorties-faites.html"]);
-  const updateUserIconLink = () => {
-    document.querySelectorAll('a[href="mon-compte.html"]').forEach(a => a.href = getUser() ? "mon-compte.html" : "utilisateur.html");
+  const protectedFiles = new Set(["mon-compte.html","sorties-a-faire.html","sorties-faites.html","accueil.html"]);
+  const updateLinksForAuth = () => {
+    // icône compte
+    document.querySelectorAll('a[href="mon-compte.html"]').forEach(a => a.href = isAuthed() ? "mon-compte.html" : "utilisateur.html");
+    // logo → index si non connecté, accueil si connecté
+    document.querySelectorAll(".logo-link, .logo-link-mobile").forEach(a => a.href = isAuthed() ? "accueil.html" : "index.html");
   };
-  updateUserIconLink();
-  if (protectedFiles.has(file) && (!getToken() || !getUser())) { window.location.replace("utilisateur.html"); return; }
+  updateLinksForAuth();
+  if (protectedFiles.has(file) && !isAuthed()) { window.location.replace("utilisateur.html"); return; }
 
   /* ===== Mobile menu ===== */
   const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
@@ -60,8 +64,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (res.ok && data?.token){
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user||{}));
-          updateUserIconLink();
-          window.location.replace("mon-compte.html");
+          updateLinksForAuth();
+          window.location.replace("accueil.html");
         } else alert("Erreur de connexion : " + (data?.error || `Statut ${res.status}`));
       }catch(err){ console.error(err); alert("Erreur lors de la connexion au serveur"); }
     });
@@ -85,8 +89,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (res.ok && data?.token){
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user||{}));
-          updateUserIconLink();
-          window.location.replace("mon-compte.html");
+          updateLinksForAuth();
+          window.location.replace("accueil.html");
         } else alert("Erreur d'inscription : " + (data?.error || `Statut ${res.status}`));
       }catch(err){ console.error(err); alert("Erreur lors de la connexion au serveur"); }
     });
@@ -103,9 +107,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (user.birthdate){ const d=new Date(user.birthdate); info.textContent=`Né(e) le ${d.toLocaleDateString("fr-FR")}`; }
     }
   }
-  document.getElementById("logout")?.addEventListener("click",(e)=>{e.preventDefault();localStorage.removeItem("token");localStorage.removeItem("user");window.location.replace("utilisateur.html")});
+  document.getElementById("logout")?.addEventListener("click",(e)=>{e.preventDefault();localStorage.removeItem("token");localStorage.removeItem("user");updateLinksForAuth();window.location.replace("index.html")});
 
-  /* ===== Table layout (colonnes élargies) ===== */
+  /* ===== Table layout (colonnes élargies et Sommet flexible) ===== */
   function applyTableLayout(){
     const tables = document.querySelectorAll("table.table--sorties, .table-container table");
     tables.forEach(table=>{
@@ -113,14 +117,14 @@ document.addEventListener("DOMContentLoaded", () => {
       table.querySelectorAll("colgroup").forEach(cg=>cg.remove());
       const cg = document.createElement("colgroup");
       const widths = [
-        "92px",   // Actions
-        "26ch",   // Sommet
-        "9ch",    // Altitude
-        "9ch",    // Dénivelé
-        "14ch",   // Méthode
-        "9ch",    // Cotation
+        "112px",  // Actions (2 boutons)
+        "",       // Sommet (flex + wrap)
+        "12ch",   // Altitude
+        "12ch",   // Dénivelé
+        "16ch",   // Méthode
+        "10ch",   // Cotation
         "12ch",   // Date/Année
-        ""        // Détails
+        ""        // Détails (prend le reste)
       ];
       widths.forEach((w,i)=>{ const c=document.createElement("col"); if(w) c.style.width=w; if(i===7) c.className="col-details"; cg.appendChild(c); });
       table.insertBefore(cg, table.firstChild);
@@ -288,9 +292,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const ta=document.createElement("textarea"); ta.className="tbl-input tbl-input--details"; ta.rows=2; ta.value=detailsVal;
     cells[7].innerHTML=""; cells[7].appendChild(ta); autoResize(ta); ta.addEventListener("input",()=>autoResize(ta));
 
+    // deux boutons visibles (💾 et ❌)
     cells[0].innerHTML=`
-      <button class="edit-btn save-btn" type="button">💾</button>
-      <button class="delete-btn cancel-btn" type="button">❌</button>
+      <button class="edit-btn save-btn" type="button" title="Sauvegarder">💾</button>
+      <button class="delete-btn cancel-btn" type="button" title="Annuler">❌</button>
     `;
     cells[0].querySelector(".cancel-btn").addEventListener("click", ()=>displaySorties());
     cells[0].querySelector(".save-btn").addEventListener("click", async ()=>{
