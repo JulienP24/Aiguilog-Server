@@ -1,106 +1,100 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Aiguilog - Accueil</title>
-    <link rel="stylesheet" href="style.css" />
-    <style>
-      .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1rem}
-      .card{padding:1.2rem;border-radius:20px}
-      .card h3{margin-bottom:.4rem}
-      .cta-row{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.8rem}
-      @media (max-width:900px){ .cards{grid-template-columns:1fr} }
-    </style>
-  </head>
-  <body>
-    <header class="main-header">
-      <div class="nav-container">
-        <div class="desktop-nav">
-          <a href="index.html" class="logo-link">
-            <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png">
-              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png">
-              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img">
-            </picture>
-          </a>
-          <nav class="nav-links">
-            <a href="sorties-faites.html" class="nav-btn">Fait</a>
-            <a href="sorties-a-faire.html" class="nav-btn">À Faire</a>
-            <a href="rechercher.html" class="nav-btn">Rechercher</a>
-          </nav>
-          <a href="mon-compte.html" class="user-icon-link">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Aiguilog - Accueil</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1rem}
+    .card{padding:1.2rem;border-radius:20px}
+    .card h3{margin-bottom:.4rem}
+    .cta-row{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.8rem}
+    @media (max-width:900px){ .cards{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <header class="main-header">
+    <div class="nav-container">
+      <div class="desktop-nav">
+        <a href="index.html" class="logo-link">
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png">
+            <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png">
+            <img src="images/logo-black.png" alt="Aiguilog" class="logo-img">
+          </picture>
+        </a>
+        <nav class="nav-links">
+          <a href="sorties-faites.html" class="nav-btn">Fait</a>
+          <a href="sorties-a-faire.html" class="nav-btn">À Faire</a>
+          <a href="rechercher.html" class="nav-btn">Rechercher</a>
+        </nav>
+        <a href="mon-compte.html" class="user-icon-link">
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png">
+            <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png">
+            <img src="images/user-icon-black.png" alt="Compte" class="user-icon">
+          </picture>
+        </a>
+      </div>
+      <div class="mobile-nav">
+        <a href="index.html" class="logo-link-mobile">
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png">
+            <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png">
+            <img src="images/logo-black.png" alt="Aiguilog" class="logo-img">
+          </picture>
+        </a>
+        <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png">
+            <source media="(prefers-color-scheme: light)" srcset="images/hamburger-black.png">
+            <img src="images/hamburger-black.png" alt="Menu" class="hamburger-icon">
+          </picture>
+        </button>
+      </div>
+    </div>
+    <nav id="mobile-menu">
+      <ul>
+        <li class="menu-user-icon">
+          <a href="mon-compte.html">
             <picture>
               <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png">
               <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png">
-              <img src="images/user-icon-black.png" alt="Compte" class="user-icon">
+              <img src="images/user-icon-black.png" alt="Compte" class="user-icon-menu">
             </picture>
           </a>
-        </div>
-        <div class="mobile-nav">
-          <a href="index.html" class="logo-link-mobile">
-            <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png">
-              <source media="(prefers-color-scheme: light)" srcset="images/logo-black.png">
-              <img src="images/logo-black.png" alt="Aiguilog" class="logo-img">
-            </picture>
-          </a>
-          <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">
-            <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png">
-              <source media="(prefers-color-scheme: light)" srcset="images/hamburger-black.png">
-              <img src="images/hamburger-black.png" alt="Menu" class="hamburger-icon">
-            </picture>
-          </button>
-        </div>
-      </div>
-      <nav id="mobile-menu">
-        <ul>
-          <li class="menu-user-icon">
-            <a href="mon-compte.html">
-              <picture>
-                <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png">
-                <source media="(prefers-color-scheme: light)" srcset="images/user-icon-black.png">
-                <img src="images/user-icon-black.png" alt="Compte" class="user-icon-menu">
-              </picture>
-            </a>
-          </li>
-          <li><a href="sorties-faites.html">Fait</a></li>
-          <li><a href="sorties-a-faire.html">À Faire</a></li>
-          <li><a href="rechercher.html">Rechercher</a></li>
-        </ul>
-      </nav>
-    </header>
+        </li>
+        <li><a href="sorties-faites.html">Fait</a></li>
+        <li><a href="sorties-a-faire.html">À Faire</a></li>
+        <li><a href="rechercher.html">Rechercher</a></li>
+      </ul>
+    </nav>
+  </header>
 
-    <div class="container">
-      <h1 style="margin-bottom:.5rem;">Bienvenue sur Aiguilog</h1>
-      <p>Ton carnet de montagne moderne : ajoute tes <strong>sorties faites</strong>, planifie tes <strong>objectifs</strong> et garde tout au même endroit avec un style liquide façon iOS.</p>
+  <div class="container">
+    <h1 style="margin-bottom:.5rem;">Bienvenue sur Aiguilog</h1>
+    <p>Ton carnet de montagne moderne : journal des sorties, liste d’objectifs, et bientôt des stats.</p>
 
-      <div class="cards">
-        <section class="card is-glass">
-          <h3>Journal des sorties</h3>
-          <p>Renseigne sommet, altitude, cotation, météo et une description. Édite en ligne, sauvegarde ou annule en un clic.</p>
-          <div class="cta-row">
-            <a class="nav-btn" href="sorties-faites.html">Voir mes sorties</a>
-          </div>
-        </section>
-        <section class="card is-glass">
-          <h3>Objectifs à venir</h3>
-          <p>Liste tes idées d’ascensions pour l’année, choisis la méthode (rando, alpi, escalade) et la cotation.</p>
-          <div class="cta-row">
-            <a class="nav-btn" href="sorties-a-faire.html">Planifier</a>
-          </div>
-        </section>
-        <section class="card is-glass">
-          <h3>Recherche & stats</h3>
-          <p>Bientôt : filtres avancés, graphiques d’altitudes et export. Le carnet devient analytique.</p>
-          <div class="cta-row">
-            <a class="nav-btn" href="rechercher.html">Rechercher</a>
-          </div>
-        </section>
-      </div>
+    <div class="cards">
+      <section class="card is-glass">
+        <h3>Journal des sorties</h3>
+        <p>Ajoute, modifie, annule — tout se fait en ligne dans ton tableau.</p>
+        <div class="cta-row"><a class="nav-btn" href="sorties-faites.html">Voir mes sorties</a></div>
+      </section>
+      <section class="card is-glass">
+        <h3>Objectifs à venir</h3>
+        <p>Prépare tes ascensions de l’année avec la page “À faire”.</p>
+        <div class="cta-row"><a class="nav-btn" href="sorties-a-faire.html">Planifier</a></div>
+      </section>
+      <section class="card is-glass">
+        <h3>Recherche & stats</h3>
+        <p>Bientôt : filtres, graphiques d’altitudes et export CSV.</p>
+        <div class="cta-row"><a class="nav-btn" href="rechercher.html">Rechercher</a></div>
+      </section>
     </div>
+  </div>
 
-    <script src="script.js" defer></script>
-  </body>
+  <script src="script.js" defer></script>
+</body>
 </html>

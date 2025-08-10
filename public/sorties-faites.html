@@ -5,11 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Aiguilog - Sorties faites</title>
     <link rel="stylesheet" href="style.css" />
-    <style>
-      .two-cols{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-      .col-left,.col-right{display:flex;flex-direction:column;gap:1rem}
-      .full-width{grid-column:1 / span 2;display:flex;justify-content:center;margin-top:1rem}
-    </style>
   </head>
   <body>
     <header class="main-header">
@@ -35,7 +30,6 @@
             </picture>
           </a>
         </div>
-
         <div class="mobile-nav">
           <a href="index.html" class="logo-link-mobile">
             <picture>
@@ -72,33 +66,10 @@
     </header>
 
     <div class="container">
-      <h2 style="margin-bottom:1rem;">Sorties faites</h2>
-      <form id="form-fait" class="two-cols">
-        <div class="col-left">
-          <input type="text" id="sommet-fait" placeholder="Sommet" list="summits-list" required />
-          <datalist id="summits-list"></datalist>
-          <input type="number" id="altitude-fait" placeholder="Altitude (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
-          <input type="number" id="denivele-fait" placeholder="Dénivelé (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
-        </div>
-        <div class="col-right">
-          <select id="methode-fait" required>
-            <option value="" disabled selected>Méthode</option>
-            <option value="Alpinisme">Alpinisme</option>
-            <option value="Randonnée">Randonnée</option>
-            <option value="Escalade">Escalade</option>
-          </select>
-          <select id="cotation-fait" required>
-            <option value="" disabled selected>Cotation</option>
-          </select>
-          <input type="date" id="date" required />
-        </div>
-        <div class="full-width">
-          <input type="text" id="details-fait" placeholder="Détails" />
-        </div>
-        <div class="full-width">
-          <button type="submit">Ajouter</button>
-        </div>
-      </form>
+      <div class="page-intro">
+        <h2>Sorties faites</h2>
+        <p>Ton journal des ascensions déjà réalisées. Édite une ligne pour corriger un détail, ou ajoute une nouvelle sortie avec le bouton “+”.</p>
+      </div>
 
       <div class="table-container">
         <table class="table--sorties">
@@ -118,6 +89,46 @@
         </table>
       </div>
     </div>
+
+    <!-- FAB -->
+    <button class="fab" id="fab-add-fait" aria-label="Ajouter">+</button>
+
+    <!-- Modale ajout “fait” -->
+    <dialog id="modal-fait" class="modal is-glass">
+      <div class="modal-header">
+        <div class="modal-title">Ajouter une sortie faite</div>
+        <button class="btn-ghost" data-close>Fermer</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-fait" class="two-cols">
+          <div class="col-left">
+            <input type="text" id="sommet-fait" placeholder="Sommet" list="summits-list" required />
+            <datalist id="summits-list"></datalist>
+            <input type="number" id="altitude-fait" placeholder="Altitude (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
+            <input type="number" id="denivele-fait" placeholder="Dénivelé (m)" min="0" onkeypress="if(event.key==='e'||event.key==='E'){event.preventDefault();}" required />
+          </div>
+          <div class="col-right">
+            <select id="methode-fait" required>
+              <option value="" disabled selected>Méthode</option>
+              <option value="Alpinisme">Alpinisme</option>
+              <option value="Randonnée">Randonnée</option>
+              <option value="Escalade">Escalade</option>
+            </select>
+            <select id="cotation-fait" required>
+              <option value="" disabled selected>Cotation</option>
+            </select>
+            <input type="date" id="date" required />
+          </div>
+          <div class="full-width">
+            <input type="text" id="details-fait" placeholder="Détails" />
+          </div>
+          <div class="full-width modal-actions">
+            <button type="button" class="btn-ghost" data-close>Annuler</button>
+            <button type="submit">Ajouter</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
 
     <script src="script.js" defer></script>
   </body>

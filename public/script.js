@@ -1,54 +1,54 @@
 "use strict";
 
 console.log("[Aiguilog] JS chargé");
-window.addEventListener("error", e => console.error("[Aiguilog] Erreur globale:", e.error || e.message));
+
+/* ========= Utils ========= */
+const getUser = () => { const raw = localStorage.getItem("user"); try { return raw ? JSON.parse(raw) : null; } catch { return null; } };
+const getToken = () => localStorage.getItem("token") || "";
+const isAuthed = () => !!(getToken() && getUser());
+const formatValue = v => v ? `~${v}m` : "";
+const handleAuthError = () => {
+  alert("Session expirée, veuillez vous reconnecter.");
+  localStorage.removeItem("token"); localStorage.removeItem("user");
+  location.href = "utilisateur.html";
+};
+const jsonOrError = async (res) => {
+  const ct = (res.headers.get("content-type")||"").toLowerCase();
+  if (ct.includes("application/json")) { try { return await res.json(); } catch { return {error:"JSON invalide"}; } }
+  return {error:`Réponse ${res.status}`};
+};
 
 document.addEventListener("DOMContentLoaded", () => {
-  /* ===== Utils ===== */
-  const formatValue = v => v ? `~${v}m` : "";
-  const getUser = () => { const raw = localStorage.getItem("user"); try { return raw ? JSON.parse(raw) : null; } catch { return null; } };
-  const getToken = () => localStorage.getItem("token") || "";
-  const isAuthed = () => !!(getToken() && getUser());
-  const handleAuthError = () => { alert("Session expirée, veuillez vous reconnecter."); localStorage.removeItem("token"); localStorage.removeItem("user"); window.location.href="utilisateur.html"; };
-  const jsonOrError = async (res) => {
-    const ct = (res.headers.get("content-type")||"").toLowerCase();
-    if (ct.includes("application/json")) { try { return await res.json(); } catch { return {error:"JSON invalide reçu du serveur"}; } }
-    const text = await res.text(); return {error:"Réponse non-JSON du serveur", raw:text};
-  };
+  const file = (location.pathname.split("/").pop() || "index.html");
 
-  /* ===== Routes / guards ===== */
-  const file = (window.location.pathname.split("/").pop() || "index.html");
-  const protectedFiles = new Set(["mon-compte.html","sorties-a-faire.html","sorties-faites.html","accueil.html"]);
+  /* liens dynamiques */
   const updateLinksForAuth = () => {
-    // icône compte
+    document.querySelectorAll('a.logo-link, a.logo-link-mobile').forEach(a => a.href = isAuthed() ? "accueil.html" : "index.html");
     document.querySelectorAll('a[href="mon-compte.html"]').forEach(a => a.href = isAuthed() ? "mon-compte.html" : "utilisateur.html");
-    // logo → index si non connecté, accueil si connecté
-    document.querySelectorAll(".logo-link, .logo-link-mobile").forEach(a => a.href = isAuthed() ? "accueil.html" : "index.html");
   };
   updateLinksForAuth();
-  if (protectedFiles.has(file) && !isAuthed()) { window.location.replace("utilisateur.html"); return; }
 
-  /* ===== Mobile menu ===== */
+  /* garde de route */
+  const protectedFiles = new Set(["mon-compte.html","sorties-a-faire.html","sorties-faites.html","accueil.html"]);
+  if (protectedFiles.has(file) && !isAuthed()) { location.replace("utilisateur.html"); return; }
+
+  /* menu mobile */
   const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
   const mobileMenu = document.getElementById("mobile-menu");
   if (mobileMenuToggle && mobileMenu){
     const setIcon = open => {
       mobileMenuToggle.innerHTML = open
-        ? `<picture>
-             <source media="(prefers-color-scheme: dark)" srcset="images/close-white.png">
-             <source media="(prefers-color-scheme: light)" srcset="images/close-black.png">
-             <img src="images/close-black.png" alt="Fermer le menu" class="hamburger-icon">
-           </picture>`
-        : `<picture>
-             <source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png">
-             <source media="(prefers-color-scheme: light)" srcset="images/hamburger-black.png">
-             <img src="images/hamburger-black.png" alt="Ouvrir le menu" class="hamburger-icon">
-           </picture>`;
+        ? `<picture><source media="(prefers-color-scheme: dark)" srcset="images/close-white.png"><source media="(prefers-color-scheme: light)" srcset="images/close-black.png"><img src="images/close-black.png" alt="Fermer" class="hamburger-icon"></picture>`
+        : `<picture><source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png"><source media="(prefers-color-scheme: light)" srcset="images/hamburger-black.png"><img src="images/hamburger-black.png" alt="Menu" class="hamburger-icon"></picture>`;
       mobileMenuToggle.setAttribute("aria-expanded", open ? "true" : "false");
     };
     setIcon(false);
     mobileMenuToggle.addEventListener("click", () => { const open = !mobileMenu.classList.contains("open"); mobileMenu.classList.toggle("open", open); setIcon(open); });
   }
+
+  /* ===== Index : bouton Se connecter ===== */
+  const btnGoLogin = document.getElementById("btn-go-login");
+  if (btnGoLogin) btnGoLogin.addEventListener("click", () => location.href = "utilisateur.html");
 
   /* ===== Connexion ===== */
   const loginForm = document.getElementById("login-form");
@@ -65,11 +65,11 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user||{}));
           updateLinksForAuth();
-          window.location.replace("accueil.html");
+          location.replace("accueil.html");       // <-- orthographe unique
         } else alert("Erreur de connexion : " + (data?.error || `Statut ${res.status}`));
       }catch(err){ console.error(err); alert("Erreur lors de la connexion au serveur"); }
     });
-    document.getElementById("btn-creer-compte")?.addEventListener("click",(e)=>{e.preventDefault();window.location.assign("creer-compte.html")});
+    document.getElementById("btn-creer-compte")?.addEventListener("click",()=>location.assign("creer-compte.html"));
   }
 
   /* ===== Inscription ===== */
@@ -90,49 +90,29 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user||{}));
           updateLinksForAuth();
-          window.location.replace("accueil.html");
+          location.replace("accueil.html");
         } else alert("Erreur d'inscription : " + (data?.error || `Statut ${res.status}`));
       }catch(err){ console.error(err); alert("Erreur lors de la connexion au serveur"); }
     });
   }
 
-  /* ===== Mon compte ===== */
-  if (document.getElementById("titre-bienvenue")){
-    const user = getUser();
-    if(!user){ window.location.replace("utilisateur.html"); }
-    else{
-      const titre = document.getElementById("titre-bienvenue");
-      const info = document.getElementById("info-membre");
-      titre.textContent = `Bienvenue, ${user.firstName||""} ${user.lastName||""} (${user.username||""})`.trim();
-      if (user.birthdate){ const d=new Date(user.birthdate); info.textContent=`Né(e) le ${d.toLocaleDateString("fr-FR")}`; }
-    }
-  }
-  document.getElementById("logout")?.addEventListener("click",(e)=>{e.preventDefault();localStorage.removeItem("token");localStorage.removeItem("user");updateLinksForAuth();window.location.replace("index.html")});
+  /* ===== Mon compte logout ===== */
+  document.getElementById("logout")?.addEventListener("click",(e)=>{e.preventDefault();localStorage.removeItem("token");localStorage.removeItem("user");updateLinksForAuth();location.replace("index.html")});
 
-  /* ===== Table layout (colonnes élargies et Sommet flexible) ===== */
+  /* ===== Layout des colonnes ===== */
   function applyTableLayout(){
     const tables = document.querySelectorAll("table.table--sorties, .table-container table");
     tables.forEach(table=>{
       table.classList.add("table--sorties");
       table.querySelectorAll("colgroup").forEach(cg=>cg.remove());
       const cg = document.createElement("colgroup");
-      const widths = [
-        "112px",  // Actions (2 boutons)
-        "",       // Sommet (flex + wrap)
-        "12ch",   // Altitude
-        "12ch",   // Dénivelé
-        "16ch",   // Méthode
-        "10ch",   // Cotation
-        "12ch",   // Date/Année
-        ""        // Détails (prend le reste)
-      ];
-      widths.forEach((w,i)=>{ const c=document.createElement("col"); if(w) c.style.width=w; if(i===7) c.className="col-details"; cg.appendChild(c); });
+      const widths = ["112px","", "12ch","12ch","16ch","10ch","12ch",""];
+      widths.forEach((w,i)=>{ const c=document.createElement("col"); if(w) c.style.width=w; cg.appendChild(c); });
       table.insertBefore(cg, table.firstChild);
     });
   }
-  applyTableLayout();
 
-  /* ===== Fetch sorties ===== */
+  /* ===== Chargement des sorties ===== */
   async function loadSorties(){
     const token = getToken(); if(!token) return [];
     try{
@@ -158,13 +138,13 @@ document.addEventListener("DOMContentLoaded", () => {
           <button class="edit-btn" type="button" onclick="editRow(this.closest('tr'), '${s.type}')">✏️</button>
           <button class="delete-btn" type="button" onclick="deleteRow(this.closest('tr'))">🗑</button>
         </td>
-        <td class="cell-sommet">${s.sommet||""}</td>
-        <td class="cell-alt">${formatValue(s.altitude)}</td>
-        <td class="cell-den">${formatValue(s.denivele)}</td>
-        <td class="cell-method">${s.methode||""}</td>
-        <td class="cell-cot">${s.cotation||""}</td>
-        <td class="cell-date">${s.type==="fait" ? (s.date||"") : (s.annee||"")}</td>
-        <td class="cell-details">${s.details||""}</td>
+        <td>${s.sommet||""}</td>
+        <td>${formatValue(s.altitude)}</td>
+        <td>${formatValue(s.denivele)}</td>
+        <td>${s.methode||""}</td>
+        <td>${s.cotation||""}</td>
+        <td>${s.type==="fait" ? (s.date||"") : (s.annee||"")}</td>
+        <td>${s.details||""}</td>
       `;
       body.appendChild(tr);
     });
@@ -172,13 +152,26 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   displaySorties();
 
-  /* ===== Form À faire ===== */
+  /* ===== FAB + modales ===== */
+  function wireModal(fabId, dialogId){
+    const fab = document.getElementById(fabId);
+    const dlg = document.getElementById(dialogId);
+    if(!fab || !dlg) return;
+    fab.addEventListener("click", ()=>dlg.showModal());
+    dlg.querySelectorAll("[data-close]")
+      .forEach(btn=>btn.addEventListener("click", ()=>dlg.close()));
+  }
+  wireModal("fab-add-fait", "modal-fait");
+  wireModal("fab-add-afaire", "modal-afaire");
+
+  /* ===== Form “À faire” (dans la modale) ===== */
   const formAFaire = document.getElementById("form-a-faire");
   if(formAFaire){
     const methodeSelect=document.getElementById("methode");
     const cotationSelect=document.getElementById("cotation");
     const yearSelect=document.getElementById("year");
     const detailsInput=document.getElementById("details");
+    const dlg = document.getElementById("modal-afaire");
     const cotationsMap={
       Alpinisme:["F","PD","AD","D","TD","ED","ABO"],
       Randonnée:["Facile","Moyen","Difficile","Expert"],
@@ -197,7 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     formAFaire.addEventListener("submit", async (e)=>{
       e.preventDefault();
-      const token=getToken(); if(!token){ alert("Vous n'êtes pas connecté."); return window.location.replace("utilisateur.html"); }
+      const token=getToken(); if(!token){ alert("Vous n'êtes pas connecté."); return location.replace("utilisateur.html"); }
       const sommet=(document.getElementById("sommet")?.value||"").trim();
       const altitude=(document.getElementById("altitude")?.value||"").trim();
       const denivele=(document.getElementById("denivele")?.value||"").trim();
@@ -208,19 +201,20 @@ document.addEventListener("DOMContentLoaded", () => {
         const res=await fetch("/api/sorties",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({type:"a-faire",sommet,altitude,denivele,methode,cotation,annee,details})});
         if(res.status===401) return handleAuthError();
         const data=await jsonOrError(res);
-        if(res.ok){ alert("Sortie à faire ajoutée !"); await displaySorties(); formAFaire.reset(); }
-        else alert("Erreur lors de l'ajout de la sortie : "+(data.error||`Statut ${res.status}`));
-      }catch(err){ console.error(err); alert("Erreur lors de la connexion au serveur"); }
+        if(res.ok){ dlg?.close(); formAFaire.reset(); await displaySorties(); }
+        else alert("Erreur : "+(data.error||`Statut ${res.status}`));
+      }catch(err){ console.error(err); alert("Erreur réseau"); }
     });
   }
 
-  /* ===== Form Faites ===== */
+  /* ===== Form “Faites” (dans la modale) ===== */
   const formFait = document.getElementById("form-fait");
   if(formFait){
     const methodeFaitSelect=document.getElementById("methode-fait");
     const cotationFaitSelect=document.getElementById("cotation-fait");
     const dateInput=document.getElementById("date");
     const detailsFait=document.getElementById("details-fait");
+    const dlg = document.getElementById("modal-fait");
     const cotationsMap={
       Alpinisme:["F","PD","AD","D","TD","ED","ABO"],
       Randonnée:["Facile","Moyen","Difficile","Expert"],
@@ -234,7 +228,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     formFait.addEventListener("submit", async (e)=>{
       e.preventDefault();
-      const token=getToken(); if(!token){ alert("Vous n'êtes pas connecté."); return window.location.replace("utilisateur.html"); }
+      const token=getToken(); if(!token){ alert("Vous n'êtes pas connecté."); return location.replace("utilisateur.html"); }
       const sommet=(document.getElementById("sommet-fait")?.value||"").trim();
       const altitude=(document.getElementById("altitude-fait")?.value||"").trim();
       const denivele=(document.getElementById("denivele-fait")?.value||"").trim();
@@ -245,9 +239,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const res=await fetch("/api/sorties",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({type:"fait",sommet,altitude,denivele,methode,cotation,date:dateVal,details})});
         if(res.status===401) return handleAuthError();
         const data=await jsonOrError(res);
-        if(res.ok){ alert("Sortie faite ajoutée !"); await displaySorties(); formFait.reset(); }
-        else alert("Erreur lors de l'ajout de la sortie : "+(data.error||`Statut ${res.status}`));
-      }catch(err){ console.error(err); alert("Erreur lors de la connexion au serveur"); }
+        if(res.ok){ dlg?.close(); formFait.reset(); await displaySorties(); }
+        else alert("Erreur : "+(data.error||`Statut ${res.status}`));
+      }catch(err){ console.error(err); alert("Erreur réseau"); }
     });
   }
 
@@ -271,15 +265,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const dateOrYearVal=cells[6].textContent;
     const detailsVal=cells[7].textContent;
 
-    cells[1].innerHTML=`<input type="text" value="${sommetVal}" class="tbl-input tbl-input--text">`;
+    cells[1].innerHTML=`<input type="text" value="${sommetVal}" class="tbl-input">`;
     cells[2].innerHTML=`<input type="number" value="${altitudeVal}" class="tbl-input tbl-input--num">`;
     cells[3].innerHTML=`<input type="number" value="${deniveleVal}" class="tbl-input tbl-input--num">`;
 
-    const met=document.createElement("select"); met.className="tbl-input tbl-input--select tbl-input--method";
+    const met=document.createElement("select"); met.className="tbl-input tbl-input--method";
     methods.forEach(m=>{ const o=document.createElement("option"); o.value=m; o.textContent=m; if(m===methodeVal) o.selected=true; met.appendChild(o); });
     cells[4].innerHTML=""; cells[4].appendChild(met);
 
-    const cot=document.createElement("select"); cot.className="tbl-input tbl-input--select tbl-input--cot";
+    const cot=document.createElement("select"); cot.className="tbl-input tbl-input--cot";
     const refill=(meth,sel)=>{ cot.innerHTML=""; (cotationsByMethod[meth]||[]).forEach(x=>{ const o=document.createElement("option"); o.value=x; o.textContent=x; if(x===sel) o.selected=true; cot.appendChild(o); }); };
     refill(methodeVal, cotationVal);
     cells[5].innerHTML=""; cells[5].appendChild(cot);
@@ -292,7 +286,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const ta=document.createElement("textarea"); ta.className="tbl-input tbl-input--details"; ta.rows=2; ta.value=detailsVal;
     cells[7].innerHTML=""; cells[7].appendChild(ta); autoResize(ta); ta.addEventListener("input",()=>autoResize(ta));
 
-    // deux boutons visibles (💾 et ❌)
     cells[0].innerHTML=`
       <button class="edit-btn save-btn" type="button" title="Sauvegarder">💾</button>
       <button class="delete-btn cancel-btn" type="button" title="Annuler">❌</button>
@@ -308,10 +301,10 @@ document.addEventListener("DOMContentLoaded", () => {
         cotation: cot.value,
         details: cells[7].querySelector("textarea").value.trim(),
       };
-      const d = cells[6].querySelector("input").value;
+      const d=cells[6].querySelector("input").value;
       if(!sortieUpdate.sommet||!sortieUpdate.altitude||!sortieUpdate.denivele||!sortieUpdate.methode||!sortieUpdate.cotation||!d)
         return alert("Veuillez remplir tous les champs obligatoires.");
-      if (mode==="fait") sortieUpdate.date=d; else sortieUpdate.annee=d;
+      if(mode==="fait") sortieUpdate.date=d; else sortieUpdate.annee=d;
 
       const id=row.getAttribute("data-id");
       try{
@@ -319,23 +312,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if(res.status===401) return handleAuthError();
         const data=await jsonOrError(res);
         if(res.ok){ alert("Sortie mise à jour !"); await displaySorties(); }
-        else alert("Erreur lors de la mise à jour : "+(data.error||`Statut ${res.status}`));
-      }catch(err){ console.error("update:",err); alert("Erreur lors de la connexion au serveur"); }
+        else alert("Erreur : "+(data.error||`Statut ${res.status}`));
+      }catch(err){ console.error("update:",err); alert("Erreur réseau"); }
     });
-  };
-
-  /* ===== Delete ===== */
-  window.deleteRow = async function(row){
-    if(!confirm("Confirmez-vous la suppression de cette sortie ?")) return;
-    const token=getToken(); if(!token) return handleAuthError();
-    const id=row.getAttribute("data-id");
-    try{
-      const res=await fetch("/api/sorties/"+id,{method:"DELETE",headers:{Authorization:"Bearer "+token}});
-      if(res.status===401) return handleAuthError();
-      const data=await jsonOrError(res);
-      if(res.ok){ alert("Sortie supprimée !"); await displaySorties(); }
-      else alert("Erreur lors de la suppression : "+(data.error||`Statut ${res.status}`));
-    }catch(err){ console.error("delete:",err); alert("Erreur lors de la connexion au serveur"); }
   };
 
   /* ===== Autocomplétion sommets ===== */

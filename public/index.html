@@ -9,9 +9,7 @@
   <body>
     <header class="main-header">
       <div class="nav-container">
-        <!-- Desktop Navigation -->
         <div class="desktop-nav">
-          <!-- Logo -->
           <a href="index.html" class="logo-link">
             <picture>
               <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png">
@@ -19,13 +17,11 @@
               <img src="images/logo-black.png" alt="Aiguilog" class="logo-img">
             </picture>
           </a>
-          <!-- Liens de navigation -->
           <nav class="nav-links">
             <a href="sorties-faites.html" class="nav-btn">Fait</a>
             <a href="sorties-a-faire.html" class="nav-btn">À Faire</a>
             <a href="rechercher.html" class="nav-btn">Rechercher</a>
           </nav>
-          <!-- Icône utilisateur -->
           <a href="mon-compte.html" class="user-icon-link">
             <picture>
               <source media="(prefers-color-scheme: dark)" srcset="images/user-icon-white.png">
@@ -34,10 +30,7 @@
             </picture>
           </a>
         </div>
-
-        <!-- Mobile Navigation -->
         <div class="mobile-nav">
-          <!-- Logo mobile -->
           <a href="index.html" class="logo-link-mobile">
             <picture>
               <source media="(prefers-color-scheme: dark)" srcset="images/logo-white.png">
@@ -45,7 +38,6 @@
               <img src="images/logo-black.png" alt="Aiguilog" class="logo-img">
             </picture>
           </a>
-          <!-- Bouton hamburger -->
           <button id="mobile-menu-toggle" aria-label="Ouvrir le menu">
             <picture>
               <source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png">
@@ -55,8 +47,6 @@
           </button>
         </div>
       </div>
-
-      <!-- Menu mobile (volet) -->
       <nav id="mobile-menu">
         <ul>
           <li class="menu-user-icon">
@@ -78,7 +68,9 @@
     <div class="container" style="text-align:center;">
       <h1>Bienvenue sur Aiguilog</h1>
       <p>Votre carnet de sorties en montagne, tout simplement.</p>
-      <button id="btn-go-login">Se connecter</button>
+
+      <!-- Lien de secours + JS -->
+      <a href="utilisateur.html" class="nav-btn" id="btn-go-login">Se connecter</a>
     </div>
 
     <script src="script.js"></script>
