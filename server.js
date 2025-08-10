@@ -167,38 +167,59 @@ function authMiddleware(req, res, next) {
   }
 }
 
-/* ---------- Sommets (local + mongo fusion) ---------- */
-app.get(['/api/summits', '/api/sommets'], async (req, res) => {
+// ---------- Sommets (alias EN/FR pour matcher le front) ----------
+app.get(['/api/summits','/api/sommets'], async (req, res) => {
   const q = (req.query.q || '').trim();
   if (!q) return res.json([]);
 
   try {
-    // Résultats Mongo (si dispo)
+    // Mongo (si dispo)
     let mongo = [];
-    if (db) {
-      try {
-        const raw = await db.collection('summits')
-          .find({ nom: { $regex: q, $options: 'i' } })
-          .limit(10).toArray();
-        mongo = raw.map(s => ({ nom: s.nom || s.name, altitude: s.altitude ?? s.altitude_m ?? null }));
-      } catch { /* ignore */ }
-    }
+    try {
+      mongo = await client.db("aiguilog").collection("summits")
+        .find({ nom: { $regex: q, $options: 'i' } })
+        .limit(20).toArray();
+      mongo = mongo.map(s => ({
+        nom: s.nom || s.name,
+        altitude: s.altitude ?? s.altitude_m ?? null,
+        latitude: s.latitude ?? null,
+        longitude: s.longitude ?? null,
+        wikidata_id: s.wikidata_id ?? null,
+        prominence_m: s.prominence_m ?? null,
+        source: s.source || "Mongo"
+      }));
+    } catch { mongo = []; }
 
-    // Résultats dataset local
-    const local = searchLocalSummits(q, 10);
+    // Local JSON
+    const local = searchLocalSummits(q, 20).map(s => ({
+      ...s,
+      prominence_m: s.prominence_m ?? null,
+      source: s.source || "OpenStreetMap / Wikidata"
+    }));
 
-    // Merge + dédoublonnage
+    // Score + tri (coords ++, wikidata +, altitude +)
+    const score = it =>
+      (it.latitude != null && it.longitude != null ? 4 : 0) +
+      (it.wikidata_id ? 2 : 0) +
+      (it.altitude != null ? 1 : 0);
+
+    const pool = [...mongo, ...local].sort((a, b) => score(b) - score(a));
+
+    // Dédup par nom (on garde la meilleure)
     const seen = new Set();
-    const merged = [...mongo, ...local].filter(it => {
+    const merged = [];
+    for (const it of pool) {
       const k = norm(it.nom);
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    }).slice(0, 12);
+      if (!seen.has(k)) {
+        seen.add(k);
+        merged.push(it);
+        if (merged.length >= 12) break;
+      }
+    }
 
     res.json(merged);
   } catch (err) {
-    console.error('Erreur /api/sommets :', err);
+    console.error('Erreur /api/sommets:', err);
     res.status(500).json({ error: 'Erreur serveur lors de la recherche' });
   }
 });

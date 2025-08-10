@@ -414,8 +414,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let map, marker;
 
-  // -------- Autocomplétion
-  let timer = null;
+  // -------- helpers API
   async function fetchSuggestions(q){
     try{
       const res = await fetch("/api/sommets?q="+encodeURIComponent(q));
@@ -423,6 +422,19 @@ document.addEventListener("DOMContentLoaded", () => {
       return await res.json();
     }catch{ return []; }
   }
+  const itemScore = it =>
+    (it.latitude!=null && it.longitude!=null ? 4 : 0) +
+    (it.wikidata_id ? 2 : 0) +
+    (it.altitude!=null ? 1 : 0);
+
+  async function pickBestByName(name){
+    const items = await fetchSuggestions(name);
+    if(!items.length) return null;
+    items.sort((a,b)=>itemScore(b)-itemScore(a));
+    return items[0];
+  }
+
+  // Datalist
   function fillDatalist(items){
     list.innerHTML = "";
     items.forEach(s => {
@@ -437,6 +449,8 @@ document.addEventListener("DOMContentLoaded", () => {
       list.appendChild(opt);
     });
   }
+
+  let timer = null;
   input.addEventListener("input", () => {
     clearTimeout(timer);
     const q = input.value.trim();
@@ -444,7 +458,39 @@ document.addEventListener("DOMContentLoaded", () => {
     timer = setTimeout(async () => fillDatalist(await fetchSuggestions(q)), 180);
   });
 
-  // Tab ou Enter -> 1ère suggestion
+  // Lire une <option> datalist → objet
+  function readOption(opt){
+    return {
+      nom: opt.value,
+      altitude: opt.dataset.altitude != null ? +opt.dataset.altitude : null,
+      latitude: opt.dataset.lat != null ? +opt.dataset.lat : null,
+      longitude: opt.dataset.lon != null ? +opt.dataset.lon : null,
+      wikidata_id: opt.dataset.wd || null,
+      prominence_m: opt.dataset.prom != null ? +opt.dataset.prom : null,
+      source: opt.dataset.src || "OpenStreetMap / Wikidata"
+    };
+  }
+
+  // Accepter la sélection (et enrichir si nécessaire)
+  async function applyFromOption(opt){
+    let cand = readOption(opt);
+    const need = (cand.latitude==null || cand.longitude==null || !cand.wikidata_id);
+    if (need){
+      const best = await pickBestByName(cand.nom);
+      if (best) cand = {
+        nom: best.nom || best.name,
+        altitude: best.altitude ?? best.altitude_m ?? null,
+        latitude: best.latitude ?? null,
+        longitude: best.longitude ?? null,
+        wikidata_id: best.wikidata_id ?? null,
+        prominence_m: best.prominence_m ?? null,
+        source: best.source || "OpenStreetMap / Wikidata"
+      };
+    }
+    renderResult(cand);
+  }
+
+  // Tab/Enter -> première suggestion (enrichie)
   input.addEventListener("keydown", (e) => {
     if ((e.key === "Tab" || e.key === "Enter") && list.options.length){
       const first = list.options[0];
@@ -454,34 +500,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Sélection manuelle par click/clavier
+  // Changement explicite → cherche la meilleure fiche pour ce nom
   input.addEventListener("change", async () => {
     const v = input.value.trim();
     if (!v) return;
-    // Essaie de retrouver l'option par son libellé
-    let opt = Array.from(list.options).find(o => (o.value||"").toLowerCase() === v.toLowerCase());
-    if (!opt){
-      const items = await fetchSuggestions(v);
-      if (items.length){
-        fillDatalist(items);
-        opt = Array.from(list.options).find(o => (o.value||"").toLowerCase() === v.toLowerCase());
-      }
+    const best = await pickBestByName(v);
+    if (best){
+      renderResult({
+        nom: best.nom || best.name,
+        altitude: best.altitude ?? best.altitude_m ?? null,
+        latitude: best.latitude ?? null,
+        longitude: best.longitude ?? null,
+        wikidata_id: best.wikidata_id ?? null,
+        prominence_m: best.prominence_m ?? null,
+        source: best.source || "OpenStreetMap / Wikidata"
+      });
     }
-    if (opt) applyFromOption(opt);
   });
-
-  function applyFromOption(opt){
-    const data = {
-      nom: opt.value,
-      altitude: +(opt.dataset.altitude || 0) || null,
-      latitude: +(opt.dataset.lat || 0) || null,
-      longitude: +(opt.dataset.lon || 0) || null,
-      wikidata_id: opt.dataset.wd || null,
-      prominence_m: opt.dataset.prom != null ? +opt.dataset.prom : null,
-      source: opt.dataset.src || "OpenStreetMap / Wikidata"
-    };
-    renderResult(data);
-  }
 
   // -------- Affichage résultat + carte
   function renderResult(s){
@@ -504,6 +539,8 @@ document.addEventListener("DOMContentLoaded", () => {
       map.setView(latlng, 12);
       if (marker) marker.remove();
       marker = L.marker(latlng).addTo(map).bindPopup(s.nom || "Sommet").openPopup();
+      // Fix layout when spawned inside a hidden container
+      setTimeout(()=> map.invalidateSize(), 50);
 
       lnkOSM.href = `https://www.openstreetmap.org/?mlat=${s.latitude}&mlon=${s.longitude}#map=13/${s.latitude}/${s.longitude}`;
       lnkGM.href  = `https://maps.google.com/?q=${s.latitude},${s.longitude}`;
@@ -558,3 +595,4 @@ document.addEventListener("DOMContentLoaded", () => {
     wdLink.removeAttribute("href");
   }
 })();
+
