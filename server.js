@@ -1,6 +1,9 @@
 import dotenv from 'dotenv';
 dotenv.config();
-console.log("MONGODB_URI:", process.env.MONGODB_URI); // pour vérifier
+
+console.log("Début serveur.js");
+console.log("MONGODB_URI:", process.env.MONGODB_URI);
+console.log("PORT:", process.env.PORT);
 
 import express from 'express';
 import bcrypt from 'bcrypt';
