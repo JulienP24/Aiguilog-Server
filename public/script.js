@@ -1,6 +1,13 @@
-document.addEventListener("DOMContentLoaded", () => {
+"use strict";
 
-  /* =================== UTILITAIRES =================== */
+/* ================ DIAG ================ */
+console.log("[Aiguilog] JS chargé");
+window.addEventListener("error", (e) => {
+  console.error("[Aiguilog] Erreur globale:", e.error || e.message);
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  /* ================ UTILITAIRES ================ */
   function formatValue(val) {
     return val ? `~${val}m` : "";
   }
@@ -8,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const raw = localStorage.getItem("user");
     try {
       return raw ? JSON.parse(raw) : null;
-    } catch (e) {
+    } catch {
       return null;
     }
   }
@@ -21,15 +28,51 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.removeItem("user");
     window.location.href = "utilisateur.html";
   }
+  async function jsonOrError(res) {
+    const ct = (res.headers.get("content-type") || "").toLowerCase();
+    if (ct.includes("application/json")) {
+      try {
+        return await res.json();
+      } catch (e) {
+        return { error: "JSON invalide reçu du serveur" };
+      }
+    } else {
+      const text = await res.text();
+      return { error: "Réponse non-JSON du serveur", raw: text };
+    }
+  }
 
-  /* =================== MOBILE MENU TOGGLE =================== */
+  /* ================ NAV / ROUTES ================ */
+  const currentPath = window.location.pathname;
+  const file = currentPath.split("/").pop() || "index.html";
+
+  function updateUserIconLink() {
+    // Tous les liens qui pointent vers mon-compte doivent rediriger vers login si non connecté
+    const links = document.querySelectorAll('a[href="mon-compte.html"]');
+    const isLogged = !!getUser();
+    links.forEach((link) => {
+      link.setAttribute("href", isLogged ? "mon-compte.html" : "utilisateur.html");
+    });
+  }
+  updateUserIconLink();
+
+  const protectedFiles = new Set(["mon-compte.html", "sorties-a-faire.html", "sorties-faites.html"]);
+  if (protectedFiles.has(file)) {
+    if (!getToken() || !getUser()) {
+      window.location.replace("utilisateur.html");
+      return;
+    }
+  }
+
+  /* ================ MOBILE MENU TOGGLE ================ */
   const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
   const mobileMenu = document.getElementById("mobile-menu");
   if (mobileMenuToggle && mobileMenu) {
-    mobileMenuToggle.addEventListener("click", () => {
-      mobileMenu.classList.toggle("open");
-      if (mobileMenu.classList.contains("open")) {
-        // Bouton "close" (X)
+    mobileMenuToggle.setAttribute("aria-expanded", "false");
+    mobileMenuToggle.setAttribute("aria-controls", "mobile-menu");
+
+    const setBtnIcon = (state) => {
+      if (state === "open") {
         mobileMenuToggle.innerHTML = `
           <picture>
             <source media="(prefers-color-scheme: dark)" srcset="images/close-white.png">
@@ -37,53 +80,48 @@ document.addEventListener("DOMContentLoaded", () => {
             <img src="images/close-black.png" alt="Fermer le menu" class="hamburger-icon">
           </picture>
         `;
+        mobileMenuToggle.setAttribute("aria-expanded", "true");
       } else {
-        // Bouton "hamburger"
         mobileMenuToggle.innerHTML = `
           <picture>
             <source media="(prefers-color-scheme: dark)" srcset="images/hamburger-white.png">
             <source media="(prefers-color-scheme: light)" srcset="images/hamburger-black.png">
-            <img src="images/hamburger-black.png" alt="Menu" class="hamburger-icon">
+            <img src="images/hamburger-black.png" alt="Ouvrir le menu" class="hamburger-icon">
           </picture>
         `;
+        mobileMenuToggle.setAttribute("aria-expanded", "false");
       }
+    };
+
+    setBtnIcon("close"); // init puis toggle pour forcer le rendu
+    setBtnIcon("closed");
+
+    mobileMenuToggle.addEventListener("click", () => {
+      mobileMenu.classList.toggle("open");
+      setBtnIcon(mobileMenu.classList.contains("open") ? "open" : "closed");
     });
   }
 
-  /* =================== NAVIGATION & REDIRECTION =================== */
-  const currentPath = window.location.pathname;
-  function updateUserIconLink() {
-    const links = document.querySelectorAll("a[href='mon-compte.html']");
-    links.forEach(link => {
-      link.href = getUser() ? "mon-compte.html" : "utilisateur.html";
-    });
-  }
-  updateUserIconLink();
-
-  const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
-  if (protectedPages.some(page => currentPath.endsWith(page))) {
-    if (!getToken() || !getUser()) {
-      window.location.href = "utilisateur.html";
-      return;
-    }
-  }
-
+  /* ================ BOUTONS RAPIDES ================ */
   const btnGoLogin = document.getElementById("btn-go-login");
   if (btnGoLogin) {
-    btnGoLogin.addEventListener("click", () => {
-      window.location.href = "utilisateur.html";
+    btnGoLogin.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.location.assign("utilisateur.html");
     });
   }
 
-  /* =================== CONNEXION (utilisateur.html) =================== */
+  /* ================ CONNEXION (utilisateur.html) ================ */
   const loginForm = document.getElementById("login-form");
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const username = document.getElementById("login-username").value.trim();
-      const password = document.getElementById("login-password").value.trim();
 
-      // Validation simple
+      const usernameEl = document.getElementById("login-username");
+      const passwordEl = document.getElementById("login-password");
+      const username = usernameEl ? usernameEl.value.trim() : "";
+      const password = passwordEl ? passwordEl.value.trim() : "";
+
       if (!username || !password) {
         alert("Veuillez remplir tous les champs.");
         return;
@@ -93,40 +131,47 @@ document.addEventListener("DOMContentLoaded", () => {
         const res = await fetch("/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password })
+          body: JSON.stringify({ username, password }),
         });
-        const data = await res.json();
-        if (res.ok && data.token) {
+        const data = await jsonOrError(res);
+
+        if (res.ok && data && data.token) {
           localStorage.setItem("token", data.token);
-          localStorage.setItem("user", JSON.stringify(data.user));
+          localStorage.setItem("user", JSON.stringify(data.user || {}));
           updateUserIconLink();
-          window.location.href = "mon-compte.html";
+          window.location.replace("mon-compte.html");
         } else {
-          alert("Erreur de connexion : " + (data.error || "Inconnue"));
+          const msg = (data && data.error) ? data.error : `Statut ${res.status}`;
+          alert("Erreur de connexion : " + msg);
+          console.warn("[login] Réponse brute:", data);
         }
       } catch (err) {
         console.error("Erreur lors de la connexion :", err);
-        alert("Erreur lors de la connexion");
+        alert("Erreur lors de la connexion au serveur");
       }
     });
+
+    // S'il existe un bouton "Créer un compte" dans le form, on empêche le submit par défaut
     const btnCreerCompte = document.getElementById("btn-creer-compte");
     if (btnCreerCompte) {
-      btnCreerCompte.addEventListener("click", () => {
-        window.location.href = "creer-compte.html";
+      btnCreerCompte.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.location.assign("creer-compte.html");
       });
     }
   }
 
-  /* =================== INSCRIPTION (creer-compte.html) =================== */
+  /* ================ INSCRIPTION (creer-compte.html) ================ */
   const registerForm = document.getElementById("register-form");
   if (registerForm) {
     registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const firstName = document.getElementById("register-firstname").value.trim();
-      const lastName = document.getElementById("register-lastname").value.trim();
-      const username = document.getElementById("register-username").value.trim();
-      const password = document.getElementById("register-password").value.trim();
-      const birthdate = document.getElementById("register-birthdate").value;
+
+      const firstName = (document.getElementById("register-firstname")?.value || "").trim();
+      const lastName  = (document.getElementById("register-lastname")?.value || "").trim();
+      const username  = (document.getElementById("register-username")?.value || "").trim();
+      const password  = (document.getElementById("register-password")?.value || "").trim();
+      const birthdate = (document.getElementById("register-birthdate")?.value || "");
 
       if (!firstName || !lastName || !username || !password || !birthdate) {
         alert("Veuillez remplir tous les champs.");
@@ -137,61 +182,67 @@ document.addEventListener("DOMContentLoaded", () => {
         const res = await fetch("/api/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ firstName, lastName, username, password, birthdate })
+          body: JSON.stringify({ firstName, lastName, username, password, birthdate }),
         });
-        const data = await res.json();
-        if (res.ok && data.token) {
+        const data = await jsonOrError(res);
+
+        if (res.ok && data && data.token) {
           localStorage.setItem("token", data.token);
-          localStorage.setItem("user", JSON.stringify(data.user));
+          localStorage.setItem("user", JSON.stringify(data.user || {}));
           updateUserIconLink();
-          window.location.href = "mon-compte.html";
+          window.location.replace("mon-compte.html");
         } else {
-          alert("Erreur d'inscription : " + (data.error || "Inconnue"));
+          const msg = (data && data.error) ? data.error : `Statut ${res.status}`;
+          alert("Erreur d'inscription : " + msg);
+          console.warn("[register] Réponse brute:", data);
         }
       } catch (err) {
         console.error("Erreur lors de l'inscription :", err);
-        alert("Erreur lors de l'inscription");
+        alert("Erreur lors de la connexion au serveur");
       }
     });
   }
 
-  /* =================== MON COMPTE (mon-compte.html) =================== */
+  /* ================ MON COMPTE (mon-compte.html) ================ */
   if (document.getElementById("titre-bienvenue")) {
     const userData = getUser();
     if (!userData) {
-      window.location.href = "utilisateur.html";
+      window.location.replace("utilisateur.html");
     } else {
       const titreBienvenue = document.getElementById("titre-bienvenue");
       const infoMembre = document.getElementById("info-membre");
-      titreBienvenue.textContent = `Bienvenue, ${userData.firstName} ${userData.lastName} (${userData.username})`;
+      titreBienvenue.textContent = `Bienvenue, ${userData.firstName || ""} ${userData.lastName || ""} (${userData.username || ""})`.trim();
       if (userData.birthdate) {
         const d = new Date(userData.birthdate);
         infoMembre.textContent = `Né(e) le ${d.toLocaleDateString("fr-FR")}`;
       }
     }
   }
+
   const logoutBtn = document.getElementById("logout");
   if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
+    logoutBtn.addEventListener("click", (e) => {
+      e.preventDefault();
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      window.location.href = "utilisateur.html";
+      window.location.replace("utilisateur.html");
     });
   }
 
-  /* =================== CHARGEMENT & AFFICHAGE DES SORTIES =================== */
+  /* ================ CHARGEMENT DES SORTIES ================ */
   async function loadSorties() {
     const token = getToken();
     if (!token) return [];
     try {
       const res = await fetch("/api/sorties", {
-        headers: { "Authorization": "Bearer " + token }
+        headers: { Authorization: "Bearer " + token },
       });
       if (res.status === 401) {
         handleAuthError();
         return [];
       }
-      return await res.json();
+      const data = await jsonOrError(res);
+      return Array.isArray(data) ? data : [];
     } catch (err) {
       console.error("Erreur lors du chargement des sorties :", err);
       return [];
@@ -200,37 +251,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function displaySorties() {
     const sorties = await loadSorties();
-    const typeToDisplay = currentPath.includes("sorties-faites") ? "fait" : "a-faire";
-    const tableBody = document.getElementById(
-      currentPath.includes("sorties-faites") ? "table-body-fait" : "table-body-afaire"
-    );
-    if (tableBody) {
-      tableBody.innerHTML = "";
-      sorties
-        .filter(s => s.type === typeToDisplay)
-        .forEach(s => {
-          const tr = document.createElement("tr");
-          tr.setAttribute("data-id", s._id);
-          tr.innerHTML = `
-            <td>
-              <button class="edit-btn" onclick="editRow(this.parentElement.parentElement, '${s.type}')">✏️</button>
-              <button class="delete-btn" onclick="deleteRow(this.parentElement.parentElement)">🗑</button>
-            </td>
-            <td>${s.sommet}</td>
-            <td>${formatValue(s.altitude)}</td>
-            <td>${formatValue(s.denivele)}</td>
-            <td>${s.methode}</td>
-            <td>${s.cotation}</td>
-            <td>${s.type === "fait" ? s.date : s.annee || ""}</td>
-            <td>${s.details}</td>
-          `;
-          tableBody.appendChild(tr);
-        });
-    }
+    const isFaites = file.includes("sorties-faites");
+    const typeToDisplay = isFaites ? "fait" : "a-faire";
+    const tableBody = document.getElementById(isFaites ? "table-body-fait" : "table-body-afaire");
+    if (!tableBody) return;
+
+    tableBody.innerHTML = "";
+    sorties
+      .filter((s) => s.type === typeToDisplay)
+      .forEach((s) => {
+        const tr = document.createElement("tr");
+        tr.setAttribute("data-id", s._id);
+        tr.innerHTML = `
+          <td>
+            <button class="edit-btn" onclick="editRow(this.closest('tr'), '${s.type}')">✏️</button>
+            <button class="delete-btn" onclick="deleteRow(this.closest('tr'))">🗑</button>
+          </td>
+          <td>${s.sommet || ""}</td>
+          <td>${formatValue(s.altitude)}</td>
+          <td>${formatValue(s.denivele)}</td>
+          <td>${s.methode || ""}</td>
+          <td>${s.cotation || ""}</td>
+          <td>${s.type === "fait" ? (s.date || "") : (s.annee || "")}</td>
+          <td>${s.details || ""}</td>
+        `;
+        tableBody.appendChild(tr);
+      });
   }
   displaySorties();
 
-  /* =================== FORM "SORTIES À FAIRE" =================== */
+  /* ================ FORM "À FAIRE" ================ */
   const formAFaire = document.getElementById("form-a-faire");
   if (formAFaire) {
     const methodeSelect = document.getElementById("methode");
@@ -239,31 +289,33 @@ document.addEventListener("DOMContentLoaded", () => {
     const detailsInput = document.getElementById("details");
 
     const cotationsMap = {
-      "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED", "ABO"],
-      "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
-      "Escalade": ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"]
+      Alpinisme: ["F", "PD", "AD", "D", "TD", "ED", "ABO"],
+      Randonnée: ["Facile", "Moyen", "Difficile", "Expert"],
+      Escalade: ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"],
     };
 
     if (methodeSelect && cotationSelect) {
-      methodeSelect.addEventListener("change", () => {
+      const refill = () => {
         const val = methodeSelect.value;
         cotationSelect.innerHTML = `<option value="" disabled selected>Cotation</option>`;
-        if (cotationsMap[val]) {
-          cotationsMap[val].forEach(opt => {
-            const o = document.createElement("option");
-            o.value = opt;
-            o.textContent = opt;
-            cotationSelect.appendChild(o);
-          });
-        }
-      });
+        (cotationsMap[val] || []).forEach((opt) => {
+          const o = document.createElement("option");
+          o.value = opt;
+          o.textContent = opt;
+          cotationSelect.appendChild(o);
+        });
+      };
+      methodeSelect.addEventListener("change", refill);
     }
+
     if (yearSelect) {
       const currentYear = new Date().getFullYear();
+      yearSelect.innerHTML = `<option value="" disabled selected>Année</option>`;
       for (let i = 0; i < 10; i++) {
+        const y = currentYear + i;
         const op = document.createElement("option");
-        op.value = currentYear + i;
-        op.textContent = currentYear + i;
+        op.value = y;
+        op.textContent = y;
         yearSelect.appendChild(op);
       }
     }
@@ -273,54 +325,40 @@ document.addEventListener("DOMContentLoaded", () => {
       const token = getToken();
       if (!token) {
         alert("Vous n'êtes pas connecté.");
-        window.location.href = "utilisateur.html";
+        window.location.replace("utilisateur.html");
         return;
       }
-      const sommet = document.getElementById("sommet").value.trim();
-      const altitude = document.getElementById("altitude").value.trim();
-      const denivele = document.getElementById("denivele").value.trim();
-      const methode = methodeSelect.value;
-      const cotation = cotationSelect.value;
-      const annee = yearSelect.value;
-      const details = detailsInput.value.trim();
 
-      // Validation simple
+      const sommet = (document.getElementById("sommet")?.value || "").trim();
+      const altitude = (document.getElementById("altitude")?.value || "").trim();
+      const denivele = (document.getElementById("denivele")?.value || "").trim();
+      const methode = methodeSelect?.value || "";
+      const cotation = cotationSelect?.value || "";
+      const annee = yearSelect?.value || "";
+      const details = (detailsInput?.value || "").trim();
+
       if (!sommet || !altitude || !denivele || !methode || !cotation || !annee) {
         alert("Veuillez remplir tous les champs obligatoires.");
         return;
       }
 
-      const sortieData = {
-        type: "a-faire",
-        sommet,
-        altitude,
-        denivele,
-        methode,
-        cotation,
-        annee,
-        details
-      };
+      const sortieData = { type: "a-faire", sommet, altitude, denivele, methode, cotation, annee, details };
 
       try {
         const res = await fetch("/api/sorties", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + token
-          },
-          body: JSON.stringify(sortieData)
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify(sortieData),
         });
-        const data = await res.json();
-        if (res.status === 401) {
-          handleAuthError();
-          return;
-        }
+        if (res.status === 401) return handleAuthError();
+        const data = await jsonOrError(res);
+
         if (res.ok) {
           alert("Sortie à faire ajoutée !");
-          await displaySorties(); // mise à jour sans reload
+          await displaySorties();
           formAFaire.reset();
         } else {
-          alert("Erreur lors de l'ajout de la sortie : " + (data.error || "Inconnue"));
+          alert("Erreur lors de l'ajout de la sortie : " + (data.error || `Statut ${res.status}`));
         }
       } catch (err) {
         console.error("Erreur lors de la requête :", err);
@@ -329,7 +367,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* =================== FORM "SORTIES FAITES" =================== */
+  /* ================ FORM "FAITES" ================ */
   const formFait = document.getElementById("form-fait");
   if (formFait) {
     const methodeFaitSelect = document.getElementById("methode-fait");
@@ -338,24 +376,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const detailsFait = document.getElementById("details-fait");
 
     const cotationsMap = {
-      "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED", "ABO"],
-      "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
-      "Escalade": ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"]
+      Alpinisme: ["F", "PD", "AD", "D", "TD", "ED", "ABO"],
+      Randonnée: ["Facile", "Moyen", "Difficile", "Expert"],
+      Escalade: ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"],
     };
 
     if (methodeFaitSelect && cotationFaitSelect) {
-      methodeFaitSelect.addEventListener("change", () => {
+      const refill = () => {
         const val = methodeFaitSelect.value;
         cotationFaitSelect.innerHTML = `<option value="" disabled selected>Cotation</option>`;
-        if (cotationsMap[val]) {
-          cotationsMap[val].forEach(opt => {
-            const o = document.createElement("option");
-            o.value = opt;
-            o.textContent = opt;
-            cotationFaitSelect.appendChild(o);
-          });
-        }
-      });
+        (cotationsMap[val] || []).forEach((opt) => {
+          const o = document.createElement("option");
+          o.value = opt;
+          o.textContent = opt;
+          cotationFaitSelect.appendChild(o);
+        });
+      };
+      methodeFaitSelect.addEventListener("change", refill);
     }
 
     formFait.addEventListener("submit", async (e) => {
@@ -363,54 +400,40 @@ document.addEventListener("DOMContentLoaded", () => {
       const token = getToken();
       if (!token) {
         alert("Vous n'êtes pas connecté.");
-        window.location.href = "utilisateur.html";
+        window.location.replace("utilisateur.html");
         return;
       }
-      const sommet = document.getElementById("sommet-fait").value.trim();
-      const altitude = document.getElementById("altitude-fait").value.trim();
-      const denivele = document.getElementById("denivele-fait").value.trim();
-      const methode = methodeFaitSelect.value;
-      const cotation = cotationFaitSelect.value;
-      const dateVal = dateInput.value;
-      const details = detailsFait.value.trim();
 
-      // Validation simple
+      const sommet = (document.getElementById("sommet-fait")?.value || "").trim();
+      const altitude = (document.getElementById("altitude-fait")?.value || "").trim();
+      const denivele = (document.getElementById("denivele-fait")?.value || "").trim();
+      const methode = methodeFaitSelect?.value || "";
+      const cotation = cotationFaitSelect?.value || "";
+      const dateVal = dateInput?.value || "";
+      const details = (detailsFait?.value || "").trim();
+
       if (!sommet || !altitude || !denivele || !methode || !cotation || !dateVal) {
         alert("Veuillez remplir tous les champs obligatoires.");
         return;
       }
 
-      const sortieData = {
-        type: "fait",
-        sommet,
-        altitude,
-        denivele,
-        methode,
-        cotation,
-        date: dateVal,
-        details
-      };
+      const sortieData = { type: "fait", sommet, altitude, denivele, methode, cotation, date: dateVal, details };
 
       try {
         const res = await fetch("/api/sorties", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + token
-          },
-          body: JSON.stringify(sortieData)
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify(sortieData),
         });
-        const data = await res.json();
-        if (res.status === 401) {
-          handleAuthError();
-          return;
-        }
+        if (res.status === 401) return handleAuthError();
+        const data = await jsonOrError(res);
+
         if (res.ok) {
           alert("Sortie faite ajoutée !");
-          await displaySorties(); // mise à jour sans reload
+          await displaySorties();
           formFait.reset();
         } else {
-          alert("Erreur lors de l'ajout de la sortie : " + (data.error || "Inconnue"));
+          alert("Erreur lors de l'ajout de la sortie : " + (data.error || `Statut ${res.status}`));
         }
       } catch (err) {
         console.error("Erreur lors de la requête :", err);
@@ -419,15 +442,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* =================== ÉDITION DES SORTIES =================== */
+  /* ================ ÉDITION DES SORTIES ================ */
   const methods = ["Alpinisme", "Randonnée", "Escalade"];
   const cotationsByMethod = {
-    "Alpinisme": ["F", "PD", "AD", "D", "TD", "ED", "ABO"],
-    "Randonnée": ["Facile", "Moyen", "Difficile", "Expert"],
-    "Escalade": ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"]
+    Alpinisme: ["F", "PD", "AD", "D", "TD", "ED", "ABO"],
+    Randonnée: ["Facile", "Moyen", "Difficile", "Expert"],
+    Escalade: ["3", "4a", "4b", "4c", "5a", "5b", "5c", "6a", "6b", "6c", "7a", "7b", "7c"],
   };
 
-  window.editRow = function(row, mode) {
+  window.editRow = function (row, mode) {
     const cells = row.querySelectorAll("td");
     if (cells.length < 8) {
       console.error("La ligne n'a pas le nombre de cellules attendu.", row);
@@ -441,14 +464,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const dateOrYearVal = cells[6].textContent;
     const detailsVal = cells[7].textContent;
 
-    // Transforme la ligne en champ éditable
     cells[1].innerHTML = `<input type="text" value="${sommetVal}" style="width:100%;">`;
     cells[2].innerHTML = `<input type="number" value="${altitudeVal}" style="width:100%;">`;
     cells[3].innerHTML = `<input type="number" value="${deniveleVal}" style="width:100%;">`;
 
-    // Méthode : select
     const methodeSelect = document.createElement("select");
-    methods.forEach(m => {
+    methods.forEach((m) => {
       const option = document.createElement("option");
       option.value = m;
       option.textContent = m;
@@ -458,12 +479,10 @@ document.addEventListener("DOMContentLoaded", () => {
     cells[4].innerHTML = "";
     cells[4].appendChild(methodeSelect);
 
-    // Cotation : select, dépend de méthode
     const cotationSelect = document.createElement("select");
     function updateCotationOptions(selectedMethod, selectedCotation) {
       cotationSelect.innerHTML = "";
-      const options = cotationsByMethod[selectedMethod] || [];
-      options.forEach(opt => {
+      (cotationsByMethod[selectedMethod] || []).forEach((opt) => {
         const o = document.createElement("option");
         o.value = opt;
         o.textContent = opt;
@@ -475,12 +494,10 @@ document.addEventListener("DOMContentLoaded", () => {
     cells[5].innerHTML = "";
     cells[5].appendChild(cotationSelect);
 
-    // Quand méthode change, on met à jour cotation
     methodeSelect.addEventListener("change", () => {
       updateCotationOptions(methodeSelect.value, cotationSelect.value);
     });
 
-    // Date ou année
     if (mode === "fait") {
       cells[6].innerHTML = `<input type="date" value="${dateOrYearVal}">`;
     } else {
@@ -489,13 +506,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     cells[7].innerHTML = `<input type="text" value="${detailsVal}" style="width:100%;">`;
 
-    // Boutons save / cancel
     cells[0].innerHTML = `
-      <button class="save-btn">💾</button>
-      <button class="cancel-btn">❌</button>
+      <button class="save-btn" type="button">💾</button>
+      <button class="cancel-btn" type="button">❌</button>
     `;
 
-    // Gestion boutons
     const saveBtn = cells[0].querySelector(".save-btn");
     const cancelBtn = cells[0].querySelector(".cancel-btn");
 
@@ -505,13 +520,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     saveBtn.addEventListener("click", async () => {
       const token = getToken();
-      if (!token) {
-        alert("Session expirée, veuillez vous reconnecter.");
-        handleAuthError();
-        return;
-      }
+      if (!token) return handleAuthError();
 
-      // Récupération données modifiées
       const newSommet = cells[1].querySelector("input").value.trim();
       const newAltitude = cells[2].querySelector("input").value.trim();
       const newDenivele = cells[3].querySelector("input").value.trim();
@@ -520,7 +530,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const newDateOrYearInput = cells[6].querySelector("input").value;
       const newDetails = cells[7].querySelector("input").value.trim();
 
-      // Validation
       if (!newSommet || !newAltitude || !newDenivele || !newMethode || !newCotation || !newDateOrYearInput) {
         alert("Veuillez remplir tous les champs obligatoires.");
         return;
@@ -534,32 +543,24 @@ document.addEventListener("DOMContentLoaded", () => {
         cotation: newCotation,
         details: newDetails,
       };
-      if (mode === "fait") {
-        sortieUpdate.date = newDateOrYearInput;
-      } else {
-        sortieUpdate.annee = newDateOrYearInput;
-      }
+      if (mode === "fait") sortieUpdate.date = newDateOrYearInput;
+      else sortieUpdate.annee = newDateOrYearInput;
 
       const sortieId = row.getAttribute("data-id");
       try {
         const res = await fetch("/api/sorties/" + sortieId, {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + token
-          },
-          body: JSON.stringify(sortieUpdate)
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify(sortieUpdate),
         });
-        if (res.status === 401) {
-          handleAuthError();
-          return;
-        }
+        if (res.status === 401) return handleAuthError();
+
         if (res.ok) {
           alert("Sortie mise à jour !");
           await displaySorties();
         } else {
-          const errData = await res.json();
-          alert("Erreur lors de la mise à jour : " + (errData.error || "Inconnue"));
+          const errData = await jsonOrError(res);
+          alert("Erreur lors de la mise à jour : " + (errData.error || `Statut ${res.status}`));
         }
       } catch (err) {
         console.error("Erreur mise à jour :", err);
@@ -568,33 +569,27 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  /* =================== SUPPRESSION D'UNE SORTIE =================== */
-  window.deleteRow = async function(row) {
+  /* ================ SUPPRESSION D'UNE SORTIE ================ */
+  window.deleteRow = async function (row) {
     if (!confirm("Confirmez-vous la suppression de cette sortie ?")) return;
 
     const token = getToken();
-    if (!token) {
-      alert("Session expirée, veuillez vous reconnecter.");
-      handleAuthError();
-      return;
-    }
+    if (!token) return handleAuthError();
 
     const sortieId = row.getAttribute("data-id");
     try {
       const res = await fetch("/api/sorties/" + sortieId, {
         method: "DELETE",
-        headers: { "Authorization": "Bearer " + token }
+        headers: { Authorization: "Bearer " + token },
       });
-      if (res.status === 401) {
-        handleAuthError();
-        return;
-      }
+      if (res.status === 401) return handleAuthError();
+
       if (res.ok) {
         alert("Sortie supprimée !");
         await displaySorties();
       } else {
-        const errData = await res.json();
-        alert("Erreur lors de la suppression : " + (errData.error || "Inconnue"));
+        const errData = await jsonOrError(res);
+        alert("Erreur lors de la suppression : " + (errData.error || `Statut ${res.status}`));
       }
     } catch (err) {
       console.error("Erreur suppression :", err);
@@ -602,7 +597,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  /* =================== AUTOCOMPLÉTION SOMMETS + ALTITUDE =================== */
+  /* ================ AUTOCOMPLÉTION SOMMETS + ALTITUDE ================ */
   let debounceTimer = null;
   async function updateSummitsDatalist() {
     clearTimeout(debounceTimer);
@@ -611,6 +606,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!inputSommet) return;
       const query = inputSommet.value.trim();
       const datalist = document.getElementById("liste-sommets");
+      if (!datalist) return;
       if (!query || query.length < 2) {
         datalist.innerHTML = "";
         return;
@@ -620,7 +616,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!res.ok) return;
         const sommets = await res.json();
         datalist.innerHTML = "";
-        sommets.forEach(s => {
+        sommets.forEach((s) => {
           const option = document.createElement("option");
           option.value = s.nom;
           datalist.appendChild(option);
@@ -641,7 +637,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const res = await fetch("/api/sommets?q=" + encodeURIComponent(val));
         if (!res.ok) return;
         const sommets = await res.json();
-        const found = sommets.find(s => s.nom.toLowerCase() === val.toLowerCase());
+        const found = sommets.find((s) => (s.nom || "").toLowerCase() === val.toLowerCase());
         if (found) {
           const altInput = document.getElementById("altitude");
           if (altInput) altInput.value = found.altitude || "";
@@ -651,5 +647,4 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
 });
