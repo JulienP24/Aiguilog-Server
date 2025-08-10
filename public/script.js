@@ -15,6 +15,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function getToken() {
     return localStorage.getItem("token") || "";
   }
+  function handleAuthError() {
+    alert("Session expirée, veuillez vous reconnecter.");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "utilisateur.html";
+  }
 
   /* =================== MOBILE MENU TOGGLE =================== */
   const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
@@ -54,7 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   updateUserIconLink();
 
-  // Redirection pour pages protégées
   const protectedPages = ["/mon-compte.html", "/sorties-a-faire.html", "/sorties-faites.html"];
   if (protectedPages.some(page => currentPath.endsWith(page))) {
     if (!getToken() || !getUser()) {
@@ -77,6 +82,13 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       const username = document.getElementById("login-username").value.trim();
       const password = document.getElementById("login-password").value.trim();
+
+      // Validation simple
+      if (!username || !password) {
+        alert("Veuillez remplir tous les champs.");
+        return;
+      }
+
       try {
         const res = await fetch("/api/login", {
           method: "POST",
@@ -115,6 +127,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const username = document.getElementById("register-username").value.trim();
       const password = document.getElementById("register-password").value.trim();
       const birthdate = document.getElementById("register-birthdate").value;
+
+      if (!firstName || !lastName || !username || !password || !birthdate) {
+        alert("Veuillez remplir tous les champs.");
+        return;
+      }
+
       try {
         const res = await fetch("/api/register", {
           method: "POST",
@@ -169,6 +187,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch("/api/sorties", {
         headers: { "Authorization": "Bearer " + token }
       });
+      if (res.status === 401) {
+        handleAuthError();
+        return [];
+      }
       return await res.json();
     } catch (err) {
       console.error("Erreur lors du chargement des sorties :", err);
@@ -262,6 +284,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const annee = yearSelect.value;
       const details = detailsInput.value.trim();
 
+      // Validation simple
+      if (!sommet || !altitude || !denivele || !methode || !cotation || !annee) {
+        alert("Veuillez remplir tous les champs obligatoires.");
+        return;
+      }
+
       const sortieData = {
         type: "a-faire",
         sommet,
@@ -283,9 +311,14 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(sortieData)
         });
         const data = await res.json();
+        if (res.status === 401) {
+          handleAuthError();
+          return;
+        }
         if (res.ok) {
           alert("Sortie à faire ajoutée !");
-          window.location.reload();
+          await displaySorties(); // mise à jour sans reload
+          formAFaire.reset();
         } else {
           alert("Erreur lors de l'ajout de la sortie : " + (data.error || "Inconnue"));
         }
@@ -341,6 +374,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const dateVal = dateInput.value;
       const details = detailsFait.value.trim();
 
+      // Validation simple
+      if (!sommet || !altitude || !denivele || !methode || !cotation || !dateVal) {
+        alert("Veuillez remplir tous les champs obligatoires.");
+        return;
+      }
+
       const sortieData = {
         type: "fait",
         sommet,
@@ -362,9 +401,14 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(sortieData)
         });
         const data = await res.json();
+        if (res.status === 401) {
+          handleAuthError();
+          return;
+        }
         if (res.ok) {
           alert("Sortie faite ajoutée !");
-          window.location.reload();
+          await displaySorties(); // mise à jour sans reload
+          formFait.reset();
         } else {
           alert("Erreur lors de l'ajout de la sortie : " + (data.error || "Inconnue"));
         }
@@ -402,180 +446,210 @@ document.addEventListener("DOMContentLoaded", () => {
     cells[2].innerHTML = `<input type="number" value="${altitudeVal}" style="width:100%;">`;
     cells[3].innerHTML = `<input type="number" value="${deniveleVal}" style="width:100%;">`;
 
-    // Méthode
-    let methodSelectHTML = `<select style="width:100%;">`;
-    methods.forEach(opt => {
-      methodSelectHTML += `<option value="${opt}" ${opt === methodeVal ? "selected" : ""}>${opt}</option>`;
+    // Méthode : select
+    const methodeSelect = document.createElement("select");
+    methods.forEach(m => {
+      const option = document.createElement("option");
+      option.value = m;
+      option.textContent = m;
+      if (m === methodeVal) option.selected = true;
+      methodeSelect.appendChild(option);
     });
-    methodSelectHTML += `</select>`;
-    cells[4].innerHTML = methodSelectHTML;
+    cells[4].innerHTML = "";
+    cells[4].appendChild(methodeSelect);
 
-    // Cotation
-    let currentMethod = cells[4].querySelector("select").value;
-    let cotSelectHTML = `<select style="width:100%;">`;
-    (cotationsByMethod[currentMethod] || []).forEach(opt => {
-      cotSelectHTML += `<option value="${opt}" ${opt === cotationVal ? "selected" : ""}>${opt}</option>`;
-    });
-    cotSelectHTML += `</select>`;
-    cells[5].innerHTML = cotSelectHTML;
-
-    // Changer la cotation si la méthode change
-    cells[4].querySelector("select").addEventListener("change", function() {
-      const newMethod = this.value;
-      const newCotSelect = document.createElement("select");
-      newCotSelect.style.width = "100%";
-      (cotationsByMethod[newMethod] || []).forEach(o => {
-        const option = document.createElement("option");
-        option.value = o;
-        option.textContent = o;
-        newCotSelect.appendChild(option);
+    // Cotation : select, dépend de méthode
+    const cotationSelect = document.createElement("select");
+    function updateCotationOptions(selectedMethod, selectedCotation) {
+      cotationSelect.innerHTML = "";
+      const options = cotationsByMethod[selectedMethod] || [];
+      options.forEach(opt => {
+        const o = document.createElement("option");
+        o.value = opt;
+        o.textContent = opt;
+        if (opt === selectedCotation) o.selected = true;
+        cotationSelect.appendChild(o);
       });
-      cells[5].innerHTML = "";
-      cells[5].appendChild(newCotSelect);
+    }
+    updateCotationOptions(methodeVal, cotationVal);
+    cells[5].innerHTML = "";
+    cells[5].appendChild(cotationSelect);
+
+    // Quand méthode change, on met à jour cotation
+    methodeSelect.addEventListener("change", () => {
+      updateCotationOptions(methodeSelect.value, cotationSelect.value);
     });
 
-    // Date ou Année
-    cells[6].innerHTML = "";
+    // Date ou année
     if (mode === "fait") {
-      cells[6].innerHTML = `<input type="date" value="${dateOrYearVal}" style="width:100%;">`;
+      cells[6].innerHTML = `<input type="date" value="${dateOrYearVal}">`;
     } else {
-      let selectYearHTML = `<select style="width:100%;">`;
-      const currentYear = new Date().getFullYear();
-      for (let i = 0; i < 10; i++) {
-        const yr = currentYear + i;
-        selectYearHTML += `<option value="${yr}" ${String(yr) === dateOrYearVal ? "selected" : ""}>${yr}</option>`;
-      }
-      selectYearHTML += `</select>`;
-      cells[6].innerHTML = selectYearHTML;
+      cells[6].innerHTML = `<input type="number" value="${dateOrYearVal}" style="width:100%;">`;
     }
 
-    // Détails
-    cells[7].innerHTML = `<textarea style="width:100%;">${detailsVal}</textarea>`;
+    cells[7].innerHTML = `<input type="text" value="${detailsVal}" style="width:100%;">`;
 
-    // Boutons Save / Cancel
-    cells[0].innerHTML = "";
-    const saveBtn = document.createElement("button");
-    saveBtn.textContent = "✔️";
-    const cancelBtn = document.createElement("button");
-    cancelBtn.textContent = "↩";
-    cells[0].appendChild(saveBtn);
-    cells[0].appendChild(cancelBtn);
+    // Boutons save / cancel
+    cells[0].innerHTML = `
+      <button class="save-btn">💾</button>
+      <button class="cancel-btn">❌</button>
+    `;
 
-    saveBtn.addEventListener("click", () => { saveRow(row, mode); });
-    cancelBtn.addEventListener("click", () => { window.location.reload(); });
+    // Gestion boutons
+    const saveBtn = cells[0].querySelector(".save-btn");
+    const cancelBtn = cells[0].querySelector(".cancel-btn");
+
+    cancelBtn.addEventListener("click", () => {
+      displaySorties();
+    });
+
+    saveBtn.addEventListener("click", async () => {
+      const token = getToken();
+      if (!token) {
+        alert("Session expirée, veuillez vous reconnecter.");
+        handleAuthError();
+        return;
+      }
+
+      // Récupération données modifiées
+      const newSommet = cells[1].querySelector("input").value.trim();
+      const newAltitude = cells[2].querySelector("input").value.trim();
+      const newDenivele = cells[3].querySelector("input").value.trim();
+      const newMethode = methodeSelect.value;
+      const newCotation = cotationSelect.value;
+      const newDateOrYearInput = cells[6].querySelector("input").value;
+      const newDetails = cells[7].querySelector("input").value.trim();
+
+      // Validation
+      if (!newSommet || !newAltitude || !newDenivele || !newMethode || !newCotation || !newDateOrYearInput) {
+        alert("Veuillez remplir tous les champs obligatoires.");
+        return;
+      }
+
+      const sortieUpdate = {
+        sommet: newSommet,
+        altitude: newAltitude,
+        denivele: newDenivele,
+        methode: newMethode,
+        cotation: newCotation,
+        details: newDetails,
+      };
+      if (mode === "fait") {
+        sortieUpdate.date = newDateOrYearInput;
+      } else {
+        sortieUpdate.annee = newDateOrYearInput;
+      }
+
+      const sortieId = row.getAttribute("data-id");
+      try {
+        const res = await fetch("/api/sorties/" + sortieId, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify(sortieUpdate)
+        });
+        if (res.status === 401) {
+          handleAuthError();
+          return;
+        }
+        if (res.ok) {
+          alert("Sortie mise à jour !");
+          await displaySorties();
+        } else {
+          const errData = await res.json();
+          alert("Erreur lors de la mise à jour : " + (errData.error || "Inconnue"));
+        }
+      } catch (err) {
+        console.error("Erreur mise à jour :", err);
+        alert("Erreur lors de la connexion au serveur");
+      }
+    });
   };
 
-  async function saveRow(row, mode) {
-    const sortieId = row.getAttribute("data-id");
-    const cells = row.querySelectorAll("td");
-    const updatedData = {
-      sommet: cells[1].querySelector("input").value.trim(),
-      altitude: cells[2].querySelector("input").value.trim(),
-      denivele: cells[3].querySelector("input").value.trim(),
-      methode: cells[4].querySelector("select").value,
-      details: cells[7].querySelector("textarea").value.trim()
-    };
-
-    const cotationSel = cells[5].querySelector("select");
-    if (cotationSel) {
-      updatedData.cotation = cotationSel.value;
-    }
-    if (mode === "fait") {
-      const dateField = cells[6].querySelector("input[type=date]");
-      updatedData.date = dateField ? dateField.value : "";
-    } else {
-      const yearSel = cells[6].querySelector("select");
-      updatedData.annee = yearSel ? yearSel.value : "";
-    }
-
-    const token = getToken();
-    try {
-      const res = await fetch(`/api/sorties/${sortieId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + token
-        },
-        body: JSON.stringify(updatedData)
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert("Sortie mise à jour !");
-        window.location.reload();
-      } else {
-        alert("Erreur de sauvegarde : " + (data.error || "Inconnue"));
-      }
-    } catch (err) {
-      console.error("Erreur lors de la mise à jour :", err);
-      alert("Erreur lors de la connexion au serveur");
-    }
-  }
-
+  /* =================== SUPPRESSION D'UNE SORTIE =================== */
   window.deleteRow = async function(row) {
-    const sortieId = row.getAttribute("data-id");
-    if (!sortieId) return;
+    if (!confirm("Confirmez-vous la suppression de cette sortie ?")) return;
+
     const token = getToken();
+    if (!token) {
+      alert("Session expirée, veuillez vous reconnecter.");
+      handleAuthError();
+      return;
+    }
+
+    const sortieId = row.getAttribute("data-id");
     try {
-      const res = await fetch(`/api/sorties/${sortieId}`, {
+      const res = await fetch("/api/sorties/" + sortieId, {
         method: "DELETE",
         headers: { "Authorization": "Bearer " + token }
       });
-      const data = await res.json();
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
       if (res.ok) {
         alert("Sortie supprimée !");
-        row.remove();
+        await displaySorties();
       } else {
-        alert("Erreur lors de la suppression : " + (data.error || "Inconnue"));
+        const errData = await res.json();
+        alert("Erreur lors de la suppression : " + (errData.error || "Inconnue"));
       }
     } catch (err) {
-      console.error("Erreur lors de la suppression :", err);
+      console.error("Erreur suppression :", err);
       alert("Erreur lors de la connexion au serveur");
     }
   };
 
-  /* =================== AUTO-COMPLÉTION "SOMMET" =================== */
-  let sommetInput = document.getElementById("sommet");
-  if (!sommetInput) { 
-    sommetInput = document.getElementById("sommet-fait");
-  }
-  if (sommetInput) {
-    sommetInput.addEventListener("input", updateSummitsDatalist);
-    sommetInput.addEventListener("change", () => {
-      const datalist = document.getElementById("summits-list");
-      if (!datalist) return;
-      const options = datalist.options;
-      for (let i = 0; i < options.length; i++) {
-        if (options[i].value.toLowerCase() === sommetInput.value.trim().toLowerCase()) {
-          let altitudeInput = document.getElementById("altitude");
-          if (!altitudeInput) { 
-            altitudeInput = document.getElementById("altitude-fait");
-          }
-          if (altitudeInput) {
-            altitudeInput.value = options[i].getAttribute("data-altitude") || "";
-          }
-          break;
-        }
+  /* =================== AUTOCOMPLÉTION SOMMETS + ALTITUDE =================== */
+  let debounceTimer = null;
+  async function updateSummitsDatalist() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(async () => {
+      const inputSommet = document.getElementById("sommet");
+      if (!inputSommet) return;
+      const query = inputSommet.value.trim();
+      const datalist = document.getElementById("liste-sommets");
+      if (!query || query.length < 2) {
+        datalist.innerHTML = "";
+        return;
       }
-    });
+      try {
+        const res = await fetch("/api/sommets?q=" + encodeURIComponent(query));
+        if (!res.ok) return;
+        const sommets = await res.json();
+        datalist.innerHTML = "";
+        sommets.forEach(s => {
+          const option = document.createElement("option");
+          option.value = s.nom;
+          datalist.appendChild(option);
+        });
+      } catch (err) {
+        console.error("Erreur auto-complétion sommets :", err);
+      }
+    }, 300);
   }
 
-  async function updateSummitsDatalist() {
-    const query = sommetInput.value.trim();
-    const datalist = document.getElementById("summits-list");
-    if (!datalist) return;
-    if (query.length < 2) {
-      datalist.innerHTML = "";
-      return;
-    }
-    try {
-      const res = await fetch(`/api/summits?q=${encodeURIComponent(query)}`);
-      const suggestions = await res.json();
-      datalist.innerHTML = suggestions.map(s =>
-        `<option data-altitude="${s.altitude}" value="${s.nom}">`
-      ).join('');
-    } catch (err) {
-      console.error("Erreur lors de l'auto-complétion des sommets :", err);
-    }
+  const inputSommet = document.getElementById("sommet");
+  if (inputSommet) {
+    inputSommet.addEventListener("input", updateSummitsDatalist);
+    inputSommet.addEventListener("change", async () => {
+      const val = inputSommet.value.trim();
+      if (!val) return;
+      try {
+        const res = await fetch("/api/sommets?q=" + encodeURIComponent(val));
+        if (!res.ok) return;
+        const sommets = await res.json();
+        const found = sommets.find(s => s.nom.toLowerCase() === val.toLowerCase());
+        if (found) {
+          const altInput = document.getElementById("altitude");
+          if (altInput) altInput.value = found.altitude || "";
+        }
+      } catch (err) {
+        console.error("Erreur récupération altitude :", err);
+      }
+    });
   }
 
 });

@@ -1,56 +1,56 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-console.log("Début serveur.js");
-console.log("MONGODB_URI:", process.env.MONGODB_URI);
-console.log("PORT:", process.env.PORT);
-
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { MongoClient, ObjectId } from 'mongodb';
 import cors from 'cors';
 
-console.log("MONGODB_URI:", process.env.MONGODB_URI);
-
 const app = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || "change-moi-en-prod";
+
+if (!process.env.MONGODB_URI) {
+  console.error("⚠️ Erreur : MONGODB_URI non défini dans les variables d'environnement !");
+  process.exit(1);
+}
+
+app.use(cors({
+  origin: true,      // autorise toutes origines, à limiter en prod
+  credentials: true, // pour que les cookies passent, si utilisés
+}));
 
 app.use(express.json());
-app.use(cors());
 app.use(express.static('public'));
 
-const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri);
+const client = new MongoClient(process.env.MONGODB_URI);
 
-client.connect()
-  .then(() => {
+async function start() {
+  try {
+    await client.connect();
     console.log("Connecté à MongoDB Atlas");
+
     const db = client.db("aiguilog");
 
-    // ---------- Inscription ----------
+    // -- Inscription
     app.post('/api/register', async (req, res) => {
       try {
         const { firstName, lastName, username, password, birthdate } = req.body;
         if (!firstName || !lastName || !username || !password || !birthdate) {
           return res.status(400).json({ error: "Tous les champs sont requis" });
         }
+
         const existingUser = await db.collection("users").findOne({ username });
         if (existingUser) return res.status(400).json({ error: "Identifiant déjà utilisé" });
-        
+
         const passwordHash = await bcrypt.hash(password, 10);
         const userDoc = { firstName, lastName, username, passwordHash, birthdate, createdAt: new Date() };
         const result = await db.collection("users").insertOne(userDoc);
-        
-        const token = jwt.sign({ userId: result.insertedId, username }, JWT_SECRET, { expiresIn: "1h" });
-        const userResponse = {
-          firstName,
-          lastName,
-          username,
-          birthdate,
-          createdAt: userDoc.createdAt
-        };
+
+        const token = jwt.sign({ userId: result.insertedId.toString(), username }, JWT_SECRET, { expiresIn: "1h" });
+        const userResponse = { firstName, lastName, username, birthdate, createdAt: userDoc.createdAt };
+
         res.json({ message: "Inscription réussie", token, user: userResponse });
       } catch (err) {
         console.error("Erreur /api/register :", err);
@@ -58,7 +58,7 @@ client.connect()
       }
     });
 
-    // ---------- Recherche de sommets ----------
+    // -- Recherche sommets
     app.get('/api/summits', async (req, res) => {
       const q = req.query.q;
       if (!q) return res.json([]);
@@ -73,19 +73,19 @@ client.connect()
       }
     });
 
-    // ---------- Connexion ----------
+    // -- Connexion
     app.post('/api/login', async (req, res) => {
       try {
         const { username, password } = req.body;
         if (!username || !password) return res.status(400).json({ error: "Identifiant et mot de passe requis" });
-        
+
         const user = await db.collection("users").findOne({ username });
         if (!user) return res.status(400).json({ error: "Utilisateur non trouvé" });
-        
+
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return res.status(400).json({ error: "Mot de passe incorrect" });
-        
-        const token = jwt.sign({ userId: user._id, username: user.username }, JWT_SECRET, { expiresIn: "1h" });
+
+        const token = jwt.sign({ userId: user._id.toString(), username: user.username }, JWT_SECRET, { expiresIn: "1h" });
         const userResponse = {
           firstName: user.firstName,
           lastName: user.lastName,
@@ -100,7 +100,7 @@ client.connect()
       }
     });
 
-    // ---------- Middleware d'authentification ----------
+    // Middleware auth
     function authMiddleware(req, res, next) {
       const authHeader = req.headers.authorization;
       if (!authHeader) return res.status(401).json({ error: "Non autorisé" });
@@ -109,23 +109,24 @@ client.connect()
         const payload = jwt.verify(token, JWT_SECRET);
         req.user = payload;
         next();
-      } catch (err) {
+      } catch {
         return res.status(401).json({ error: "Token invalide" });
       }
     }
 
-    // ---------- Ajouter une sortie ----------
+    // -- Ajout sortie
     app.post('/api/sorties', authMiddleware, async (req, res) => {
       try {
         const sortieData = req.body;
         if (sortieData.type === "fait" && !sortieData.date) {
           return res.status(400).json({ error: "La date est requise pour une sortie réalisée" });
-        } else if (sortieData.type === "a-faire" && !sortieData.annee) {
+        }
+        if (sortieData.type === "a-faire" && !sortieData.annee) {
           return res.status(400).json({ error: "L'année est requise pour une sortie à faire" });
         }
         sortieData.createdAt = new Date();
         sortieData.userId = new ObjectId(req.user.userId);
-        
+
         const result = await db.collection("sorties").insertOne(sortieData);
         res.json({ message: "Sortie ajoutée", id: result.insertedId });
       } catch (err) {
@@ -134,7 +135,7 @@ client.connect()
       }
     });
 
-    // ---------- Récupérer les sorties ----------
+    // -- Récupérer sorties
     app.get('/api/sorties', authMiddleware, async (req, res) => {
       try {
         const sorties = await db.collection("sorties").find({
@@ -147,7 +148,7 @@ client.connect()
       }
     });
 
-    // ---------- Mettre à jour une sortie ----------
+    // -- Mise à jour sortie
     app.put('/api/sorties/:id', authMiddleware, async (req, res) => {
       try {
         const sortieId = req.params.id;
@@ -168,7 +169,7 @@ client.connect()
       }
     });
 
-    // ---------- Supprimer une sortie ----------
+    // -- Suppression sortie
     app.delete('/api/sorties/:id', authMiddleware, async (req, res) => {
       try {
         const sortieId = req.params.id;
@@ -186,12 +187,15 @@ client.connect()
         res.status(500).json({ error: "Erreur serveur lors de la suppression" });
       }
     });
-  
+
     app.listen(PORT, () => {
       console.log(`Serveur démarré sur http://localhost:${PORT}`);
     });
-  
-  })
-  .catch(err => {
+
+  } catch (err) {
     console.error("Erreur de connexion à MongoDB Atlas :", err);
-  });
+    process.exit(1);
+  }
+}
+
+start();
